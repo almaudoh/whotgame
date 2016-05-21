@@ -1,10 +1,11 @@
 // This class represents the basic card object which describes all the features
 // of the cards in a whot game. It contains all information about the cards in a card pack
-package org.anieanie.whot;
+package org.anieanie.card.whot;
+
 import java.util.*;
-import java.io.*;
 import java.lang.*;
-import org.anieanie.cardgame.*;
+import org.anieanie.card.AbstractCard;
+import org.anieanie.card.Card;
 
 public class WhotCard extends AbstractCard {
     // static initializer for ramdom number generator
@@ -20,48 +21,56 @@ public class WhotCard extends AbstractCard {
     public static final int N_ANGLE  = 12;
     public static final int N_WHOT = 5;
     public static final int N_SHAPES = 6;
-    public static final String[] SHAPES =  {"Star",
-                                            "Cross",
-                                            "Circle",
-                                            "Square",
-                                            "Triangle",
-                                            "Whot"};
-    public static final int[][] EXCLUDED_NUMBERS = {{6,9,10,11,12,13,14},
-    {4,6,8,9,12},{6,9},
-    {4,6,8,9,12},{6,9},
-    {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}};
+    public static final String[] SHAPES =  {
+        "Star",
+        "Cross",
+        "Circle",
+        "Square",
+        "Triangle",
+        "Whot"
+    };
     //this array must be sorted
+    public static final int[][] EXCLUDED_NUMBERS = {
+        {6, 9, 10, 11, 12, 13, 14},
+        {4, 6, 8, 9, 12},
+        {6, 9},
+        {4, 6, 8, 9, 12},
+        {6, 9},
+        {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
+    };
     public static final int STAR = 0;
     public static final int CROSS = 1;
     public static final int BALL = 2;
     public static final int CARPET = 3;
     public static final int ANGLE  = 4;
     public static final int WHOT  = 5;
-    
-    /** variable to keep track of number of Whots created */
-//    protected static int num_whots = 0;
-    
+
     // Static methods
     /** 
      * This method returns true if that combination of shape and label is not allowed
      * False otherwise
      */
     public static boolean isIllegal(int shape, int label) {
-        if (shape < STAR || shape > WHOT) return true;
-        return (Arrays.binarySearch(EXCLUDED_NUMBERS[shape], label) >= 0) || (shape == WHOT && label != 20);
+        return shape < STAR || shape > WHOT     // shape in set (STAR, CROSS, BALL, CARPET, ANGLE, WHOT).
+                || label < 1 || (shape !=  WHOT && label > 14)      // 1 <= label <= 14 for non-WHOT shapes.
+                || (Arrays.binarySearch(EXCLUDED_NUMBERS[shape], label) >= 0)   // label is excluded for the shape.
+                || (shape == WHOT && label != 20);  // WHOT shape can only have 20 label.
+    }
+
+    public static void assertLegal(int shape, int label) {
+        if (shape < STAR || shape > WHOT)
+            throw new IllegalArgumentException("Illegal shape '" + shape + "' specified.");
+
+        if (isIllegal(shape, label))
+            throw new IllegalArgumentException("Number " + label + " not allowed for the shape '" + SHAPES[shape] + "'.");
     }
     
     //Constructors: a card is generated randomly if no arguments are specified
     public WhotCard(int shape, int label) {
-        if (shape < STAR || shape > WHOT)
-            throw new IllegalArgumentException("You specified an illegal shape");
+        // Ensure this has the right label for the shape.
+        assertLegal(shape, label);
         this.shape = shape;
-        if (isIllegal(shape, label))
-            throw new IllegalArgumentException("Number not allowed for this shape");
         this.label = label;
-        if (this.shape == WHOT) {
-//            num_whots++;
-        }
     }
     
     public WhotCard() {
@@ -71,14 +80,12 @@ public class WhotCard extends AbstractCard {
         
         if (shape == WHOT) {
             label = 20;
-//            num_whots++;
         }
         else {
-            Arrays.sort(EXCLUDED_NUMBERS[shape]); // sort EXCLUDED_NUMBERS array to enable binary search
+            // sort EXCLUDED_NUMBERS array to enable binary search.
+            Arrays.sort(EXCLUDED_NUMBERS[shape]);
+            // Ensure that the label generated is not in the excluded list for that particular shapeL
             while (isIllegal(shape, label)) {
-                /*this loop checks to ensure that the label generated is not in the excluded list
-                 * for that particular shape
-                 */
                 label = WhotCard.generator.nextInt(U_LIMIT) + 1; // random number from 1 to U_LIMIT
             }
         }
@@ -87,11 +94,12 @@ public class WhotCard extends AbstractCard {
         this.shape = shape;
     }
     
-    public String getShapeString() { return SHAPES[this.shape]; }
+    public String getShapeString() {
+        return SHAPES[this.shape];
+    }
     
     private void setLabel(int label) {
-        if (isIllegal(this.shape, label))
-            throw new IllegalArgumentException("Number not allowed for this shape");
+        assertLegal(this.shape, label);
         this.label = label;
     }
     
@@ -104,7 +112,7 @@ public class WhotCard extends AbstractCard {
     
     private void setShape(String shape) {
         for (int i=0; i<5; i++) {
-            if (shape == SHAPES[i]) {
+            if (shape.equals(SHAPES[i])) {
                 this.shape = i;
                 break;
             }
@@ -139,26 +147,21 @@ public class WhotCard extends AbstractCard {
     }
     
     // public method implementing comparable
-    public int compareTo(Object anObject) {
-        if (anObject instanceof org.anieanie.whot.WhotCard) {
-            return compareTo((WhotCard) anObject);
+    public int compareTo(Object another) {
+        if (another instanceof WhotCard) {
+            return compareTo((WhotCard) another);
         }
         else {
             throw new ClassCastException("Object type mismatch");
         }
-        //return 0;
     }
     
-    public boolean equals(WhotCard anotherCard) {
-//        if (anotherCard.getShape() == WHOT) {
-//            if (num_whots > N_WHOT) return true;
-//            else return false;
-//        } else
-            return ((anotherCard.getShape() == this.shape) && (anotherCard.getLabel() == this.label));
+    public boolean equals(WhotCard another) {
+        return ((another.getShape() == this.shape) && (another.getLabel() == this.label));
     }
     
     //public methods overriding object
-    public AbstractCard clone() {
+    public Card clone() {
         return new WhotCard(this.shape, this.label);
     }
     
@@ -167,7 +170,7 @@ public class WhotCard extends AbstractCard {
     }
     
     public boolean equals(Object anObject) {
-        if (anObject instanceof org.anieanie.whot.WhotCard) {
+        if (anObject instanceof WhotCard) {
             return equals((WhotCard) anObject);
         }
         else {
@@ -175,23 +178,18 @@ public class WhotCard extends AbstractCard {
         }
     }
     
-    // this protected class method allows the num_whots variable to be reset
-//    protected static void reset_whots() {
-////        num_whots = 0;
-//    }
-
     protected AbstractCard getInstance(String string) {
         String shape = string.substring(0, string.indexOf(' '));
         int intshape = -1;
-        for (int i=0; i<5; i++) {
-            if (shape == SHAPES[i]) {
+        for (int i = 0; i < 6; i++) {
+            if (shape.equals(SHAPES[i])) {
                 intshape = i;
                 break;
             }
         }
         int intlabel = Integer.parseInt(string.substring(string.indexOf(' ')).trim());
-        if (isIllegal(intshape, intlabel))
-            throw new IllegalArgumentException("WhotCard.getInstance(): Illegal card string supplied");
+        // Ensure the right label is used for the specified shape.
+        assertLegal(intshape, intlabel);
         return new WhotCard(intshape, intlabel);
     }
 }
