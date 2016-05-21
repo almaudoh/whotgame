@@ -2,10 +2,12 @@
 // It deals the cards and signifies to each player that it is its turn to play
 // The monitor class also provides the interface that allows Watcher objects to watch
 // the proceedings
-package org.anieanie.whot;
+package org.anieanie.cardgame.game;
+import org.anieanie.card.whot.WhotCardSet;
+import org.anieanie.cardgame.game.CardPlayer;
+
 import java.util.*;
 import java.lang.*;
-import java.io.*;
 
 public class WhotGameMonitor extends Thread {
   // Each new WhotGameMonitor starts a new game

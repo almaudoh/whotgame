@@ -1,9 +1,8 @@
-package org.anieanie.whot;
+package org.anieanie.cardgame.game;
 
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.border.*;
 
 /**
  * Title:        A Complete Whot Playing Environment

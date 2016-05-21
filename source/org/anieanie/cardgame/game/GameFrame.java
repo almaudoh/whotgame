@@ -1,4 +1,4 @@
-package org.anieanie.whot;
+package org.anieanie.cardgame.game;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -42,9 +42,9 @@ public class GameFrame extends JFrame {
   }
   /**Component initialization*/
   private void jbInit() throws Exception  {
-    image1 = new ImageIcon(org.anieanie.whot.GameFrame.class.getResource("openFile.gif"));
-    image2 = new ImageIcon(org.anieanie.whot.GameFrame.class.getResource("closeFile.gif"));
-    image3 = new ImageIcon(org.anieanie.whot.GameFrame.class.getResource("help.gif"));
+    image1 = new ImageIcon(GameFrame.class.getResource("openFile.gif"));
+    image2 = new ImageIcon(GameFrame.class.getResource("closeFile.gif"));
+    image3 = new ImageIcon(GameFrame.class.getResource("help.gif"));
     //setIconImage(Toolkit.getDefaultToolkit().createImage(GameFrame.class.getResource("[Your Icon]")));
     contentPane = (JPanel) this.getContentPane();
     contentPane.setLayout(borderLayout1);

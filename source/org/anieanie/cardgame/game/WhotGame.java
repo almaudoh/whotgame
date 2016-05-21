@@ -1,4 +1,4 @@
-package org.anieanie.whot;
+package org.anieanie.cardgame.game;
 
 import javax.swing.UIManager;
 import java.awt.*;
