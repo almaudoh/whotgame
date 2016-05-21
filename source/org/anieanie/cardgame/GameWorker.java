@@ -6,13 +6,11 @@
 
 package org.anieanie.cardgame;
 
-import java.io.*;
 import java.net.*;
-import java.util.*;
 
 import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.cardgame.GameEnvironment.GameMonitor;
-import org.anieanie.whot.WhotCard;
+import org.anieanie.card.whot.WhotCard;
 
 /**
  *

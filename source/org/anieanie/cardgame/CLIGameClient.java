@@ -7,10 +7,10 @@
 package org.anieanie.cardgame;
 
 import java.io.*;
-import java.net.*;
-import java.util.Hashtable;
+
 import org.anieanie.cardgame.cgmp.*;
-import org.anieanie.whot.WhotCard;
+import org.anieanie.card.AbstractCard;
+import org.anieanie.card.CardSet;
 
 /**
  *

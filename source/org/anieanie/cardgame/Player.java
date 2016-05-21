@@ -6,6 +6,8 @@
 
 package org.anieanie.cardgame;
 
+import org.anieanie.card.Card;
+
 /**
  * This interface is to be implemented by all classes to take part in a game. This includes
  * user interface elements that allow games to be played and artificial intelligence

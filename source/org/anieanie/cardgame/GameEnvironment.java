@@ -14,6 +14,9 @@
 
 package org.anieanie.cardgame;
 
+import org.anieanie.card.Card;
+import org.anieanie.card.CardSet;
+
 import java.io.*;
 import java.util.*;
 
@@ -31,7 +34,7 @@ public final class GameEnvironment extends Thread implements java.io.Serializabl
     private GameMonitor gMon;   // The game monitor who has locked this Environment
     private Hashtable players;	// the list of all players in the game
     private Hashtable watchers;	// the list of all those watching the game
-    private String __gameClass = "org.anieanie.whot.Whot";
+    private String __gameClass = "org.anieanie.org.anieanie.card.whot.Whot";
     
     /**
      * The cardstacks in this game

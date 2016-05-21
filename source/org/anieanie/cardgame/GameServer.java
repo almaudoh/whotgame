@@ -10,7 +10,6 @@ import java.net.*;
 import java.io.*;
 import java.util.Hashtable;
 import org.anieanie.cardgame.GameEnvironment.GameMonitor;
-import org.anieanie.whot.WhotGameMonitor;
 
 /**
  *
