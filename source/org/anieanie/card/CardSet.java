@@ -1,6 +1,7 @@
 // This is the CardSet class that contains Card objects of any given number
 // no null or duplicate entries are allowed
-package org.anieanie.cardgame;
+package org.anieanie.card;
+
 import java.util.*;
 import java.io.*;
 import java.lang.*;
@@ -9,72 +10,79 @@ import java.lang.*;
 public class CardSet extends AbstractSet implements Cloneable, Serializable, Set {
     // This class uses an internal LinkedList object to store the elements of the CardSet
     // and also to improve the functionality
-    
-    // private instance fields
-    protected LinkedList cardlist;	// an internal list to be used to store the elements of the set
+
+    // An internal list to be used to store the elements of the set
+    protected LinkedList<Card> cardlist;
     
     // public constructors
     public CardSet() {
-        cardlist = new LinkedList();
+        cardlist = new LinkedList<Card>();
     }
     
     //  public CardSet(Card[] cards) {
     //  }
-    //
-    //  public CardSet(CardSet anotherCardSet) {
-    //
-    //  }
-    //
-    public CardSet(Collection c) {
+
+    // copy constructor
+    public CardSet(CardSet original) {
         this();
-        Object element;
-        for (Iterator i = c.iterator(); i.hasNext();) {
-            element = i.next();
-            if (cardlist.contains(element)) {
-                throw new RuntimeException("Attempt to insert duplicate entries in Set object");
+        for (Card card : original.getCardlist()) {
+            if (isDuplicate(card)) {
+                throw new RuntimeException("Cannot clone cardset, duplicate entries found.");
             } else {
-                cardlist.add(element);
+                cardlist.add(card.clone());
+            }
+        }
+
+    }
+
+    public CardSet(Collection<Card> cards) {
+        this();
+        for (Card card : cards) {
+            if (isDuplicate(card)) {
+                throw new RuntimeException("Attempt to insert duplicate entries in cardset");
+            } else {
+                cardlist.add(card);
             }
         }
     }
     
     // private constructor for clone method
-    protected CardSet(LinkedList list) {
+    protected CardSet(LinkedList<Card> list) {
         cardlist = list;
+    }
+
+    public LinkedList<Card> getCardlist() {
+        return cardlist;
     }
     
     // public instance methods
     public boolean add(Card card) {
-        if (cardlist.contains(card)) {
-            throw new RuntimeException("Attempt to insert duplicate entries in Set object");
-            //System.out.println("Duplicate entry detected: " + card.toString() + ", could not add");
-            //return false;
+        if (isDuplicate(card)) {
+            throw new RuntimeException("Attempt to insert duplicate entries in cardset");
         } else {
             return cardlist.add(card);
         }
     }
     
     public void add(int index, Card card) {
-        if (cardlist.contains(card)) {
-            throw new RuntimeException("Attempt to insert duplicate entries in Set object");
+        if (isDuplicate(card)) {
+            throw new RuntimeException("Attempt to insert duplicate entries in cardset");
         } else {
             cardlist.add(index, card);
         }
     }
     
     public void addFirst(Card card) {
-        if (cardlist.contains(card)) {
-            throw new RuntimeException("Attempt to insert duplicate entries in Set object");
-            //System.out.println("Duplicate entry detected: " + card.toString() + ", could not add");
+        if (isDuplicate(card)) {
+            throw new RuntimeException("Attempt to insert duplicate entries in cardset");
         } else {
             cardlist.addFirst(card);
         }
     }
     
     public void addLast(Card card) {
-        if (cardlist.contains(card)) {
-            throw new RuntimeException("Attempt to insert duplicate entries in Set object");
-            //System.out.println("Duplicate entry detected: " + card.toString() + ", could not add");
+        if (isDuplicate(card)) {
+            throw new RuntimeException("Attempt to insert duplicate entries in cardset");
         } else {
             cardlist.addLast(card);
         }
@@ -108,7 +116,8 @@ public class CardSet extends AbstractSet implements Cloneable, Serializable, Set
         Collections.shuffle(cardlist);
     }
     
-    public void shuffle(int times) { // shuffle a number of times
+    public void shuffle(int times) {
+        // shuffle a number of times
         Collections.shuffle(cardlist);
         if (--times > 0) this.shuffle(times);
     }
@@ -126,16 +135,9 @@ public class CardSet extends AbstractSet implements Cloneable, Serializable, Set
         Collections.sort(cardlist);
     }
     
-    // public methods implementing set
     public boolean add(Object obj) {
         try {
-            if (cardlist.contains(obj)) {
-                //throw new RuntimeException("Attempt to insert duplicate entries in Set object");
-                //System.out.println("Duplicate entry detected: " + card.toString() + ", could not add");
-                return false;
-            } else {
-                return cardlist.add((Card) obj);
-            }
+            return !isDuplicate((Card) obj) && cardlist.add((Card) obj);
         }
         catch (ClassCastException cce) {
             return false;
@@ -165,19 +167,15 @@ public class CardSet extends AbstractSet implements Cloneable, Serializable, Set
     public int size() {
         return cardlist.size();
     }
+
+    public boolean isDuplicate(Card card) {
+        return cardlist.contains(card);
+    }
     
     // Public methods overriding Object
     public Object clone() {
-        Object element;
-        LinkedList list = new LinkedList();
-        for (Iterator i = cardlist.iterator(); i.hasNext();) {
-            element = ((AbstractCard)i.next()).clone();
-            if (list.contains(element)) {
-                throw new RuntimeException("Cannot clone CardSet, duplicate entries found.");
-            } else {
-                list.add(element);
-            }
-        }
+        LinkedList<Card> list = (LinkedList) cardlist.clone();
+        Collections.copy(list, cardlist);
         return new CardSet(list);
     }
     

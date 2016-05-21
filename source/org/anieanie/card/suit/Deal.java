@@ -1,4 +1,4 @@
-package org.anieanie.suit;
+package org.anieanie.card.suit;
 
 import java.util.*;
 

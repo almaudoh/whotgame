@@ -4,7 +4,7 @@
  * Created on February 23, 2005, 9:53 PM
  */
 
-package org.anieanie.cardgame;
+package org.anieanie.card;
 
 /**
  *
@@ -16,7 +16,7 @@ public abstract class AbstractCard implements Comparable, java.io.Serializable, 
     protected static String __subclass;
     
     static {
-        AbstractCard.__subclass = "org.anieanie.whot.WhotCard";        
+        AbstractCard.__subclass = "org.anieanie.card.whot.WhotCard";
     }
     
     /** Creates a new instance of AbstractCard */
@@ -56,9 +56,7 @@ public abstract class AbstractCard implements Comparable, java.io.Serializable, 
         catch (ClassCastException cce) {
             cce.printStackTrace();
         }
-        finally {
-            return null; //basis.clone().getInstance();
-        }
+        return null;
     }
     
     /**
@@ -70,7 +68,7 @@ public abstract class AbstractCard implements Comparable, java.io.Serializable, 
     
     /** 
      * This method is needed to create a valid instance of a subclass of AbstractCard
-     * @param string The string from which the Card object is created
+     * @param cardspec The string from which the Card object is created
      * @return A card object created from a string
      */
     protected abstract AbstractCard getInstance(String cardspec);
@@ -80,5 +78,6 @@ public abstract class AbstractCard implements Comparable, java.io.Serializable, 
      * This method must be overridden by its concrete subclass
      * @return A card object created from a string
      */
-    public abstract Object clone();
+    public abstract Card clone();
+
 }
