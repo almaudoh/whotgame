@@ -7,8 +7,9 @@
 package org.anieanie.cardgame.cgmp;
 
 import java.net.*;
-import org.anieanie.cardgame.*;
-import org.anieanie.cardgame.cgmp.*;
+
+import org.anieanie.card.AbstractCard;
+import org.anieanie.card.Card;
 
 /**
  *
