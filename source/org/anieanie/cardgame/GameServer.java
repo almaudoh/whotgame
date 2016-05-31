@@ -6,20 +6,23 @@
 
 package org.anieanie.cardgame;
 
-import java.net.*;
 import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Hashtable;
-import org.anieanie.cardgame.GameEnvironment.GameMonitor;
+
+import org.anieanie.cardgame.cgmp.CGMPSpecification;
+import org.anieanie.cardgame.environment.GameEnvironment.GameMonitor;
 
 /**
  *
  * @author  ALMAUDOH
  */
 public class GameServer {
-    static GameMonitor gameMon = null;
-    static Hashtable<String, GameWorker> workers;
-    static Hashtable<String, Socket> users;
-    static ServerSocket ss;
+    private static GameMonitor gameMon = null;
+    private static Hashtable<String, GameWorker> workers;
+    private static Hashtable<String, Socket> users;
+    private static ServerSocket ss;
     public static void main(String []args) {
         try {
             // Create a socket on server
@@ -29,8 +32,8 @@ public class GameServer {
             gameMon = null; //new GameEnvironment().getGameMonitor();
             
             // hashtable to manage list of sockets and workers
-            workers = new Hashtable(10);
-            users = new Hashtable(10);
+            workers = new Hashtable<String, GameWorker>(10);
+            users = new Hashtable<String, Socket>(10);
             
             System.out.println("Server running on port " + ss.getLocalPort());
             // ---------------------------------------------------------------
@@ -49,6 +52,7 @@ public class GameServer {
                 // read user name from the client and store in table
                 // in the format username + socket
                 String strUserName = br.readLine();
+                pr.println(CGMPSpecification.ACK);
                 System.out.println("Username: " + strUserName + "\n");
                 users.put(strUserName, socket);
                 
@@ -73,8 +77,10 @@ public class GameServer {
         if (workers != null) {
             for (GameWorker w : workers.values()) {
                 try {
+                    // @todo Stop this worker properly.
                     w.finalize();
-                } catch (Throwable ex) {
+                }
+                catch (Throwable ex) {
                     ex.printStackTrace();
                 }
             }
@@ -84,7 +90,8 @@ public class GameServer {
             for (Socket s : users.values()) {
                 try {
                     s.close();
-                } catch (Throwable ex) {
+                }
+                catch (Throwable ex) {
                     ex.printStackTrace();
                 }
             }
@@ -93,7 +100,8 @@ public class GameServer {
         if (ss != null) {
             try {
                 ss.close();
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 e.printStackTrace();
             }
             ss = null;

@@ -6,11 +6,12 @@
 
 package org.anieanie.cardgame;
 
-import java.io.*;
-
 import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.card.AbstractCard;
 import org.anieanie.card.CardSet;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.Socket;
 
 /**
  *
@@ -33,24 +34,44 @@ public class CLIGameClient extends AbstractGameClient {
     /**
      * Creates a new instance of CLIGameClient
      */
-    public CLIGameClient(String name) {
-        super(name);
+    public CLIGameClient(ClientCGMPRelay relay, String name) {
+        super(relay, name);
         cards = new CardSet();
     }
     
     /**
      * Creates a new instance of CLIGameClient
      */
-    public CLIGameClient() {
-        super();
+    public CLIGameClient(ClientCGMPRelay relay) {
+        super(relay);
         cards = new CardSet();
     }
     
     public static void main(String [] args) {
-        // Get ip, port & user name from the client
-        String strPort="";	// server port
-        CLIGameClient client = new CLIGameClient();
-        client.connect("",0);
+        try {
+            // create a new socket
+            /** @todo Update this line to search for unused ports in case DEFAULT_PORT  is used already */
+            int port = CGMPSpecification.Connection.DEFAULT_PORT;
+            String ip = CGMPSpecification.Connection.DEFAULT_IP;
+            Socket socket = new Socket(ip, port);
+            ClientCGMPRelay relay = new ClientCGMPRelay(socket);
+            CLIGameClient client = new CLIGameClient(relay);
+            relay.setListener(client);
+
+            // Connect to the client.
+            client.connect();
+            client.run();
+        }
+        catch (ConnectException e) {
+            System.out.println("I could not connect to the server.");
+            e.printStackTrace();
+            System.exit(0);
+        }	// End of exception
+        catch (Exception e) {
+            System.out.println("Some kind of error has occurred.");
+            e.printStackTrace();
+            System.exit(0);
+        }	// End of exception
     }
     
     /**
@@ -58,13 +79,13 @@ public class CLIGameClient extends AbstractGameClient {
      * Once this method exits, the client will be cleaned up and terminated
      *
      */
-    protected void run(BufferedReader br, PrintWriter pr) {
+    protected void run() {
         try {
             // Immediately, the client asks the server for permission to play
             int count = 0;
             while (true) {
                 if (relay.requestPlay()) break;
-                else if (count > 10) {
+                else if (count++ > 10) {
                     System.out.println("Server did not grant request to play");
                     return;
                 }
@@ -144,8 +165,12 @@ public class CLIGameClient extends AbstractGameClient {
     public boolean cardReceived(String cardSpec) {
         try {
             relay.sendAcknowledgement();
-        } catch (CGMPException ex) {
+        }
+        catch (CGMPException ex) {
             ex.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
         clientStatus = 1;  // Now waiting for server to ask for move
         // add card to card pack
@@ -165,7 +190,7 @@ public class CLIGameClient extends AbstractGameClient {
     }
     
     
-    public void gameWon() {
+    public void gameWon(String winner) {
         System.out.println("game won");
     }
     
@@ -206,7 +231,7 @@ public class CLIGameClient extends AbstractGameClient {
         return false;
     }
     
-    public class CommandLineReader implements Runnable {
+    private class CommandLineReader implements Runnable {
         // Wait for input on a separate thread
         public void run() {
             // ---------------------------------
@@ -218,40 +243,54 @@ public class CLIGameClient extends AbstractGameClient {
             
             // Wait for server to signal start of game
             info("Waiting for server to deal cards");
-            while (clientStatus != 1) try { Thread.sleep(50); } catch (InterruptedException ie) { ie.printStackTrace(); }
+            while (clientStatus != 1) try {
+                Thread.sleep(50);
+            }
+            catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
             
             /*
              * Main game control while loop
              * loop until there is a winner as announced by the server
-             * or you resign
+             * or you resign.
              */
             while (clientStatus !=3 && strInput.charAt(0) != '#') {
                 // Wait for your turn
                 info("Waiting for your turn to play");
-                while (clientStatus != 2) try { Thread.sleep(50); } catch (InterruptedException ie) { ie.printStackTrace(); }
+                while (clientStatus != 2) try {
+                    Thread.sleep(50);
+                }
+                catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
                 
                 if (clientStatus == 2) {
                     // Time to play
                     info("Your turn to play");
                     
                     // give user a menu
-                    System.out.println("\n\nEnter (#) to disconnect from server.\n" +
-                            "      (1) To view game status.\n" +
-                            "      (2) To view your hand.\n" +
-                            "      (3) To play a card.\n" +
-                            "      (4) To pick market.    " );
+                    System.out.println(
+                          "\n\nEnter (#) to disconnect from server.\n"
+                        + "      (1) To view game status.\n"
+                        + "      (2) To view your hand.\n"
+                        + "      (3) To play a card.\n"
+                        + "      (4) To pick market."
+                    );
                     
                     // The while loop for getting input
                     // --------------------------------
                     while (strInput.charAt(0) != '#') {
                         try {
                             strInput = input.readLine();
-                        } catch (IOException ex) {
+                        }
+                        catch (IOException ex) {
                             ex.printStackTrace();
                         }
                         
-                        if (strInput.equals(""))
+                        if (strInput.equals("")) {
                             strInput = "z";
+                        }
                         
                         switch(strInput.charAt(0)) {
                             case '#':
@@ -303,7 +342,8 @@ public class CLIGameClient extends AbstractGameClient {
                         try {
                             // Allow other threads to run
                             Thread.sleep(50);
-                        } catch (InterruptedException ex) {
+                        }
+                        catch (InterruptedException ex) {
                             ex.printStackTrace();
                         }
                     }	// End of the while loop

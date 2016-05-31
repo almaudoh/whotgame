@@ -7,12 +7,10 @@
  * and open the template in the editor.
  */
 
-package org.anieanie.cardgame;
+package org.anieanie.cardgame.cgmp;
 
+import java.io.IOException;
 import java.net.Socket;
-import org.anieanie.cardgame.cgmp.*;
-import org.anieanie.cardgame.cgmp.ClientCGMPRelayListener;
-
 
 
 /**
@@ -20,13 +18,17 @@ import org.anieanie.cardgame.cgmp.ClientCGMPRelayListener;
  * @author Aniebiet
  */
 public class TestClientCGMPRelay extends ClientCGMPRelay {
-    
+
+    public TestClientCGMPRelay(Socket s) {
+        super(s);
+    }
+
     /** Creates a new instance of TestClientCGMPRelay */
     public TestClientCGMPRelay(Socket s, ClientCGMPRelayListener sl) {
         super(s,sl);
     }
     
-    public String sendMessage(String msg) throws CGMPException {
+    public CGMPResponse sendMessage(String msg) throws CGMPException, IOException {
         return super.sendMessage(msg);
     }
     

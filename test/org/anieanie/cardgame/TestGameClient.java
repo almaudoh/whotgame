@@ -6,9 +6,12 @@
 
 package org.anieanie.cardgame;
 
-import java.io.*;
-import java.net.*;
-import java.util.Hashtable;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
+
 import org.anieanie.cardgame.cgmp.*;
 
 /**
@@ -16,76 +19,42 @@ import org.anieanie.cardgame.cgmp.*;
  * @author  ALMAUDOH
  */
 public class TestGameClient extends AbstractGameClient {
-    protected TestClientCGMPRelay relay;
-    
+
     /**
      * Creates a new instance of TestGameClient
      */
-    public TestGameClient(String name) {
-        super(name);
+    public TestGameClient(ClientCGMPRelay relay, String name) {
+        super(relay, name);
     }
     
     /**
      * Creates a new instance of TestGameClient
      */
-    public TestGameClient() {
-        super();
+    public TestGameClient(ClientCGMPRelay relay) {
+        super(relay);
     }
     
     public static void main(String [] args) {
-        // Get ip, port & user name from the client
-        String strPort="";	// server port
-        TestGameClient client = new TestGameClient();
-        client.connect("",0);
-    }
-    
-    public void connect(String ip, int port) {
-        // Declarations to get input from keyboard
-        // ---------------------------------------
-        /** @todo Update this line to search for unused ports in case DEFAULT_PORT  is used already */
-        if (port<=1024) port = CGMPSpecification.Connection.DEFAULT_PORT;       // server port
-        if (ip=="" || ip==null) ip = CGMPSpecification.Connection.DEFAULT_IP;   // IP of server
-        
         try {
-            // create a new socket
-            Socket socket = new Socket(ip, port);
-            relay = new TestClientCGMPRelay(socket, this);
-            
-            // Connection successful at this point, so inform user about this
-            System.out.print("\n\n\t\tConnection successful.\n\t\t----------------------");
-            System.out.print("\n\t\tClient connected on port "+port+" to server on ip "+ip);
-            
-            // to get data to and from server
-            InputStream in = socket.getInputStream();
-            BufferedReader br = new BufferedReader(new InputStreamReader(in));
-            OutputStream out = socket.getOutputStream();
-            PrintWriter pr = new PrintWriter(out, true);
-            
-            // send user name to the server
-            pr.println(this.name);
-            
-            // Carry out interaction between client and server
-            run(br, pr);
-            
-            // At this point client wants to disconnect from the server,
-            // so close the connection
-            socket.close();
-            
-            // At this point, the relay should also clean up
-            
-        } catch (ConnectException e) {
-            System.out.println("I could not connect to the server.");
+            int port = CGMPSpecification.Connection.DEFAULT_PORT;
+            String ip = CGMPSpecification.Connection.DEFAULT_IP;
+            Socket socket = null;
+            socket = new Socket(ip, port);
+            TestClientCGMPRelay relay = new TestClientCGMPRelay(socket);
+            TestGameClient client = new TestGameClient(relay);
+            relay.setListener(client);
+            client.connect();
+            client.run();
+        }
+        catch (IOException e) {
             e.printStackTrace();
-            System.exit(0);
-        }	// End of exception
-        catch (Exception e) {
-            System.out.println("Some kind of error has occurred.");
+        }
+        catch (GameClientException e) {
             e.printStackTrace();
-            System.exit(0);
-        }	// End of exception	
+        }
     }
-    
-    protected void run(BufferedReader br, PrintWriter pr) {
+
+    protected void run() {
         try {
             // Declarations to manage connection
             // ---------------------------------
@@ -94,6 +63,8 @@ public class TestGameClient extends AbstractGameClient {
             String quit = "#";
             String chmod = "@";
             String rsp = "";
+            BufferedReader br = new BufferedReader(new InputStreamReader(relay.getSocket().getInputStream()));
+            PrintWriter pr = new PrintWriter(relay.getSocket().getOutputStream());
             // The while loop
             // --------------
             while (strInput.charAt(0) != '#') {
@@ -120,15 +91,21 @@ public class TestGameClient extends AbstractGameClient {
                                 // while (!br.ready()) Thread.sleep(100);
                                 // process reply
                                 int t=0;
-                                while (!br.ready() && t++ < CGMPSpecification.READ_TIMEOUT*10) { System.out.print("."); Thread.sleep(100); }
+                                while (!br.ready() && t++ < CGMPSpecification.READ_TIMEOUT * 10) {
+                                    System.out.print(".");
+                                    Thread.sleep(100);
+                                }
                                 System.out.println("finished waiting: " + t + " rounds");
-                                if (br.ready()) { rsp = br.readLine();
-                                System.out.println(rsp); }
+                                if (br.ready()) {
+                                    rsp = br.readLine();
+                                    System.out.println(rsp);
+                                }
                                 break;
                             default: // Use ClientCGMPRelayListener object
                                 try {
-                                    relay.sendMessage(strInput);
-                                } catch (CGMPException ce) {
+                                    ((TestClientCGMPRelay)relay).sendMessage(strInput);
+                                }
+                                catch (CGMPException ce) {
                                     System.out.println(ce.getMessage());
                                     //ce.printStackTrace();
                                 }
@@ -165,7 +142,7 @@ public class TestGameClient extends AbstractGameClient {
     }
     
     public static void doAction(int actioncode) {
-        
+
     }
     
     /*
@@ -191,7 +168,7 @@ public class TestGameClient extends AbstractGameClient {
         return false;
     }
     
-    public void gameWon() {
+    public void gameWon(String winner) {
     }
     
     public boolean relayTerminated() {
@@ -200,7 +177,5 @@ public class TestGameClient extends AbstractGameClient {
     
     public void errorReceived(int errorcode) {
     }
-    
-    
-}	// End of class}
 
+}

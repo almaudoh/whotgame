@@ -9,12 +9,7 @@
 
 package org.anieanie.cardgame;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import org.anieanie.cardgame.cgmp.ClientCGMPRelay;
@@ -31,64 +26,47 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     protected String name;
     protected static BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
     
-    /** Creates a new instance of AbstractGameClient */
-    public AbstractGameClient(String name) {
+    /**
+     * Creates a new instance of AbstractGameClient
+     */
+    public AbstractGameClient(ClientCGMPRelay relay, String name) {
+        this.relay = relay;
         this.name = name;
     }
     
-    /** Creates a new instance of AbstractGameClient */
-    public AbstractGameClient() {
+    /**
+     * Creates a new instance of AbstractGameClient
+     */
+    public AbstractGameClient(ClientCGMPRelay relay) {
         /** @todo Generate random user name if function call returns null */
+        this.relay = relay;
         this.name = getUserName();
     }
     
-    public void connect(String ip, int port) {
-        // Declarations to get input from keyboard
-        // ---------------------------------------
-        /** @todo Update this line to search for unused ports in case DEFAULT_PORT  is used already */
-        if (port<=1024) port = CGMPSpecification.Connection.DEFAULT_PORT;       // server port
-        if (ip=="" || ip==null) ip = CGMPSpecification.Connection.DEFAULT_IP;   // IP of server
-        
-        try {
-            // create a new socket
-            Socket socket = new Socket(ip, port);
-            relay = new ClientCGMPRelay(socket, this);
-            
-            // Connection successful at this point, so inform user about this
-            System.out.print("\n\n\t\tConnection successful.\n\t\t----------------------");
-            System.out.print("\n\t\tClient connected on port "+port+" to server on ip "+ip+"\n");
-            
-            // to get data to and from server
-            InputStream in = socket.getInputStream();
-            BufferedReader br = new BufferedReader(new InputStreamReader(in));
-            OutputStream out = socket.getOutputStream();
-            PrintWriter pr = new PrintWriter(out, true);
-            
-            // send user name to the server
-            pr.println(this.name);
-            
-            // Carry out interaction between client and server
-            run(br, pr);
-            
-            // At this point client wants to disconnect from the server,
-            // so close the connection
-            //socket.close();
-            
-            // At this point, the relay should also clean up
-            
-        } catch (ConnectException e) {
-            System.out.println("I could not connect to the server.");
-            e.printStackTrace();
-            System.exit(0);
-        }	// End of exception
-        catch (Exception e) {
-            System.out.println("Some kind of error has occurred.");
-            e.printStackTrace();
-            System.exit(0);
-        }	// End of exception	
+    public void connect() throws GameClientException, IOException {
+        // Initial handshake with the Game Server.
+        InputStream in = relay.getSocket().getInputStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+        OutputStream out = relay.getSocket().getOutputStream();
+        PrintWriter pr = new PrintWriter(out, true);
+
+        // Handshake: Send user name to the server and get acknowledgement.
+        pr.println(this.name);
+
+        // Carry out interaction between client and server
+        String response = br.readLine();
+
+        if (!response.equals(CGMPSpecification.ACK)) {
+            throw new GameClientException(String.format("Server not responding on ip address %s and port %s",
+                    relay.getSocket().getInetAddress(), relay.getSocket().getPort()));
+        }
+    }
+
+    public void close() {
+
     }
     
-    protected abstract void run(BufferedReader br, PrintWriter pr);
+    protected abstract void run();
     
     // Later I may implement this to generate a random name
     protected abstract String getUserName(); 

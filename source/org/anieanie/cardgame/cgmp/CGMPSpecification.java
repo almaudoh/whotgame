@@ -6,6 +6,8 @@
 
 package org.anieanie.cardgame.cgmp;
 
+import java.lang.reflect.Field;
+
 /**
  * The CGMPSpecification class holds information on the Card Game Messaging Protocol (CGMP)
  *
@@ -185,14 +187,14 @@ public final class CGMPSpecification {
      * @param keyword The keyword whose validity is to be confirmed
      * @return true or false
      */
-    public static final boolean isValidKeyword(String keyword) {
+    public static boolean isValidKeyword(String keyword) {
         try {
             String fldType;
             java.lang.reflect.Field[] fields = Class.forName("org.anieanie.cardgame.cgmp.CGMPSpecification").getDeclaredFields();
-            for (int i=0; i<fields.length; i++) {
-                fldType = fields[i].getType().toString().trim();
-                fldType = (fldType.indexOf(' ')>-1) ? fldType.substring(fldType.indexOf(' ')).trim() : fldType;
-                if (fldType.equals("java.lang.String") && fields[i].get(null).equals(keyword)) return true;
+            for (Field field : fields) {
+                fldType = field.getType().toString().trim();
+                fldType = (fldType.indexOf(' ') > -1) ? fldType.substring(fldType.indexOf(' ')).trim() : fldType;
+                if (fldType.equals("java.lang.String") && field.get(null).equals(keyword)) return true;
             }
             return false;
         }
@@ -205,10 +207,9 @@ public final class CGMPSpecification {
         return false;
     }
 
-    public static final boolean isValidSyntax(String op, String arg) {
+    public static boolean isValidSyntax(String op, String arg) {
         if (op.equals(REQ)) {
-            if (arg.equals(PLAY) || arg.equals(VIEW) || arg.equals(ENVR) || arg.equals(MOVE) || arg.equals(CARD)) return true;
-            else return false;
+            return arg.equals(PLAY) || arg.equals(VIEW) || arg.equals(ENVR) || arg.equals(MOVE) || arg.equals(CARD);
         }
 
         else if (op.equals(ENVR)) {
@@ -270,22 +271,29 @@ public final class CGMPSpecification {
         /**
          * The types of errors encountered in CGMP transmission
          */
-        private static final String[] inWords = { "An inappropriate message was received",
-        "The message contains an unrecognised keyword", "The message has bad syntax",
-        "The message has wrong protocol specification" };
+        private static final String[] inWords = {
+            "An inappropriate message was received",
+            "The message contains an unrecognised keyword",
+            "The message has bad syntax",
+            "The message has wrong protocol specification"
+        };
+
+        /** No error */
+        public static final int NO_ERROR = 0;
+
         /** Inappropriate message error */
-        public static final int BAD_MSG = 0;
+        public static final int BAD_MSG = 1;
 
         /** Unrecognised keyword error */
-        public static final int BAD_KWD = 1;
+        public static final int BAD_KWD = 2;
 
         /** Syntax error */
-        public static final int BAD_SYN = 2;
+        public static final int BAD_SYN = 3;
 
         /** Protocol specifier not given */
-        public static final int BAD_PROTO = 3;
+        public static final int BAD_PROTO = 4;
 
-        public static final String describeError(int errorcode) {
+        public static String describeError(int errorcode) {
             try {
                 return inWords[errorcode];
             }

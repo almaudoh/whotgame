@@ -6,9 +6,11 @@
 
 package org.anieanie.cardgame.cgmp;
 
-import java.net.*;
-import java.io.*;
-import org.anieanie.cardgame.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 
 /**
  * The CGMPRelay class defines the active component in the system of communication between the
@@ -44,8 +46,13 @@ public abstract class CGMPRelay {
      */
     protected PrintWriter pr;
     protected BufferedReader br;
-    
-    /** Creates a new instance of CGMPRelay
+
+    public CGMPRelay(Socket s) {
+        this(s, null);
+    }
+
+    /**
+     * Creates a new instance of CGMPRelay
      * @param s The socket to which this CGMPRelay listens
      * @param l the CGMPRelayListener that responds to the events raised by
      * this CGMPRelay when a message comes in.
@@ -56,7 +63,8 @@ public abstract class CGMPRelay {
         try {
             pr = new PrintWriter(sock.getOutputStream(), true);
             br = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-        } catch (IOException ioe) {
+        }
+        catch (IOException ioe) {
             ioe.printStackTrace();
             if (pr != null) pr = null;
             if (br != null) br = null;
@@ -82,8 +90,12 @@ public abstract class CGMPRelay {
      */
     public void terminateRelay() {
         try {
-            String resp = sendMessage(CGMPSpecification.TERM);
-        } catch (CGMPException e) {
+            sendMessage(CGMPSpecification.TERM);
+        }
+        catch (CGMPException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -98,13 +110,14 @@ public abstract class CGMPRelay {
      */
     public void scan() {
         if (debug) System.out.println("in scan()");
-        
-        if (listener == null) return;
-        String msg = readMessage(0);
-        if (msg == null) return;
-        else msg = msg.trim();
-        
-        handleMessage(msg);
+
+        CGMPResponse response = null;
+        try {
+            response = readMessage(0);
+            handleResponse(response);
+        } catch (CGMPException e) {
+            e.printStackTrace();
+        }
     }
     
     public Socket getSocket() {
@@ -114,9 +127,18 @@ public abstract class CGMPRelay {
     public CGMPRelayListener getListener() {
         return this.listener;
     }
+
+    // @todo Improve to add more than one listener.
+    public void setListener(CGMPRelayListener listener) {
+        this.listener = listener;
+    }
     
-    public void sendAcknowledgement() throws CGMPException {
-        sendMessage(CGMPSpecification.ACK);
+    public CGMPResponse sendAcknowledgement() throws CGMPException, IOException {
+        return sendMessage(CGMPSpecification.ACK);
+    }
+
+    public CGMPResponse sendRequest(String request) throws CGMPException, IOException {
+        return sendMessage(CGMPSpecification.REQ + " " + request);
     }
     
     /**
@@ -126,115 +148,115 @@ public abstract class CGMPRelay {
      * A CGMPException is thrown if <code>msg</code> is invalid or - more precisely -,
      * if the CGMPRelay on the other end of the connection returns an error message.
      *
-     * @param
+     * @param msg Message to be sent.
+     *
      */
-    protected String sendMessage(String msg) throws CGMPException {
-        if (debug) System.out.println("--> sendMessage(" + msg + ")");
+    protected CGMPResponse sendMessage(String msg) throws CGMPException, IOException {
         if (sock.isClosed()) {
             renewConnection();
-        } else if (pr.checkError()) {
-            System.out.println("<-- sendMessage(" + msg + ")");
+        }
+        else if (pr.checkError()) {
             throw new CGMPException("Error on remote end of socket. Cannot send message");
         }
-        String resp;
+        CGMPResponse response;
         msg = msg.trim();
+        // Clear buffers.
+        pr.flush();
+        if (br.ready()) br.skip(1000);
         synchronized (pr) {
-            if (debug) System.out.println("checkError?: "+pr.checkError());
-            if (debug) System.out.println("socket closed?: "+sock.isClosed());
-            pr.println(CGMPSpecification.MARKER + " " + msg);
-            resp = readMessage(0);
-            if (resp == null) {
-                if (debug) {
-                    System.out.println("Finished waiting, no reply");
-                    System.out.println("<-- sendMessage(" + msg + ")");
-                }
-                return "";
-            }
-            
+            bufferOut(msg);
+            response = readMessage(0);
         }
-        String key = (resp.indexOf(' ') > -1) ? (resp.substring(0, resp.indexOf(' ')).trim()) : resp;
-        String arg = (resp.indexOf(' ') > -1) ? (resp.substring(resp.indexOf(' ')).trim()) : "";
-        
+
         /* Error handling code */
-        if (key.equals(CGMPSpecification.ERR)) {
+        if (response.isError()) {
             synchronized(pr) {
-                pr.println(CGMPSpecification.MARKER + " " + CGMPSpecification.ACK);
-                pr.flush();
+                bufferOut(CGMPSpecification.ACK);
             }
-            switch (Integer.parseInt(arg)) {
+            switch (response.getError()) {
                 case CGMPSpecification.Error.BAD_PROTO:
-                    return sendMessage(msg);    // Potential weakness here (stack overflow) if other end continues to send BAD_PROTO errors regardless of what comes in
+                    // // TODO: 5/21/16
+                    // Potential weakness here (stack overflow) if other end continues to send BAD_PROTO errors
+                    // regardless of what comes in.
+                    return sendMessage(msg);
+
                 case CGMPSpecification.Error.BAD_KWD:
                     throw new CGMPException("Message contains bad keyword");
+
                 case CGMPSpecification.Error.BAD_SYN:
                     throw new CGMPException("Message has wrong syntax");
+
                 case CGMPSpecification.Error.BAD_MSG:
                     throw new CGMPException("Inappropriate message or reply sent");
+
                 default:
                     break;
             }
-        } else {
-            if (debug) System.out.println("message sent: " + msg + "; response received: "+resp);
+        }
+        else {
+            if (debug) System.out.println("message sent: " + msg + "; response received: "+response);
             if (debug) System.out.println("<-- sendMessage(" + msg + ")");
-            return resp;
+            return response;
         }
         return null;
         
     }
     
-    protected synchronized String readMessage(int attempts) {
+    protected synchronized CGMPResponse readMessage(int attempts) throws CGMPException {
         if (debug) System.out.println("--> readMessage(" + attempts + ")");
         if (sock.isClosed()) {
             renewConnection();
         }
-        String resp, msg, key, arg;
+        String response;
         try {
             if (debug) System.out.println("socket closed?: "+sock.isClosed());
             synchronized (br) {
                 if (attempts++ > CGMPSpecification.MAX_TRIES) return null;
-                int t = 0;
-                while (!br.ready() && t++ < CGMPSpecification.READ_TIMEOUT*10) Thread.sleep(100);
-                if (br.ready()) resp = br.readLine();
-                else {
+                response = bufferIn(CGMPSpecification.READ_TIMEOUT*10);
+                if (response == null) {
                     if (debug) System.out.println("<-- readMessage(" + (attempts-1) + ")");
                     return null;
                 }
             }
-            if (debug) System.out.println("Message received: "+resp);
+            if (debug) System.out.println("Message received: "+response);
             
-            
+            CGMPResponse cgmpResponse = CGMPResponse.fromString(response);
+
             /* Check for correct protocol specification */
-            // String magic = ;
-            if (resp.length() < CGMPSpecification.MARKER.length() ||
-                    !resp.substring(0, CGMPSpecification.MARKER.length()).equals(CGMPSpecification.MARKER)) {
+            if (!cgmpResponse.isValidProtocol()) {
                 sendError(CGMPSpecification.Error.BAD_PROTO);
                 //if (debug) System.out.println("--> readMessage(" + attempts + ")");
+                // Further read attempts.
                 return readMessage(attempts);
             }
             
             /* Check for correct keyword */
-            msg = resp.substring(CGMPSpecification.MARKER.length()).trim();
-            key = (msg.indexOf(' ') > -1) ? (msg.substring(0, msg.indexOf(' ')).trim()) : (msg.trim());
-            if (!CGMPSpecification.isValidKeyword(key)) {
+            if (!cgmpResponse.isValidKeyword()) {
                 sendError(CGMPSpecification.Error.BAD_KWD);
                 //if (debug) System.out.println("--> readMessage(" + attempts + ")");
+                // Further read attempts.
                 return readMessage(attempts);
             }
             
             /* Check for correct syntax */
-            arg = (msg.indexOf(' ') > -1) ? (msg.substring(msg.indexOf(' ')).trim()) : "";
-            if (!CGMPSpecification.isValidSyntax(key, arg)) {
+            if (!cgmpResponse.isValidResponse()) {
                 sendError(CGMPSpecification.Error.BAD_SYN);
                 //if (debug) System.out.println("--> readMessage(" + attempts + ")");
+                // Further read attempts.
                 return readMessage(attempts);
             }
-            
-            if (debug) System.out.println("readMessage(): message (" + msg + ") read successfully");
+
+            if (debug) System.out.println("readMessage(): message (" + cgmpResponse.toString() + ") read successfully");
             if (debug) System.out.println("<-- readMessage(" + (attempts-1) + ")");
-            return msg;
-            
-        } catch (IOException ioe) { ioe.printStackTrace(); } catch (Exception e) {   }
-        return null;
+            return cgmpResponse;
+
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // If we are here, we did not succeed in reading.
+        throw new CGMPException("Failed to read valid message from remote.");
     }
     
     protected void sendError(int errorcode) {
@@ -242,34 +264,45 @@ public abstract class CGMPRelay {
         if (debug) System.out.println("--> sendError(" + errorcode + ")");
         try {
             synchronized (pr) {
-                synchronized (br){
+                synchronized (br) {
                     if (br.ready()) br.skip(1000); // Using this method to clear buffer
-                    pr.println(CGMPSpecification.MARKER + " " + CGMPSpecification.ERR + " " + errorcode);
-                    pr.flush();
-                    //                    pr.println(CGMPSpecification.MARKER + " " + CGMPSpecification.ERR + " " + errorcode +
-                    //                    "   (" + CGMPSpecification.Error.describeError(errorcode) + ")");
-                    //String resp = br.readLine();
-                    int i=1, t;
+                    bufferOut(CGMPSpecification.ERR + " " + errorcode);
+                    int i=1;
                     do {
-                        t=0;
-                        while (!br.ready() && t++ < CGMPSpecification.READ_TIMEOUT*10) { /*if (debug) System.out.print(".");*/ Thread.sleep(100); }
-                        //                        if (debug) System.out.println("finished waiting: " + t + " rounds");
-                        if (br.ready()) resp = br.readLine(); else return;
-                        
-                        //resp = br.readLine();
-                        //if (br.ready())
+                        resp = bufferIn(CGMPSpecification.READ_TIMEOUT*10);
                         if (debug) System.out.println(resp);
                         if (resp.equals(CGMPSpecification.MARKER+" "+CGMPSpecification.ACK)) break;
                         
-                        //for (int i=0; i<CGMPSpecification.MAX_TRIES && !resp.equals(CGMPSpecification.MARKER+" "+CGMPSpecification.ACK); i++) {
-                        pr.println(CGMPSpecification.MARKER + " " + CGMPSpecification.ERR + " " + errorcode);
-                        //                        pr.println(CGMPSpecification.MARKER + " " + CGMPSpecification.ERR + " " + errorcode +
-                        //                        "   (" + CGMPSpecification.Error.describeError(errorcode) + ")");
-                    } while (i++<CGMPSpecification.MAX_TRIES);
+                        bufferOut(CGMPSpecification.ERR + " " + errorcode);
+                    } while (i++ < CGMPSpecification.MAX_TRIES);
                 }
             }
         } catch (IOException ioe) { ioe.printStackTrace(); } catch (Exception e) {   }
         if (debug) System.out.println("<-- sendError(" + errorcode + ")");
+    }
+
+    protected void bufferOut(String command) {
+        pr.println(CGMPSpecification.MARKER + " " + command);
+        pr.flush();;
+    }
+
+    protected String bufferIn(int timeout) throws IOException {
+        int time = 0;
+        while (!br.ready() && time++ < timeout) {
+            /*if (debug) System.out.print(".");*/
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // TODO: 5/21/16
+                e.printStackTrace();
+            }
+        }
+        // if (debug) System.out.println("finished waiting: " + t + " rounds");
+        if (br.ready()) {
+            return br.readLine();
+        } else {
+            return null;
+        }
     }
     
     protected final boolean renewConnection() {
@@ -286,5 +319,5 @@ public abstract class CGMPRelay {
         return false;
     }
     
-    protected abstract void handleMessage(String msg);
+    protected abstract void handleResponse(CGMPResponse response);
 }

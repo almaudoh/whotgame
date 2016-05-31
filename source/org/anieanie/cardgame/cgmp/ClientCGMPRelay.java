@@ -6,16 +6,22 @@
 
 package org.anieanie.cardgame.cgmp;
 
-import java.net.*;
-import org.anieanie.cardgame.*;
 import org.anieanie.card.AbstractCard;
 import org.anieanie.card.Card;
+import org.anieanie.cardgame.environment.GameEnvironment;
+
+import java.io.IOException;
+import java.net.Socket;
 
 /**
  *
  * @author  ALMAUDOH
  */
 public class ClientCGMPRelay extends CGMPRelay {
+
+    public ClientCGMPRelay(Socket s) {
+        super(s, null);
+    }
     
     /** Creates a new instance of ServerCGMPRelay */
     public ClientCGMPRelay(Socket s, ClientCGMPRelayListener sl) {
@@ -28,13 +34,12 @@ public class ClientCGMPRelay extends CGMPRelay {
      */
     public boolean requestPlay() {
         try {
-            String resp = sendMessage(CGMPSpecification.REQ + " " + CGMPSpecification.PLAY).trim();
-            
-            if (resp.indexOf(' ') != -1) resp = resp.substring(0, resp.indexOf(' ')).trim();
-            
-            if (resp.equals(CGMPSpecification.ACK)) return true;
-            else return false;
-        } catch (CGMPException e) {
+            return sendRequest(CGMPSpecification.PLAY).getKeyword().equals(CGMPSpecification.ACK);
+        }
+        catch (CGMPException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
         return false;
@@ -45,108 +50,130 @@ public class ClientCGMPRelay extends CGMPRelay {
      */
     public boolean requestView() {
         try {
-            String resp = sendMessage(CGMPSpecification.REQ + " " + CGMPSpecification.VIEW);
-            if (resp.substring(0, resp.indexOf(' ')).trim().equals(CGMPSpecification.ACK)) return true;
-            else return false;
-        } catch (CGMPException e) {
+            return sendRequest(CGMPSpecification.VIEW).getKeyword().equals(CGMPSpecification.ACK);
+        }
+        catch (CGMPException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
         return false;
     }
     
-    /** Used by Game Client to request the current state of the Game Environment
+    /**
+     * Used by Game Client to request the current state of the Game Environment
+     *
      * @return Object An object representing the current Game Environment
      *    or null if unsuccessful
      */
    public Object requestEnvironment(GameEnvironment env) {
         try {
             int trials = 0;
-            String msg = sendMessage(CGMPSpecification.REQ + " " + CGMPSpecification.ENVR).trim();
-            String op = (msg.indexOf(' ') > -1) ? (msg.substring(0, msg.indexOf(' '))) : msg;
+            CGMPResponse msg = sendRequest(CGMPSpecification.ENVR);
+            String op = msg.getKeyword();
     
             // Loop until you get a valid message or maximum number of tries is exceeded
             while (!op.equals(CGMPSpecification.ENVR) && ++trials < CGMPSpecification.MAX_TRIES) {
                 sendError(CGMPSpecification.Error.BAD_MSG);
-                msg = sendMessage(CGMPSpecification.REQ + " " + CGMPSpecification.ENVR);
-                op = (msg.indexOf(' ') > -1) ? (msg.substring(0, msg.indexOf(' '))) : msg;
+                msg = sendRequest(CGMPSpecification.ENVR);
+                op = msg.getKeyword();
             }
             if (!op.equals(CGMPSpecification.ENVR)) return null;
-            String arg = (msg.indexOf(' ') > -1) ? (msg.substring(msg.indexOf(' '))) : "";
+            String arg = msg.getArguments();
             //return env.fromString(arg);
             return null;
         }
         catch (CGMPException e) {
             e.printStackTrace();
         }
-        return null;
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+       return null;
     }
     
     /**
-    * Used by Game Client to request a card to be given to them
-    * @return Object An object (Card) representing the card given or null if unsuccessful
-    * @param card
-    */
+     * Used by Game Client to request a card to be given to them.
+     *
+     * @return Object An object (Card) representing the card given or null if unsuccessful
+     */
     public Card requestCard() {
         try {
             int trials = 0;
-            String msg = sendMessage(CGMPSpecification.REQ + " " + CGMPSpecification.CARD).trim();
-            String op = (msg.indexOf(' ') > -1) ? (msg.substring(0, msg.indexOf(' '))) : msg;
+            CGMPResponse msg = sendRequest(CGMPSpecification.CARD);
+            String op = msg.getKeyword();
             
             // Loop until you get a valid message or maximum number of tries is exceeded
             while (!op.equals(CGMPSpecification.CARD) && ++trials < CGMPSpecification.MAX_TRIES) {
                 sendError(CGMPSpecification.Error.BAD_MSG);
-                msg = sendMessage(CGMPSpecification.REQ + " " + CGMPSpecification.CARD).trim();
-                op = (msg.indexOf(' ') > -1) ? (msg.substring(0, msg.indexOf(' '))) : msg;
+                msg = sendRequest(CGMPSpecification.CARD);
+                op = msg.getKeyword();
             }
             if (!op.equals(CGMPSpecification.CARD)) return null;
-            String arg = (msg.indexOf(' ') > -1) ? (msg.substring(msg.indexOf(' '))) : "";
-            return AbstractCard.fromString(arg);
-        } catch (CGMPException e) {
+            return AbstractCard.fromString(msg.getArguments());
+        }
+        catch (CGMPException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
         return null;
     }
     
-    protected void handleMessage(String msg) {
-        ClientCGMPRelayListener list = (ClientCGMPRelayListener) listener;
-        String op = (msg.indexOf(' ') > -1) ? (msg.substring(0, msg.indexOf(' ')).trim()) : msg;
-        String arg = (msg.indexOf(' ') > -1) ? (msg.substring(msg.indexOf(' ')).trim()) : "";
+    protected void handleResponse(CGMPResponse response) {
+        ClientCGMPRelayListener listener = (ClientCGMPRelayListener) this.listener;
+        String op = response.getKeyword();
+        String arg = response.getArguments();
         //System.out.println("op: " + op + "; arg" + arg);
-        //list.playRequested();
+        //listener.playRequested();
         if (op.equals(CGMPSpecification.REQ)) {
-            //            System.out.println("request made; op: " + op + "; arg" + arg);
-            if (arg.equals(CGMPSpecification.PLAY)) { sendError(CGMPSpecification.Error.BAD_MSG); } else if (arg.equals(CGMPSpecification.VIEW)) { sendError(CGMPSpecification.Error.BAD_MSG); } else if (arg.equals(CGMPSpecification.ENVR)) { sendError(CGMPSpecification.Error.BAD_MSG); } else if (arg.equals(CGMPSpecification.MOVE)) list.moveRequested();
-            else if (arg.equals(CGMPSpecification.CARD)) { sendError(CGMPSpecification.Error.BAD_MSG); }
+            // Clients should not handle play, view, environment or card requests.
+            if (arg.equals(CGMPSpecification.PLAY)
+                || arg.equals(CGMPSpecification.VIEW)
+                || arg.equals(CGMPSpecification.ENVR)
+                || arg.equals(CGMPSpecification.CARD)) {
+                sendError(CGMPSpecification.Error.BAD_MSG);
+            }
+            // Move requests from the server.
+            else if (arg.equals(CGMPSpecification.MOVE)) {
+                listener.moveRequested();
+            }
         }
         
         else if (op.equals(CGMPSpecification.ENVR)) {
-            list.envReceived(arg);
+            listener.envReceived(arg);
         }
         
         else if (op.equals(CGMPSpecification.CARD)) {
-            list.cardReceived(arg);
+            listener.cardReceived(arg);
         }
         
         else if (op.equals(CGMPSpecification.MOVE)) {
             // Can't receive a move without asking for it
-            // list.moveReceived(Card.fromString(arg));
+            // listener.moveReceived(Card.fromString(arg));
         }
         
         else if (op.equals(CGMPSpecification.MACK)) {
-            list.moveAccepted(arg);
+            listener.moveAccepted(arg);
         }
         
         else if (op.equals(CGMPSpecification.WON)) {
-            list.gameWon();
+            listener.gameWon(arg);
         }
         
         else if (op.equals(CGMPSpecification.TERM)) {
             try {
-                sendMessage(CGMPSpecification.ACK);
-            } catch (CGMPException ex) {
+                sendAcknowledgement();
+            }
+            catch (CGMPException ex) {
                 //ex.printStackTrace();
             }
-            list.relayTerminated();
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            listener.relayTerminated();
         }
         
         else if (op.equals(CGMPSpecification.ACK)) {
@@ -162,7 +189,7 @@ public class ClientCGMPRelay extends CGMPRelay {
         }
         
         else if (op.equals(CGMPSpecification.ERR)) {
-            list.errorReceived(Integer.parseInt(arg));
+            listener.errorReceived(Integer.parseInt(arg));
         }
         
     }

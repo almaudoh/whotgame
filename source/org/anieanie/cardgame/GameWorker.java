@@ -6,10 +6,11 @@
 
 package org.anieanie.cardgame;
 
+import java.io.IOException;
 import java.net.*;
 
 import org.anieanie.cardgame.cgmp.*;
-import org.anieanie.cardgame.GameEnvironment.GameMonitor;
+import org.anieanie.cardgame.environment.GameEnvironment.GameMonitor;
 import org.anieanie.card.whot.WhotCard;
 
 /**
@@ -19,15 +20,14 @@ import org.anieanie.card.whot.WhotCard;
 public class GameWorker extends Thread implements ServerCGMPRelayListener {
 
     // Socket socket;
-    String strUserName;
-    GameMonitor gMon;
-    ServerCGMPRelay relay;
+    private String strUserName;
+    private GameMonitor monitor;
+    private ServerCGMPRelay relay;
 
     /** Creates a new instance of GameWorker */
     public GameWorker(Socket s, GameMonitor gm, String userName) {
-        // socket = s;
         super(userName);
-        gMon = gm;
+        monitor = gm;
         strUserName = userName;
         relay = new ServerCGMPRelay(s, this);
     }
@@ -79,8 +79,12 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
 //            }
             System.out.print("\n");
             relay.requestMove();
-        } catch (CGMPException ex) {
+        }
+        catch (CGMPException ex) {
             ex.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
         return true;
     }
