@@ -90,17 +90,20 @@ public class CardSetTest {
 
     @Test
     public void ShuffleAndClone() {
-        CardSet newpack = new CardSet();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 52; j++) {
-                newpack.add(new CardTestImpl(i, j));
-            }
-        }
+        CardSet newpack = getCardSet(4, 52);
         CardSet savedpack = (CardSet) newpack.clone();
         newpack.shuffle(20);
         assertNotEquals(newpack, savedpack);
         newpack.sort();
         assertEquals(newpack, savedpack);
+    }
+
+    @Test
+    public void Clear() {
+        CardSet pack = getCardSet(10, 10);
+        assertEquals(pack.size(), 100);
+        pack.clear();
+        assertEquals(pack.size(), 0);
     }
 
     protected static void printCardSet(CardSet pack) {
