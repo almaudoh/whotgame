@@ -1,4 +1,4 @@
-package org.anieanie.cardgame.game;
+package org.anieanie.cardgame.ui;
 
 import java.awt.*;
 import java.awt.event.*;

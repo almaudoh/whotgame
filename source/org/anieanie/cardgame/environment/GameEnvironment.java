@@ -12,10 +12,12 @@
  * Created on February 23, 2005, 11:31 AM
  */
 
-package org.anieanie.cardgame;
+package org.anieanie.cardgame.environment;
 
 import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
+import org.anieanie.cardgame.Player;
+import org.anieanie.cardgame.Watcher;
 
 import java.io.*;
 import java.util.*;
@@ -35,9 +37,16 @@ public final class GameEnvironment extends Thread implements java.io.Serializabl
     private Hashtable players;	// the list of all players in the game
     private Hashtable watchers;	// the list of all those watching the game
     private String __gameClass = "org.anieanie.org.anieanie.card.whot.Whot";
+
+    // The card decks in this game and the additional information on them.
+    protected HashMap<String, CardSet> cardDecks;
+
+    // The deckInfo provides information on whether card decks can be view, changed
+    // (added / subtracted from), shuffled, sorted, etc.
+    protected HashMap<String, DeckInfo> deckInfo;
     
     /**
-     * The cardstacks in this game
+     * The card decks for this game.
      */
     private CardSet exposed;
     private CardSet covered;
@@ -57,6 +66,19 @@ public final class GameEnvironment extends Thread implements java.io.Serializabl
         players = new Hashtable();     // players list is empty
         watchers = new Hashtable();    // watchers of the game
         gMon = newGameMonitor(gameClass);
+    }
+
+    public void addDeck(String name, CardSet cards, DeckInfo info) {
+        if (cardDecks.containsKey(name)) {
+            throw new RuntimeException("Card deck with name '" + name + "' already exists.");
+        }
+        cardDecks.put(name, cards);
+        deckInfo.put(name, info);
+    }
+
+    public CardSet removeDeck(String name) {
+        deckInfo.remove(name);
+        return cardDecks.remove(name);
     }
     
     /*
@@ -103,7 +125,7 @@ public final class GameEnvironment extends Thread implements java.io.Serializabl
             System.out.println("Could not instantiate the specified class: "+gameClass+"GameMonitor");
         }
         catch (ClassCastException cce) {
-            System.out.println("Specified class: "+gameClass+"GameMonitor does not extend org.anieanie.cardgame.GameEnvironment.GameMonitor");
+            System.out.println("Specified class: "+gameClass+"GameMonitor does not extend org.anieanie.cardgame.environment.GameEnvironment.GameMonitor");
         }
         finally {
             return null;

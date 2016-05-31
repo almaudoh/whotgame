@@ -1,5 +1,7 @@
 package org.anieanie.cardgame.game;
 
+import org.anieanie.cardgame.ui.GameFrame;
+
 import javax.swing.UIManager;
 import java.awt.*;
 
