@@ -6,9 +6,12 @@
 
 package org.anieanie.cardgame;
 
-import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.card.AbstractCard;
 import org.anieanie.card.CardSet;
+import org.anieanie.cardgame.cgmp.CGMPException;
+import org.anieanie.cardgame.cgmp.CGMPSpecification;
+import org.anieanie.cardgame.cgmp.ClientCGMPRelay;
+
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -162,7 +165,7 @@ public class CLIGameClient extends AbstractGameClient {
      */
     
     /** Called when the client CGMPRelay receives card from the worker CGMPRelay */
-    public boolean cardReceived(String cardSpec) {
+    public void cardReceived(String cardSpec) {
         try {
             relay.sendAcknowledgement();
         }
@@ -176,7 +179,6 @@ public class CLIGameClient extends AbstractGameClient {
         // add card to card pack
         cards.add(AbstractCard.fromString(cardSpec));
         System.out.println("card received: " + cardSpec);
-        return true;
     }
     
     /** Called when client CGMPRelay receives environment from worker CGMPRelay */
@@ -202,7 +204,7 @@ public class CLIGameClient extends AbstractGameClient {
     
     
     /** Called when the client or server is terminated */
-    public boolean relayTerminated() {
+    public void relayTerminated() {
         try {
             // Now, close the socket after deleting that socket from online list
             //        Socket s = (Socket)tOnlineUsers.remove(getUserName());
@@ -211,8 +213,13 @@ public class CLIGameClient extends AbstractGameClient {
             //relay = null;
             System.out.println("finalizing worker");
             //this.finalize();
-        } catch (Exception e) {} catch (Throwable t) {}
-        return true;
+        }
+        catch (Exception e) {
+
+        }
+        catch (Throwable t) {
+
+        }
     }
 
     public void finalize() throws Throwable {
@@ -343,9 +350,16 @@ public class CLIGameClient extends AbstractGameClient {
                     }	// End of the while loop
                 }
             }   // End of outer while loop
-            
-            relay.terminateRelay();
-            
+
+            try {
+                relay.terminateRelay();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            catch (CGMPException e) {
+                e.printStackTrace();
+            }
         }
         
     }

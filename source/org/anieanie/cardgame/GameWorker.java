@@ -55,9 +55,13 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         return this.relay;
     }
 
-    /*
-     * Methods implemented by interface ServerCGMPRelayListener
-     */
+    // Methods implemented by interface ServerCGMPRelayListener
+
+    @Override
+    public void clientConnected(String identifier) {
+
+    }
+
     /** Called when worker CGMPRelay receives request to play from client CGMPRelay */
     public boolean playRequested() {
         System.out.println("play requested");
@@ -108,10 +112,10 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         return null;
     }
 
-    /** 
+    /**
      * Called when the client or server is terminated 
      */
-    public boolean relayTerminated() {
+    public void relayTerminated() {
         // Now, close the socket after deleting that socket from online list
         // if you terminate the relay, you must terminate the GameWorker since 
         // communication will have been breached
@@ -126,7 +130,6 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         }
         catch (Exception e) { e.printStackTrace(); }
         catch (Throwable t) { t.printStackTrace(); }
-        return true;
     }
 
     @Override

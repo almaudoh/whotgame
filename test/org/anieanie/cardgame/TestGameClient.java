@@ -52,6 +52,9 @@ public class TestGameClient extends AbstractGameClient {
         catch (GameClientException e) {
             e.printStackTrace();
         }
+        catch (CGMPException e) {
+            e.printStackTrace();
+        }
     }
 
     protected void run() {
@@ -121,7 +124,6 @@ public class TestGameClient extends AbstractGameClient {
         }	// End of try
         catch(Exception e) {
             System.out.println("Some kind of error has occurred.");
-            relay.terminateRelay();
             e.printStackTrace();
             System.exit(0);
         }	// End of exception
@@ -164,15 +166,15 @@ public class TestGameClient extends AbstractGameClient {
     public void envReceived(String envSpec) {
     }
     
-    public boolean cardReceived(String cardSpec) {
-        return false;
+    public void cardReceived(String cardSpec) {
+
     }
     
     public void gameWon(String winner) {
     }
     
-    public boolean relayTerminated() {
-        return false;
+    public void relayTerminated() {
+
     }
     
     public void errorReceived(int errorcode) {

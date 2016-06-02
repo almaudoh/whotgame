@@ -125,7 +125,7 @@ public final class GameEnvironment extends Thread implements java.io.Serializabl
             System.out.println("Could not instantiate the specified class: "+gameClass+"GameMonitor");
         }
         catch (ClassCastException cce) {
-            System.out.println("Specified class: "+gameClass+"GameMonitor does not extend org.anieanie.cardgame.environment.GameEnvironment.GameMonitor");
+            System.out.println("Specified class: "+gameClass+"GameMonitor does not extend GameEnvironment.GameMonitor");
         }
         finally {
             return null;

@@ -24,4 +24,10 @@ public interface ServerCGMPRelayListener extends CGMPRelayListener {
     /** Called when worker CGMPRelay receives request for card from client CGMPRelay */
     public Object cardRequested();
 
+    /**
+     * Called when worker CGMPRelay receives a connection request from client CGMPRelay
+     *
+     * @param identifier The name of the client relay.
+     */
+    public void clientConnected(String identifier);
 }

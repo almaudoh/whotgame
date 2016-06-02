@@ -6,11 +6,9 @@
 
 package org.anieanie.cardgame.cgmp;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 
 /**
  * The CGMPRelay class defines the active component in the system of communication between the
@@ -37,9 +35,10 @@ import java.net.Socket;
 public abstract class CGMPRelay {
     public static boolean debug = false;
     
-    protected Socket sock;
+    protected Socket socket;
     protected CGMPRelayListener listener;
-    
+    protected LowLevelCGMPRelayListener[] lowLevelListeners;
+
     /*
      * Must be synchronized since multiple threads may access them and simultaneous
      * reading may corrupt message
@@ -47,22 +46,23 @@ public abstract class CGMPRelay {
     protected PrintWriter pr;
     protected BufferedReader br;
 
-    public CGMPRelay(Socket s) {
-        this(s, null);
+    public CGMPRelay(Socket socket) {
+        this(socket, new MultiCGMPRelayListener());
     }
 
     /**
      * Creates a new instance of CGMPRelay
-     * @param s The socket to which this CGMPRelay listens
-     * @param l the CGMPRelayListener that responds to the events raised by
+     * @param socket The socket to which this CGMPRelay listens
+     * @param listener the CGMPRelayListener that responds to the events raised by
      * this CGMPRelay when a message comes in.
      */
-    public CGMPRelay(Socket s, CGMPRelayListener l) {
-        sock = s;
-        listener = l;
+    public CGMPRelay(Socket socket, CGMPRelayListener listener) {
+        this.socket = socket;
+        this.listener = listener;
+        this.lowLevelListeners = new LowLevelCGMPRelayListener[] {};
         try {
-            pr = new PrintWriter(sock.getOutputStream(), true);
-            br = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+            pr = new PrintWriter(this.socket.getOutputStream(), true);
+            br = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
         }
         catch (IOException ioe) {
             ioe.printStackTrace();
@@ -70,37 +70,9 @@ public abstract class CGMPRelay {
             if (br != null) br = null;
         }
     }
-    
-    // Override finalize() to close socket
-    public void finalize() {
-        System.out.println("Finalizing relay: ...");
-        if (sock != null) {
-            terminateRelay();
-            try {
-                sock.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            sock = null;
-        }
-    }
-    
+
     /**
-     * Used by Game Client or Worker to terminate the connection before closing
-     */
-    public void terminateRelay() {
-        try {
-            sendMessage(CGMPMessage.terminate());
-        }
-        catch (CGMPException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    /** Scans the socket for any outstanding or impending messages from the other end.
+     * Scans the socket for any outstanding or impending messages from the other end.
      *
      * This method must be called frequently (every 0.2 - 0.5 seconds recommended) from
      * a separate thread to ensure that messages don't get locked in for too long and that
@@ -109,11 +81,12 @@ public abstract class CGMPRelay {
      * (CGMPRelayListener)</CODE> according to the message received.
      */
     public void scan() {
-        if (debug) System.out.println("in scan()");
-
         try {
             CGMPMessage response = readMessage(0);
             handleResponse(response);
+        }
+        catch (CGMPConnectionException e) {
+            // Since this is a scan, we may not always have a response.
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -124,7 +97,7 @@ public abstract class CGMPRelay {
     }
     
     public Socket getSocket() {
-        return this.sock;
+        return this.socket;
     }
     
     public CGMPRelayListener getListener() {
@@ -135,7 +108,45 @@ public abstract class CGMPRelay {
     public void setListener(CGMPRelayListener listener) {
         this.listener = listener;
     }
-    
+
+    public void addLowLevelListener(LowLevelCGMPRelayListener listener) {
+        lowLevelListeners = Arrays.copyOf(lowLevelListeners, lowLevelListeners.length + 1);
+        lowLevelListeners[lowLevelListeners.length - 1] = listener;
+    }
+
+    /**
+     * Connects the relay to the server and returns success status.
+     *
+     * @param identifier The name used to identify this relay.
+     *
+     * @return boolean
+     *   TRUE if the connection was successful and acknowledged.
+     *
+     * @throws CGMPException
+     * @throws IOException
+     */
+    public boolean connect(String identifier) throws CGMPException, IOException {
+        // Connect to the socket with the specified identifier. Response should be ACK with the identifier returned.
+        CGMPMessage response = sendMessage(CGMPMessage.handShake(identifier));
+        return response.isAcknowledgement() && response.getArguments().equals(identifier);
+    }
+
+    public void disconnect() throws IOException, CGMPException {
+        // @todo: What to do before disconnecting?
+        if (socket != null) {
+            terminateRelay();
+            socket.close();
+            socket = null;
+        }
+    }
+
+    /**
+     * Used by Game Client or Worker to terminate the connection before closing
+     */
+    public void terminateRelay() throws IOException, CGMPException {
+        sendMessage(CGMPMessage.terminate());
+    }
+
     public CGMPMessage sendAcknowledgement() throws CGMPException, IOException {
         return sendMessage(CGMPMessage.acknowledgement());
     }
@@ -155,17 +166,16 @@ public abstract class CGMPRelay {
      *
      */
     protected CGMPMessage sendMessage(CGMPMessage msg) throws CGMPException, IOException {
-        if (sock.isClosed()) {
+        if (socket.isClosed()) {
             renewConnection();
         }
         else if (pr.checkError()) {
             throw new CGMPException("Error on remote end of socket. Cannot send message");
         }
         CGMPMessage response;
-        // Clear buffers.
-        pr.flush();
         synchronized (pr) {
-            // Using this method to read buffer to be sure we don't have spurious messages waiting.
+            // Clear read and write buffers.
+            pr.flush();
             if (br.ready()) br.skip(1000);
             bufferOut(msg);
             onSendMessage(msg);
@@ -207,7 +217,7 @@ public abstract class CGMPRelay {
     }
     
     protected synchronized CGMPMessage readMessage(int attempts) throws CGMPException, IOException {
-        if (sock.isClosed()) {
+        if (socket.isClosed()) {
             renewConnection();
         }
         if (attempts++ > CGMPSpecification.MAX_TRIES) {
@@ -254,7 +264,8 @@ public abstract class CGMPRelay {
         try {
             synchronized (pr) {
                 synchronized (br) {
-                    if (br.ready()) br.skip(1000); // Using this method to clear buffer
+                    // Using this method to clear buffer
+                    if (br.ready()) br.skip(1000);
                     bufferOut(CGMPMessage.error(errorcode));
                     int i = 1;
                     do {
@@ -290,9 +301,9 @@ public abstract class CGMPRelay {
             }
         }
         if (br.ready()) {
-            String line = br.readLine();
-            onBufferIn(line);
-            return line;
+            String message = br.readLine();
+            onBufferIn(message);
+            return message;
         }
         else {
             return null;
@@ -301,9 +312,9 @@ public abstract class CGMPRelay {
     
     protected final boolean renewConnection() {
         try {
-            sock.connect(sock.getRemoteSocketAddress());
-            pr = new PrintWriter(sock.getOutputStream(), true);
-            br = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+            socket.connect(socket.getRemoteSocketAddress());
+            pr = new PrintWriter(socket.getOutputStream(), true);
+            br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             return true;
         } catch (IOException ex) {
             if (pr != null) pr = null;
@@ -334,14 +345,28 @@ public abstract class CGMPRelay {
 
     // Low-level events
     protected void onBufferOut(String message) {
-        if (listener instanceof LowLevelCGMPRelayListener) {
-            ((LowLevelCGMPRelayListener) listener).onBufferOut(message);
+        for (LowLevelCGMPRelayListener listener : lowLevelListeners) {
+            listener.onBufferOut(message);
         }
     }
 
     protected void onBufferIn(String message) {
-        if (listener instanceof LowLevelCGMPRelayListener) {
-            ((LowLevelCGMPRelayListener) listener).onBufferIn(message);
+        for (LowLevelCGMPRelayListener listener : lowLevelListeners) {
+            listener.onBufferIn(message);
+        }
+    }
+
+    // Override finalize() to close socket
+    public void finalize() {
+        System.out.println("Finalizing relay: ...");
+        try {
+            disconnect();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        catch (CGMPException e) {
+            e.printStackTrace();
         }
     }
 

@@ -10,13 +10,11 @@
 package org.anieanie.cardgame;
 
 import java.io.*;
-import java.net.ConnectException;
-import java.net.Socket;
 
+import org.anieanie.cardgame.cgmp.CGMPException;
 import org.anieanie.cardgame.cgmp.CGMPMessage;
 import org.anieanie.cardgame.cgmp.ClientCGMPRelay;
 import org.anieanie.cardgame.cgmp.ClientCGMPRelayListener;
-import org.anieanie.cardgame.cgmp.CGMPSpecification;
 
 /**
  *
@@ -45,27 +43,15 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
         this.name = getUserName();
     }
     
-    public void connect() throws GameClientException, IOException {
-        // Initial handshake with the Game Server.
-        InputStream in = relay.getSocket().getInputStream();
-        BufferedReader br = new BufferedReader(new InputStreamReader(in));
-        OutputStream out = relay.getSocket().getOutputStream();
-        PrintWriter pr = new PrintWriter(out, true);
-
-        // Handshake: Send user name to the server and get acknowledgement.
-        pr.println(this.name);
-
-        // Carry out interaction between client and server
-        String response = br.readLine();
-
-        if (!response.equals(CGMPSpecification.ACK)) {
+    public void connect() throws CGMPException, IOException {
+        if (!relay.connect(name)) {
             throw new GameClientException(String.format("Server not responding on ip address %s and port %s",
                     relay.getSocket().getInetAddress(), relay.getSocket().getPort()));
         }
     }
 
-    public void close() {
-
+    public void close() throws IOException, CGMPException {
+        relay.disconnect();
     }
     
     protected abstract void run();
@@ -74,8 +60,8 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     protected abstract String getUserName(); 
     
     /**
-     * public GameClient(Socket sock, String name) {
-     * relay = new ClientCGMPRelay(sock, this);
+     * public GameClient(Socket socket, String name) {
+     * relay = new ClientCGMPRelay(socket, this);
      * this.name = name;
      * }
      *

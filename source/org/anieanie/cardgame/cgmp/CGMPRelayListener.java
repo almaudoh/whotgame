@@ -22,7 +22,7 @@ package org.anieanie.cardgame.cgmp;
 public interface CGMPRelayListener {
 
     /** Called when the client or worker is terminated */
-    boolean relayTerminated();
+    void relayTerminated();
     
     void messageSent(CGMPMessage message);
 

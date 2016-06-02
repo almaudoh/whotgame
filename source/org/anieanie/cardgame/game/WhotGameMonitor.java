@@ -4,7 +4,6 @@
 // the proceedings
 package org.anieanie.cardgame.game;
 import org.anieanie.card.whot.WhotCardSet;
-import org.anieanie.cardgame.game.CardPlayer;
 
 import java.util.*;
 import java.lang.*;

@@ -22,7 +22,7 @@ public interface ClientCGMPRelayListener extends CGMPRelayListener {
     public void envReceived(String envSpec);
 
     /** Called when the client CGMPRelay receives card from the worker CGMPRelay */
-    public boolean cardReceived(String cardSpec);
+    public void cardReceived(String cardSpec);
 
     /** Called when the client CGMPRelay receives notice that someone has won from the worker CGMPRelay
      * @param winner*/

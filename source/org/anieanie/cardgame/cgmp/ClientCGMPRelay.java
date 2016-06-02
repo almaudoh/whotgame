@@ -20,21 +20,22 @@ import java.net.Socket;
 public class ClientCGMPRelay extends CGMPRelay {
 
     public ClientCGMPRelay(Socket s) {
-        super(s, null);
+        super(s);
     }
     
     /** Creates a new instance of ServerCGMPRelay */
     public ClientCGMPRelay(Socket s, ClientCGMPRelayListener sl) {
         super(s, sl);
-        System.out.println("ClientCGMPRelay for socket "+s+" initiated");
     }
     
-    /** Used by Game Client to request permission to play in a game
+    /**
+     * Used by Game Client to request permission to play in a game.
+     *
      * @return boolean true if the request is granted, false otherwise
      */
     public boolean requestPlay() {
         try {
-            return sendRequest(CGMPSpecification.PLAY).getKeyword().equals(CGMPSpecification.ACK);
+            return sendRequest(CGMPSpecification.PLAY).isAcknowledgement();
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -45,7 +46,9 @@ public class ClientCGMPRelay extends CGMPRelay {
         return false;
     }
     
-    /** Used by Game Client to request permission to watch a game
+    /**
+     * Used by Game Client to request permission to watch a game.
+     *
      * @return boolean true if request is granted, false otherwise
      */
     public boolean requestView() {
@@ -98,28 +101,21 @@ public class ClientCGMPRelay extends CGMPRelay {
      *
      * @return Object An object (Card) representing the card given or null if unsuccessful
      */
-    public Card requestCard() {
-        try {
-            int trials = 0;
-            CGMPMessage msg = sendRequest(CGMPSpecification.CARD);
-            String op = msg.getKeyword();
-            
-            // Loop until you get a valid message or maximum number of tries is exceeded
-            while (!op.equals(CGMPSpecification.CARD) && ++trials < CGMPSpecification.MAX_TRIES) {
-                sendError(CGMPSpecification.Error.BAD_MSG);
-                msg = sendRequest(CGMPSpecification.CARD);
-                op = msg.getKeyword();
-            }
-            if (!op.equals(CGMPSpecification.CARD)) return null;
-            return AbstractCard.fromString(msg.getArguments());
+    public Card requestCard() throws CGMPException, IOException {
+        int trials = 0;
+        CGMPMessage msg = sendRequest(CGMPSpecification.CARD);
+        String op = msg.getKeyword();
+
+        // Loop until you get a valid message or maximum number of tries is exceeded
+        while (!op.equals(CGMPSpecification.CARD) && ++trials < CGMPSpecification.MAX_TRIES) {
+            sendError(CGMPSpecification.Error.BAD_MSG);
+            msg = sendRequest(CGMPSpecification.CARD);
+            op = msg.getKeyword();
         }
-        catch (CGMPException e) {
-            e.printStackTrace();
+        if (!op.equals(CGMPSpecification.CARD)) {
+            throw new CGMPException("Invalid card specifications given");
         }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return AbstractCard.fromString(msg.getArguments());
     }
     
     protected void handleResponse(CGMPMessage response) {
@@ -191,7 +187,6 @@ public class ClientCGMPRelay extends CGMPRelay {
         else if (op.equals(CGMPSpecification.ERR)) {
             listener.errorReceived(Integer.parseInt(arg));
         }
-        
     }
     
 }

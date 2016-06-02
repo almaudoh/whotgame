@@ -1,5 +1,7 @@
 package org.anieanie.cardgame.cgmp;
 
+import static org.anieanie.cardgame.cgmp.CGMPSpecification.*;
+
 /**
  * Encapsulates a complete CGMP message.
  *
@@ -17,23 +19,23 @@ public class CGMPMessage {
         if (!isValidProtocol(stringResponse)) {
             throw new InvalidProtocolException();
         }
-        String message = stringResponse.substring(CGMPSpecification.MARKER.length()).trim();
+        String message = stringResponse.substring(MARKER.length()).trim();
         String[] parts = message.split(" ", 2);
         String arguments = (parts.length > 1) ? parts[1] : "";
-        return new CGMPMessage(stringResponse.substring(0, CGMPSpecification.MARKER.length()).trim(), parts[0], arguments);
+        return new CGMPMessage(stringResponse.substring(0, MARKER.length()).trim(), parts[0], arguments);
     }
 
     public static boolean isValidProtocol(String response) {
-        return response.length() > CGMPSpecification.MARKER.length() &&
-                response.substring(0, CGMPSpecification.MARKER.length()).equals(CGMPSpecification.MARKER);
+        return response.length() > MARKER.length() &&
+                response.substring(0, MARKER.length()).equals(MARKER);
     }
 
     public CGMPMessage(String keyword) {
-        this(CGMPSpecification.MARKER, keyword, null);
+        this(MARKER, keyword, null);
     }
 
     public CGMPMessage(String keyword, String arguments) {
-        this(CGMPSpecification.MARKER, keyword, arguments);
+        this(MARKER, keyword, arguments);
     }
 
     // Private constructor
@@ -44,7 +46,7 @@ public class CGMPMessage {
     }
 
     public boolean isValidProtocol() {
-        return this.protocolString.equals(CGMPSpecification.MARKER);
+        return this.protocolString.equals(MARKER);
     }
 
     public boolean isValidKeyword() {
@@ -63,8 +65,29 @@ public class CGMPMessage {
         return arguments;
     }
 
+    // Message type helpers.
+    public boolean isAcknowledgement() {
+        return keyword.equals(ACK);
+    }
+
+    public boolean isHandshake() {
+        return keyword.equals(HANDSHAKE);
+    }
+
+    public boolean isRequest() {
+        return keyword.equals(REQ);
+    }
+
+    public boolean isMove() {
+        return keyword.equals(MOVE);
+    }
+
+    public boolean isCard() {
+        return keyword.equals(CARD);
+    }
+
     public boolean isError() {
-        return keyword.equals(CGMPSpecification.ERR);
+        return keyword.equals(ERR);
     }
 
     public int getError() {
@@ -77,24 +100,28 @@ public class CGMPMessage {
     }
 
     public String toString() {
-        return protocolString + " " + keyword + (arguments != null ? " " + arguments : "");
+        return protocolString + " " + keyword + (arguments == null || arguments.equals("") ? "" : " " + arguments);
     }
 
     // Helper methods.
     public static CGMPMessage acknowledgement() {
-        return new CGMPMessage(CGMPSpecification.ACK);
+        return new CGMPMessage(ACK);
     }
 
     public static CGMPMessage request(String request) {
-        return new CGMPMessage(CGMPSpecification.REQ, request);
+        return new CGMPMessage(REQ, request);
     }
 
     public static CGMPMessage terminate() {
-        return new CGMPMessage(CGMPSpecification.TERM);
+        return new CGMPMessage(TERM);
     }
 
     public static CGMPMessage error(int errorcode) {
-        return new CGMPMessage(CGMPSpecification.ERR, String.valueOf(errorcode));
+        return new CGMPMessage(ERR, String.valueOf(errorcode));
+    }
+
+    public static CGMPMessage handShake(String name) {
+        return new CGMPMessage(HANDSHAKE, name);
     }
 
 }

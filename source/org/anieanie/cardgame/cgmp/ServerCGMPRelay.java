@@ -20,13 +20,11 @@ public class ServerCGMPRelay extends CGMPRelay {
 
     public ServerCGMPRelay(Socket s) {
         super(s, null);
-        System.out.println("ServerCGMPRelay for socket "+s+" initiated");
     }
     
     /** Creates a new instance of ServerCGMPRelay */
     public ServerCGMPRelay(Socket s, ServerCGMPRelayListener sl) {
         super(s, sl);
-        System.out.println("ServerCGMPRelay for socket "+s+" initiated");
     }
     
     /** Used by Game Worker to request a move from the client
@@ -132,7 +130,10 @@ public class ServerCGMPRelay extends CGMPRelay {
         String arg = response.getArguments();
         //System.out.println("op: " + op + "; arg" + arg);
         //listener.playRequested();
-        if (op.equals(CGMPSpecification.REQ)) {
+        if (op.equals(CGMPSpecification.HANDSHAKE)) {
+            listener.clientConnected(arg);
+        }
+        else if (op.equals(CGMPSpecification.REQ)) {
             if (arg.equals(CGMPSpecification.PLAY)) {
                 listener.playRequested();
             }

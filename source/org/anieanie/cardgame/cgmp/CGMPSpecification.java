@@ -170,6 +170,11 @@ public final class CGMPSpecification {
     public static final String TERM = "TERM";
 
     /**
+     * Constant holding the value for the client-server handshake.
+     */
+    public static final java.lang.String HANDSHAKE = "HELLO";
+
+    /**
      * The maximum number of times a CGMPRelay will retry to read from a socket that
      * gives bad data before continuing as if no data was read
      */
@@ -249,6 +254,10 @@ public final class CGMPSpecification {
         }
 
         else if (op.equals(ERR)) {
+            return true;
+        }
+
+        else if (op.equals(HANDSHAKE)) {
             return true;
         }
 
