@@ -5,6 +5,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 /**
+ * Socket subclass used for testing.
+ *
  * Created by almaudoh on 5/29/16.
  */
 public class TestSocket extends Socket {
