@@ -129,10 +129,27 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         return true;
     }
 
+    @Override
+    public void messageSent(CGMPMessage message) {
+
+    }
+
+    @Override
+    public void messageReceived(CGMPMessage message) {
+
+    }
+
+    @Override
+    public void errorSent(int errorcode) {
+
+    }
+
+    @Override
     public void errorReceived(int errorcode) {
         System.out.println("error received: " + errorcode + " " + CGMPSpecification.Error.describeError(errorcode));
     }
-    
+
+    @Override
     public void finalize() throws Throwable {
         System.out.println("Finalize called!");
         if (relay != null) {
@@ -141,6 +158,7 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         super.finalize();
     }
 
+    @Override
     public void start() {
         System.out.println("Worker for socket " + this.strUserName + " started");
         super.start();

@@ -35,7 +35,7 @@ public class ServerCGMPRelay extends CGMPRelay {
     public Card requestMove() {
         try {
             int trials = 0;
-            CGMPResponse response = sendRequest(CGMPSpecification.MOVE);
+            CGMPMessage response = sendRequest(CGMPSpecification.MOVE);
             String op = response.getKeyword();
 
             // Loop until you get a valid message or maximum number of tries is exceeded
@@ -63,9 +63,9 @@ public class ServerCGMPRelay extends CGMPRelay {
 
     /** Used by Game Worker to accept/confirm move it received from the game client
      */
-    public void acceptMove(Card move) {
+    public void acceptMove(Card card) {
         try {
-            sendMessage(CGMPSpecification.MACK + " " + move);
+            sendMessage(new CGMPMessage(CGMPSpecification.MACK, card.toString()));
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -80,7 +80,7 @@ public class ServerCGMPRelay extends CGMPRelay {
      */
     public void sendEnvironment(Object env) {
         try {
-            sendMessage(CGMPSpecification.ENVR + " " + env);
+            sendMessage(new CGMPMessage(CGMPSpecification.ENVR , env.toString()));
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -94,9 +94,9 @@ public class ServerCGMPRelay extends CGMPRelay {
      * @param card The Card object to be sent
      * @return boolean true if card was successfully received, false otherwise
      */
-    public boolean sendCard(Object card) {
+    public boolean sendCard(Card card) {
         try {
-            CGMPResponse response = sendMessage(CGMPSpecification.CARD + " " + card);
+            CGMPMessage response = sendMessage(new CGMPMessage(CGMPSpecification.CARD , card.toString()));
             return response.getKeyword().equals(CGMPSpecification.ACK);
         }
         catch (CGMPException e) {
@@ -113,7 +113,7 @@ public class ServerCGMPRelay extends CGMPRelay {
      */
     public void sendGameWon() {
         try {
-            sendMessage(CGMPSpecification.WON);
+            sendMessage(new CGMPMessage(CGMPSpecification.WON));
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -126,7 +126,7 @@ public class ServerCGMPRelay extends CGMPRelay {
     /**
      * This method is called by the scan() method to handle the message received during a passive scan
      */
-    protected void handleResponse(CGMPResponse response) {
+    protected void handleResponse(CGMPMessage response) {
         ServerCGMPRelayListener listener = (ServerCGMPRelayListener) this.listener;
         String op = response.getKeyword();
         String arg = response.getArguments();

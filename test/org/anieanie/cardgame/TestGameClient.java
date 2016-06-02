@@ -103,7 +103,7 @@ public class TestGameClient extends AbstractGameClient {
                                 break;
                             default: // Use ClientCGMPRelayListener object
                                 try {
-                                    ((TestClientCGMPRelay)relay).sendMessage(strInput);
+                                    ((TestClientCGMPRelay)relay).sendMessage(CGMPMessage.fromString(strInput));
                                 }
                                 catch (CGMPException ce) {
                                     System.out.println(ce.getMessage());

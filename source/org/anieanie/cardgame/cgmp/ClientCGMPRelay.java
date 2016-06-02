@@ -70,7 +70,7 @@ public class ClientCGMPRelay extends CGMPRelay {
    public Object requestEnvironment(GameEnvironment env) {
         try {
             int trials = 0;
-            CGMPResponse msg = sendRequest(CGMPSpecification.ENVR);
+            CGMPMessage msg = sendRequest(CGMPSpecification.ENVR);
             String op = msg.getKeyword();
     
             // Loop until you get a valid message or maximum number of tries is exceeded
@@ -101,7 +101,7 @@ public class ClientCGMPRelay extends CGMPRelay {
     public Card requestCard() {
         try {
             int trials = 0;
-            CGMPResponse msg = sendRequest(CGMPSpecification.CARD);
+            CGMPMessage msg = sendRequest(CGMPSpecification.CARD);
             String op = msg.getKeyword();
             
             // Loop until you get a valid message or maximum number of tries is exceeded
@@ -122,7 +122,7 @@ public class ClientCGMPRelay extends CGMPRelay {
         return null;
     }
     
-    protected void handleResponse(CGMPResponse response) {
+    protected void handleResponse(CGMPMessage response) {
         ClientCGMPRelayListener listener = (ClientCGMPRelayListener) this.listener;
         String op = response.getKeyword();
         String arg = response.getArguments();

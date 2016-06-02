@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.Socket;
 
 /**
+ * Test CGMPRelay class.
+ *
  * Created by almaudoh on 5/29/16.
  */
 public class TestCGMPRelay extends CGMPRelay {
@@ -23,13 +25,13 @@ public class TestCGMPRelay extends CGMPRelay {
     }
 
     @Override
-    public synchronized CGMPResponse readMessage(int attempts) throws CGMPException {
+    public synchronized CGMPMessage readMessage(int attempts) throws CGMPException, IOException {
         return super.readMessage(attempts);
     }
 
     @Override
-    public void bufferOut(String command) {
-        super.bufferOut(command);
+    public void bufferOut(CGMPMessage message) {
+        super.bufferOut(message);
     }
 
     @Override
@@ -38,11 +40,11 @@ public class TestCGMPRelay extends CGMPRelay {
     }
 
     @Override
-    public synchronized CGMPResponse sendMessage(String message) throws CGMPException, IOException {
+    public synchronized CGMPMessage sendMessage(CGMPMessage message) throws CGMPException, IOException {
         return super.sendMessage(message);
     }
     @Override
-    protected void handleResponse(CGMPResponse response) {
+    protected void handleResponse(CGMPMessage response) {
 
     }
 }

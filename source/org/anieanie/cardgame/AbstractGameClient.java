@@ -12,6 +12,8 @@ package org.anieanie.cardgame;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
+
+import org.anieanie.cardgame.cgmp.CGMPMessage;
 import org.anieanie.cardgame.cgmp.ClientCGMPRelay;
 import org.anieanie.cardgame.cgmp.ClientCGMPRelayListener;
 import org.anieanie.cardgame.cgmp.CGMPSpecification;
@@ -117,6 +119,26 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
      * }
      *
      * }*/
-    
-}
 
+    // Events
+    @Override
+    public void messageSent(CGMPMessage message) {
+
+    }
+
+    @Override
+    public void messageReceived(CGMPMessage message) {
+
+    }
+
+    @Override
+    public void errorSent(int errorcode) {
+
+    }
+
+    @Override
+    public void errorReceived(int errorcode) {
+        System.out.println("error received: " + errorcode);
+    }
+
+}

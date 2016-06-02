@@ -12,7 +12,6 @@ package org.anieanie.cardgame.cgmp;
 import java.io.IOException;
 import java.net.Socket;
 
-
 /**
  *
  * @author Aniebiet
@@ -28,7 +27,7 @@ public class TestClientCGMPRelay extends ClientCGMPRelay {
         super(s,sl);
     }
     
-    public CGMPResponse sendMessage(String msg) throws CGMPException, IOException {
+    public CGMPMessage sendMessage(CGMPMessage msg) throws CGMPException, IOException {
         return super.sendMessage(msg);
     }
     

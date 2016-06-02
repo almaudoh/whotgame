@@ -184,12 +184,6 @@ public class CLIGameClient extends AbstractGameClient {
         System.out.println("environment received: " + envSpec);
     }
     
-    
-    public void errorReceived(int errorcode) {
-        System.out.println("error received: " + errorcode);
-    }
-    
-    
     public void gameWon(String winner) {
         System.out.println("game won");
     }
@@ -220,7 +214,7 @@ public class CLIGameClient extends AbstractGameClient {
         } catch (Exception e) {} catch (Throwable t) {}
         return true;
     }
-    
+
     public void finalize() throws Throwable {
         System.out.println("Finalize called!");
         super.finalize();

@@ -22,8 +22,14 @@ package org.anieanie.cardgame.cgmp;
 public interface CGMPRelayListener {
 
     /** Called when the client or worker is terminated */
-    public boolean relayTerminated();
+    boolean relayTerminated();
     
-    public void errorReceived(int errorcode);
+    void messageSent(CGMPMessage message);
+
+    void messageReceived(CGMPMessage message);
+
+    void errorSent(int errorcode);
+
+    void errorReceived(int errorcode);
 
 }
