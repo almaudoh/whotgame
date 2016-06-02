@@ -57,9 +57,9 @@ public class WhotCard extends AbstractCard {
                 || (shape == WHOT && label != 20);  // WHOT shape can only have 20 label.
     }
 
-    public static void assertLegal(int shape, int label) {
+    public static void assertLegal(int shape, int label, String shapeStr) {
         if (shape < STAR || shape > WHOT)
-            throw new IllegalArgumentException("Illegal shape '" + shape + "' specified.");
+            throw new IllegalArgumentException("Illegal shape '" + shapeStr + "' specified.");
 
         if (isIllegal(shape, label))
             throw new IllegalArgumentException("Number " + label + " not allowed for the shape '" + SHAPES[shape] + "'.");
@@ -68,7 +68,7 @@ public class WhotCard extends AbstractCard {
     //Constructors: a card is generated randomly if no arguments are specified
     public WhotCard(int shape, int label) {
         // Ensure this has the right label for the shape.
-        assertLegal(shape, label);
+        assertLegal(shape, label, Integer.toString(shape));
         this.shape = shape;
         this.label = label;
     }
@@ -99,7 +99,7 @@ public class WhotCard extends AbstractCard {
     }
     
     private void setLabel(int label) {
-        assertLegal(this.shape, label);
+        assertLegal(this.shape, label, Integer.toString(this.shape));
         this.label = label;
     }
     
@@ -189,7 +189,7 @@ public class WhotCard extends AbstractCard {
         }
         int intlabel = Integer.parseInt(string.substring(string.indexOf(' ')).trim());
         // Ensure the right label is used for the specified shape.
-        assertLegal(intshape, intlabel);
+        assertLegal(intshape, intlabel, shape);
         return new WhotCard(intshape, intlabel);
     }
 }

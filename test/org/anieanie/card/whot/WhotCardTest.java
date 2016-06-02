@@ -38,7 +38,7 @@ public class WhotCardTest {
           dataProvider = "illegal_values",
           dataProviderClass = WhotCardTestProvider.class)
     public void assertLegal(int shape, int label) {
-        WhotCard.assertLegal(shape, label);
+        WhotCard.assertLegal(shape, label, Integer.toString(shape));
     }
 
     @Test(dataProvider = "illegal_pairs", dataProviderClass = WhotCardTestProvider.class)
