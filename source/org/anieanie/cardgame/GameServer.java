@@ -9,32 +9,34 @@ package org.anieanie.cardgame;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Hashtable;
+import java.util.ArrayList;
 
-import org.anieanie.cardgame.cgmp.CGMPSpecification;
-import org.anieanie.cardgame.environment.GameEnvironment.GameMonitor;
+import org.anieanie.cardgame.cgmp.ServerCGMPRelay;
 
 /**
  *
  * @author  ALMAUDOH
  */
 public class GameServer {
-    private static GameMonitor gameMon = null;
-    private static Hashtable<String, GameWorker> workers;
-    private static Hashtable<String, Socket> users;
-    private static ServerSocket ss;
-    public static void main(String []args) {
+    private GameMonitor gameMonitor;
+    private ArrayList<GameWorker> workers;
+    private ServerSocket ss;
+    private int serverPort;
+
+    public GameServer(GameMonitor monitor, int port_number) {
+        gameMonitor = monitor;
+        workers = new ArrayList<GameWorker>();
+        serverPort = port_number;
+    }
+
+    public void start() {
         try {
+//            ServerCGMPRelay relay;
+//            CGMPMessage response;
+
             // Create a socket on server
-            ss = new ServerSocket(5550);
-            
-            // Create new GameMonitor object
-            gameMon = null; //new GameEnvironment().getGameMonitor();
-            
-            // hashtable to manage list of sockets and workers
-            workers = new Hashtable<String, GameWorker>(10);
-            users = new Hashtable<String, Socket>(10);
-            
+            ss = new ServerSocket(serverPort);
+
             System.out.println("Server running on port " + ss.getLocalPort());
             // ---------------------------------------------------------------
             // Now start accepting connections from clients in a while loop
@@ -42,40 +44,30 @@ public class GameServer {
             while(true) {
                 Socket socket = ss.accept();	// accept connection from client
                 System.out.println("A new client is connected.");
-                
-                // to get data to and from server
-                InputStream in = socket.getInputStream();
-                BufferedReader br = new BufferedReader(new InputStreamReader(in));
-                OutputStream out = socket.getOutputStream();
-                PrintWriter pr = new PrintWriter(out, true);
-                
-                // read user name from the client and store in table
-                // in the format username + socket
-                String strUserName = br.readLine();
-                pr.println(CGMPSpecification.ACK);
-                System.out.println("Username: " + strUserName + "\n");
-                users.put(strUserName, socket);
-                
-                // create a thread to allow simultaneous connections
+
+                // Create a thread to allow simultaneous connections
                 // There is need to check workers on a continual basis to ensure that their clients are still there
                 // disconnected workers should be discarded
-                GameWorker w = new GameWorker(socket, gameMon, strUserName);
-                workers.put(strUserName, w);
-                w.start();
+                GameWorker worker = new GameWorker(new ServerCGMPRelay(socket), gameMonitor);
+                workers.add(worker);
+                worker.start();
+
+                // Allow worker thread
             }	// End of while
-            
+
         }	// End of try
         catch(Exception e) {
             e.printStackTrace();
             System.out.println("Some kind of error has occurred.");
         }	// End of exception
-        
+
     }	// End of main()
-    
+
     // Override finalize() to close server socket
-    protected void finalize() {
+    protected void finalize() throws Throwable {
+        super.finalize();
         if (workers != null) {
-            for (GameWorker w : workers.values()) {
+            for (GameWorker w : workers) {
                 try {
                     // @todo Stop this worker properly.
                     w.finalize();
@@ -85,17 +77,6 @@ public class GameServer {
                 }
             }
             workers = null;
-        }
-        if (users != null) {
-            for (Socket s : users.values()) {
-                try {
-                    s.close();
-                }
-                catch (Throwable ex) {
-                    ex.printStackTrace();
-                }
-            }
-            users = null;
         }
         if (ss != null) {
             try {

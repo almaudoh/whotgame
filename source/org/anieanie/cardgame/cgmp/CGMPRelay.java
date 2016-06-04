@@ -47,7 +47,7 @@ public abstract class CGMPRelay {
     protected BufferedReader br;
 
     public CGMPRelay(Socket socket) {
-        this(socket, new MultiCGMPRelayListener());
+        this(socket, null);
     }
 
     /**
@@ -80,20 +80,10 @@ public abstract class CGMPRelay {
      * The action of this method is to call the relevant function of its <CODE>listener
      * (CGMPRelayListener)</CODE> according to the message received.
      */
-    public void scan() {
-        try {
-            CGMPMessage response = readMessage(0);
-            handleResponse(response);
-        }
-        catch (CGMPConnectionException e) {
-            // Since this is a scan, we may not always have a response.
-        }
-        catch (CGMPException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+    public CGMPMessage scan() throws IOException, CGMPException {
+        CGMPMessage response = readMessage(0);
+        handleResponse(response);
+        return response;
     }
     
     public Socket getSocket() {
@@ -127,7 +117,7 @@ public abstract class CGMPRelay {
      */
     public boolean connect(String identifier) throws CGMPException, IOException {
         // Connect to the socket with the specified identifier. Response should be ACK with the identifier returned.
-        CGMPMessage response = sendMessage(CGMPMessage.handShake(identifier));
+        CGMPMessage response = sendMessage(CGMPMessage.handShake(identifier), true);
         return response.isAcknowledgement() && response.getArguments().equals(identifier);
     }
 
@@ -144,17 +134,25 @@ public abstract class CGMPRelay {
      * Used by Game Client or Worker to terminate the connection before closing
      */
     public void terminateRelay() throws IOException, CGMPException {
-        sendMessage(CGMPMessage.terminate());
+        sendMessage(CGMPMessage.terminate(), false);
     }
 
-    public CGMPMessage sendAcknowledgement() throws CGMPException, IOException {
-        return sendMessage(CGMPMessage.acknowledgement());
+    public void sendAcknowledgement() throws CGMPException, IOException {
+        sendMessage(CGMPMessage.acknowledgement(), false);
+    }
+
+    public void sendAcknowledgement(String argument) throws CGMPException, IOException {
+        sendMessage(CGMPMessage.acknowledgement(argument), false);
+    }
+
+    public void sendRejection() throws IOException, CGMPException {
+        sendMessage(new CGMPMessage(CGMPSpecification.NAK), false);
     }
 
     public CGMPMessage sendRequest(String request) throws CGMPException, IOException {
-        return sendMessage(CGMPMessage.request(request));
+        return sendMessage(CGMPMessage.request(request), true);
     }
-    
+
     /**
      * Handles message transmission, verification and error correction/recovery
      *
@@ -164,71 +162,51 @@ public abstract class CGMPRelay {
      *
      * @param msg Message to be sent.
      *
+     * @param readBack true if the relay should read back a response.
+     *
      */
-    protected CGMPMessage sendMessage(CGMPMessage msg) throws CGMPException, IOException {
+    protected synchronized CGMPMessage sendMessage(CGMPMessage msg, boolean readBack) throws CGMPException, IOException {
+        // Only one thread can do sendMessage or readMessage at a time.
         if (socket.isClosed()) {
             renewConnection();
-        }
-        else if (pr.checkError()) {
+        } else if (pr.checkError()) {
             throw new CGMPException("Error on remote end of socket. Cannot send message");
         }
         CGMPMessage response;
-        synchronized (pr) {
-            // Clear read and write buffers.
-            pr.flush();
-            if (br.ready()) br.skip(1000);
-            bufferOut(msg);
-            onSendMessage(msg);
-            response = readMessage(0);
+        // Clear read and write buffers.
+        pr.flush();
+        while (br.ready() && br.read() != 0) {
         }
+        bufferOut(msg);
+        onSendMessage(msg);
 
+        // Only read back if needed.
+        if (readBack) {
+            response = readMessage(0);
         /* Error handling code */
-        if (response.isError()) {
-            synchronized(pr) {
+            if (response.isError()) {
+                // @todo Should we be pushing out ACK's for errors too???
                 bufferOut(CGMPMessage.acknowledgement());
                 onReceiveError(response.getError());
             }
-            // @todo: Should we throw exceptions on CGMP errors here? or in the listener?
-//            switch (response.getError()) {
-//                case CGMPSpecification.Error.BAD_PROTO:
-//                    // // TODO: 5/21/16
-//                    // Potential weakness here (stack overflow) if other end continues to send BAD_PROTO errors
-//                    // regardless of what comes in.
-//                    return sendMessage(msg);
-//
-//                case CGMPSpecification.Error.BAD_KWD:
-//                    throw new CGMPException("Message contains bad keyword");
-//
-//                case CGMPSpecification.Error.BAD_SYN:
-//                    throw new CGMPException("Message has wrong syntax");
-//
-//                case CGMPSpecification.Error.BAD_MSG:
-//                    throw new CGMPException("Inappropriate message or reply sent");
-//
-//                default:
-//                    throw new CGMPException("Unknown error in message");
-//            }
-        }
-//        else {
-            if (debug) System.out.println("message sent: " + msg + "; response received: "+response);
-            if (debug) System.out.println("<-- sendMessage(" + msg + ")");
             return response;
-//        }
+        }
+        return null;
     }
     
     protected synchronized CGMPMessage readMessage(int attempts) throws CGMPException, IOException {
+        // Only one thread can do sendMessage or readMessage at a time.
         if (socket.isClosed()) {
             renewConnection();
         }
         if (attempts++ > CGMPSpecification.MAX_TRIES) {
             throw new CGMPConnectionException("Failed to read valid message from remote CGMP peer: maximum tries exceeded");
         }
-        String response = bufferIn(CGMPSpecification.READ_TIMEOUT*10);
+        String response = bufferIn(CGMPSpecification.READ_TIMEOUT);
         if (response == null) {
             if (attempts > 0) {
                 throw new CGMPConnectionException("Failed to read valid message from remote CGMP peer: maximum tries exceeded");
-            }
-            else {
+            } else {
                 throw new CGMPConnectionException("No message received from remote CGMP peer: maximum tries exceeded");
             }
         }
@@ -259,24 +237,22 @@ public abstract class CGMPRelay {
         return cgmpResponse;
     }
     
-    protected void sendError(int errorcode) {
+    public synchronized void sendError(int errorcode) {
         String resp = "";
         try {
-            synchronized (pr) {
-                synchronized (br) {
-                    // Using this method to clear buffer
-                    if (br.ready()) br.skip(1000);
-                    bufferOut(CGMPMessage.error(errorcode));
-                    int i = 1;
-                    do {
-                        resp = bufferIn(CGMPSpecification.READ_TIMEOUT * 10);
-                        if (resp.equals(CGMPMessage.acknowledgement().toString())) break;
-                        
-                        bufferOut(CGMPMessage.error(errorcode));
-                    } while (i++ < CGMPSpecification.MAX_TRIES);
-                    onSendError(errorcode);
-                }
+            // Using this method to clear buffer.
+            while (br.ready() && br.read() != 0) {
             }
+            bufferOut(CGMPMessage.error(errorcode));
+            int i = 1;
+            do {
+                resp = bufferIn(CGMPSpecification.READ_TIMEOUT);
+                if (resp.equals(CGMPMessage.acknowledgement().toString())) break;
+
+                bufferOut(CGMPMessage.error(errorcode));
+            }
+            while (i++ < CGMPSpecification.MAX_TRIES);
+            onSendError(errorcode);
         }
         catch (IOException ioe) {
             ioe.printStackTrace();
@@ -292,9 +268,9 @@ public abstract class CGMPRelay {
 
     protected String bufferIn(int timeout) throws IOException {
         int time = 0;
-        while (!br.ready() && time++ < timeout) {
+        while (!br.ready() && time++ < CGMPSpecification.MAX_TRIES) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(timeout);
             } catch (InterruptedException e) {
                 // TODO: 5/21/16
                 e.printStackTrace();
@@ -310,7 +286,7 @@ public abstract class CGMPRelay {
         }
     }
     
-    protected final boolean renewConnection() {
+    private boolean renewConnection() {
         try {
             socket.connect(socket.getRemoteSocketAddress());
             pr = new PrintWriter(socket.getOutputStream(), true);
@@ -328,19 +304,19 @@ public abstract class CGMPRelay {
 
     // Events
     protected void onSendMessage(CGMPMessage message) {
-        listener.messageSent(message);
+        if (listener != null) listener.messageSent(message);
     }
 
     protected void onReceiveMessage(CGMPMessage message) {
-        listener.messageReceived(message);
+        if (listener != null) listener.messageReceived(message);
     }
 
     protected void onSendError(int errorcode) {
-        listener.errorSent(errorcode);
+        if (listener != null) listener.errorSent(errorcode);
     }
 
     protected void onReceiveError(int errorcode) {
-        listener.errorReceived(errorcode);
+        if (listener != null) listener.errorReceived(errorcode);
     }
 
     // Low-level events

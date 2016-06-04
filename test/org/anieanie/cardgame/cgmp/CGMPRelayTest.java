@@ -195,7 +195,7 @@ public class CGMPRelayTest {
 
         // Exercise method under test.
         CGMPRelay relay = new TestCGMPRelay(socket, fake_listener);
-        final CGMPMessage reply = relay.sendMessage(CGMPMessage.request(CARD));
+        final CGMPMessage reply = relay.sendMessage(CGMPMessage.request(CARD), true);
 
         // Assert responses.
         assertEquals(baos.toString(), expected_output + '\n');
@@ -207,6 +207,30 @@ public class CGMPRelayTest {
 //            fake_listener.messageSent(CGMPMessage.fromString(expected_output)); times = 1;
 //            fake_listener.messageReceived(reply); times = 1;
         }};
+    }
+
+    @Test
+    public void sendingMessageWithFilledInputStream() throws Exception {
+        // Load the relay's input stream with random bytes.
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < Math.random() * 100; i++) {
+            builder.append(CGMPMessage.request(PLAY).toString());
+            builder.append('\n');
+        }
+        final ByteArrayInputStream bais = new ByteArrayInputStream(builder.toString().getBytes());
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        // Expectations.
+        new Expectations() {{
+            socket.getOutputStream(); returns(baos);
+            socket.getInputStream(); returns(bais);
+        }};
+
+        // Exercise method under test. Send acknowledgement and confirm that read buffer is cleared.
+        CGMPRelay relay = new TestCGMPRelay(socket, null);
+        relay.sendAcknowledgement();
+
+        assertEquals(bais.available(), 0);
     }
 
     @Test

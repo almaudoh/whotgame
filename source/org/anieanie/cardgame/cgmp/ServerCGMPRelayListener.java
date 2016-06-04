@@ -13,21 +13,23 @@ package org.anieanie.cardgame.cgmp;
 public interface ServerCGMPRelayListener extends CGMPRelayListener {
     
     /** Called when worker CGMPRelay receives request to play from client CGMPRelay */
-    public boolean playRequested();
+    void playRequested();
 
     /** Called when worker CGMPRelay receives request to watch from client CGMPRelay */
-    public boolean viewRequested();
+    void viewRequested();
 
     /** Called when worker CGMPRelay receives request for environment from client CGMPRelay */
-    public Object envRequested();
+    void envRequested();
 
     /** Called when worker CGMPRelay receives request for card from client CGMPRelay */
-    public Object cardRequested();
+    void cardRequested();
 
     /**
      * Called when worker CGMPRelay receives a connection request from client CGMPRelay
      *
      * @param identifier The name of the client relay.
      */
-    public void clientConnected(String identifier);
+    void clientConnected(String identifier);
+
+    void gameStartRequested();
 }

@@ -11,21 +11,26 @@ package org.anieanie.cardgame;
 
 import java.io.*;
 
-import org.anieanie.cardgame.cgmp.CGMPException;
-import org.anieanie.cardgame.cgmp.CGMPMessage;
-import org.anieanie.cardgame.cgmp.ClientCGMPRelay;
-import org.anieanie.cardgame.cgmp.ClientCGMPRelayListener;
+import org.anieanie.card.CardSet;
+import org.anieanie.cardgame.cgmp.*;
 
 /**
  *
  * @author Aniebiet
  */
 public abstract class AbstractGameClient implements ClientCGMPRelayListener {
-    
+
+    public static final int STATUS_UNDEFINED = -1;
+    public static final int STATUS_WAITING_TO_START = 0;
+    public static final int STATUS_WAITING_FOR_TURN = 1;
+    public static final int STATUS_WAITING_FOR_USER = 2;
+    public static final int STATUS_GAME_WON = 3;
+    public static final int STATUS_TERMINATE = 10;
+
     protected ClientCGMPRelay relay;
     protected String name;
-    protected static BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-    
+    protected int clientStatus = STATUS_UNDEFINED;
+
     /**
      * Creates a new instance of AbstractGameClient
      */
@@ -40,7 +45,7 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     public AbstractGameClient(ClientCGMPRelay relay) {
         /** @todo Generate random user name if function call returns null */
         this.relay = relay;
-        this.name = getUserName();
+        this.name = null;
     }
     
     public void connect() throws CGMPException, IOException {
@@ -53,78 +58,70 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     public void close() throws IOException, CGMPException {
         relay.disconnect();
     }
-    
+
+    /* Possible values for client status
+     * -1 - Undefined
+     *  0 - Waiting to start game
+     *  1 - Waiting for turn
+     *  2 - Waiting for user input (action)
+     *  3 - Game has been won
+     * 10 - Terminate Game
+     */
+    public int getClientStatus() {
+        return clientStatus;
+    }
+
+    // Game management methods.
+    public abstract CardSet getCards();
+
+    public abstract void playCard(String card);
+
+    public abstract void startGame();
+
+    public abstract void requestCard();
+
     protected abstract void run();
     
     // Later I may implement this to generate a random name
-    protected abstract String getUserName(); 
-    
-    /**
-     * public GameClient(Socket socket, String name) {
-     * relay = new ClientCGMPRelay(socket, this);
-     * this.name = name;
-     * }
-     *
-     * public GameClient(String ip, int port, String name) {
-     * try {
-     * // instructions
-     * //            System.out.println("Instructions to connect to the server.\n\n" +
-     * //            "-> If the server is running on the same computer," +
-     * //            "just press enter key or enter \"127.0.0.1\".\n\n" +
-     * //            "-> Do not enter anything when it asks for port unless" +
-     * //            "you don't edit the code in Server.java and edit it." +
-     * //            "Just leave it blank by pressing the enter key.\n\n" +
-     * //            "-> Enter the UserName of your choice. It can be you own name.\n");
-     *
-     * // get IP from the user
-     * //            System.out.print("\n\nEnter IP of the server: ");
-     * //            ip = input.readLine();
-     * //            if (ip.equals(""))
-     *
-     * // get port from user
-     * //            System.out.print("Port Number: ");
-     * //            strPort = input.readLine();
-     * //            if (strPort.equals(""))
-     * //            else
-     * //                port = Integer.parseInt(strPort);
-     *
-     * // --------------------------------------------------------------
-     * // IP, port and username is complete at this point
-     * // Now, create a socket to connect to server.
-     * // After that manage the connection in a while loop
-     * // until user wants to exit on his/her will
-     * // --------------------------------------------------------------
-     *
-     * // create a new socket
-     * Socket socket = new Socket(ip, port);
-     * relay = new ClientCGMPRelay(socket, this);
-     * this.name = name;
-     * }
-     * catch (IOException ioe) {
-     *
-     * }
-     *
-     * }*/
+    public abstract String getUsername();
 
     // Events
     @Override
-    public void messageSent(CGMPMessage message) {
-
-    }
+    public void messageSent(CGMPMessage message) {}
 
     @Override
-    public void messageReceived(CGMPMessage message) {
-
-    }
+    public void messageReceived(CGMPMessage message) {}
 
     @Override
     public void errorSent(int errorcode) {
-
+        // Let's log the errors to console for now.
+        System.out.println("An error was sent: " + errorcode + " [" + CGMPSpecification.Error.describeError(errorcode) + "]");
     }
 
     @Override
     public void errorReceived(int errorcode) {
-        System.out.println("error received: " + errorcode);
-    }
+        // Let's log the errors to console for now.
+        System.out.println("An error occurred: " + errorcode + " [" + CGMPSpecification.Error.describeError(errorcode) + "]");
 
+        // @todo: Should we throw exceptions on CGMP errors here? or in the listener?
+//        switch (errorcode) {
+//            case CGMPSpecification.Error.BAD_PROTO:
+//                // // TODO: 5/21/16
+//                // Potential weakness here (stack overflow) if other end continues to send BAD_PROTO errors
+//                // regardless of what comes in.
+//                return sendMessage(msg);
+//
+//            case CGMPSpecification.Error.BAD_KWD:
+//                throw new CGMPException("Message contains bad keyword");
+//
+//            case CGMPSpecification.Error.BAD_SYN:
+//                throw new CGMPException("Message has wrong syntax");
+//
+//            case CGMPSpecification.Error.BAD_MSG:
+//                throw new CGMPException("Inappropriate message or reply sent");
+//
+//            default:
+//                throw new CGMPException("Unknown error in message");
+//        }
+    }
 }

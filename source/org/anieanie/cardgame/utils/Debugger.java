@@ -26,12 +26,12 @@ public class Debugger {
 
             @Override
             public void onBufferOut(String message) {
-                System.out.println(name + ": ==> " + message);
+                System.out.println(name + ": ==> " + message + " [Thread " + Thread.currentThread().getName() + "]");
             }
 
             @Override
             public void onBufferIn(String message) {
-                System.out.println(name + ": <== " + message);
+                System.out.println(name + ": <== " + message + " [Thread " + Thread.currentThread().getName() + "]");
             }
         };
     }

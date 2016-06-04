@@ -105,7 +105,11 @@ public class CGMPMessage {
 
     // Helper methods.
     public static CGMPMessage acknowledgement() {
-        return new CGMPMessage(ACK);
+        return acknowledgement(null);
+    }
+
+    public static CGMPMessage acknowledgement(String argument) {
+        return new CGMPMessage(ACK, argument);
     }
 
     public static CGMPMessage request(String request) {

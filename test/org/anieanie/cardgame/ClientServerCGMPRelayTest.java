@@ -12,6 +12,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.Socket;
 
+import static org.anieanie.cardgame.cgmp.CGMPSpecification.*;
 import static org.testng.Assert.*;
 
 /**
@@ -39,7 +40,7 @@ public class ClientServerCGMPRelayTest {
     public ClientServerCGMPRelayTest() throws IOException { }
 
     @Test
-    public void testClientServerHandshake() throws Exception {
+    public void testClientServerInteractions() throws Exception {
         initializeRelays();
 
         new MockUp<TestClientCGMPRelayListener>(clientListener) {
@@ -47,13 +48,16 @@ public class ClientServerCGMPRelayTest {
             public void messageSent(CGMPMessage message) throws IOException {
                 if (message.isHandshake()) {
                     assertEquals(message.getArguments(), "game_client");
-                    writeOut(new CGMPMessage(CGMPSpecification.ACK, message.getArguments()).toString());
+                    writeOut(new CGMPMessage(ACK, message.getArguments()).toString());
                 }
-                else if (message.isRequest() && message.getArguments().equals(CGMPSpecification.PLAY)) {
-                    writeOut(new CGMPMessage(CGMPSpecification.ACK, CGMPSpecification.PLAY).toString());
+                else if (message.isRequest() && message.getArguments().equals(PLAY)) {
+                    writeOut(new CGMPMessage(ACK, PLAY).toString());
                 }
-                else if (message.isRequest() && message.getArguments().equals(CGMPSpecification.CARD)) {
-                    writeOut(new CGMPMessage(CGMPSpecification.CARD, "Circle 10").toString());
+                else if (message.isRequest() && message.getArguments().equals(CARD)) {
+                    writeOut(new CGMPMessage(CARD, "Circle 10").toString());
+                }
+                else if (message.isRequest() && message.getArguments().equals(START)) {
+                    writeOut(CGMPMessage.acknowledgement().toString());
                 }
             }
 
@@ -65,6 +69,7 @@ public class ClientServerCGMPRelayTest {
         assertTrue(clientRelay.connect("game_client"));
         assertTrue(clientRelay.requestPlay());
         assertEquals(clientRelay.requestCard(), AbstractCard.fromString("Circle 10"));
+        assertEquals(clientRelay.sendRequest(START), CGMPMessage.acknowledgement());
 
         new Verifications() {{
            clientListener.messageReceived(CGMPMessage.handShake("game_client"));

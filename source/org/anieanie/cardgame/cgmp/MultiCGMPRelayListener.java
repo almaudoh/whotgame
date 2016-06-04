@@ -109,43 +109,44 @@ public class MultiCGMPRelayListener implements CGMPRelayListener {
         }
 
         @Override
-        public boolean playRequested() {
-            boolean returnval = true;
+        public void playRequested() {
             for (ServerCGMPRelayListener listener : (ServerCGMPRelayListener[]) listeners) {
-                returnval = returnval && listener.playRequested();
+                listener.playRequested();
             }
-            return returnval;
         }
 
         @Override
-        public boolean viewRequested() {
-            boolean returnval = true;
+        public void viewRequested() {
             for (ServerCGMPRelayListener listener : (ServerCGMPRelayListener[]) listeners) {
-                returnval = returnval && listener.viewRequested();
+                listener.viewRequested();
             }
-            return returnval;
         }
 
         @Override
-        public Object envRequested() {
+        public void envRequested() {
             for (ServerCGMPRelayListener listener : (ServerCGMPRelayListener[]) listeners) {
                 listener.envRequested();
             }
-            return null;
         }
 
         @Override
-        public Object cardRequested() {
+        public void cardRequested() {
             for (ServerCGMPRelayListener listener : (ServerCGMPRelayListener[]) listeners) {
                 listener.cardRequested();
             }
-            return null;
         }
 
         @Override
         public void clientConnected(String identifier) {
             for (ServerCGMPRelayListener listener : (ServerCGMPRelayListener[]) listeners) {
                 listener.clientConnected(identifier);
+            }
+        }
+
+        @Override
+        public void gameStartRequested() {
+            for (ServerCGMPRelayListener listener : (ServerCGMPRelayListener[]) listeners) {
+                listener.gameStartRequested();
             }
         }
     }
@@ -162,11 +163,10 @@ public class MultiCGMPRelayListener implements CGMPRelayListener {
         }
 
         @Override
-        public Object moveRequested() {
+        public void moveRequested() {
             for (ClientCGMPRelayListener listener : (ClientCGMPRelayListener[]) listeners) {
                 listener.moveRequested();
             }
-            return null;
         }
 
         @Override

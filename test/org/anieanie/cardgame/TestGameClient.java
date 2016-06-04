@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import org.anieanie.card.CardSet;
 import org.anieanie.cardgame.cgmp.*;
 
 /**
@@ -19,6 +20,8 @@ import org.anieanie.cardgame.cgmp.*;
  * @author  ALMAUDOH
  */
 public class TestGameClient extends AbstractGameClient {
+
+    protected BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
     /**
      * Creates a new instance of TestGameClient
@@ -33,7 +36,32 @@ public class TestGameClient extends AbstractGameClient {
     public TestGameClient(ClientCGMPRelay relay) {
         super(relay);
     }
-    
+
+    @Override
+    public CardSet getCards() {
+        return null;
+    }
+
+    @Override
+    public void playCard(String card) {
+
+    }
+
+    @Override
+    public void startGame() {
+
+    }
+
+    @Override
+    public int getClientStatus() {
+        return 0;
+    }
+
+    @Override
+    public void requestCard() {
+
+    }
+
     public static void main(String [] args) {
         try {
             int port = CGMPSpecification.Connection.DEFAULT_PORT;
@@ -106,7 +134,7 @@ public class TestGameClient extends AbstractGameClient {
                                 break;
                             default: // Use ClientCGMPRelayListener object
                                 try {
-                                    ((TestClientCGMPRelay)relay).sendMessage(CGMPMessage.fromString(strInput));
+                                    ((TestClientCGMPRelay)relay).sendMessage(CGMPMessage.fromString(strInput), false);
                                 }
                                 catch (CGMPException ce) {
                                     System.out.println(ce.getMessage());
@@ -129,7 +157,7 @@ public class TestGameClient extends AbstractGameClient {
         }	// End of exception
     }
     
-    protected String getUserName() {
+    public String getUsername() {
         String strUserName = "";	// User name of client
         try {
             do  {
@@ -156,8 +184,7 @@ public class TestGameClient extends AbstractGameClient {
         super.finalize();
     }
     
-    public Object moveRequested() {
-        return null;
+    public void moveRequested() {
     }
     
     public void moveAccepted(String moveSpec) {

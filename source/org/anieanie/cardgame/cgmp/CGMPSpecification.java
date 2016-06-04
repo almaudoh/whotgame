@@ -175,14 +175,19 @@ public final class CGMPSpecification {
     public static final java.lang.String HANDSHAKE = "HELLO";
 
     /**
+     * Constant holding the value for the game start keywork.
+     */
+    public static final String START = "START";
+
+    /**
      * The maximum number of times a CGMPRelay will retry to read from a socket that
      * gives bad data before continuing as if no data was read
      */
     public static int MAX_TRIES = 5;
 
     /**
-     * The number of seconds a CGMPRelay will block waiting to read from a socket's
-     * inputstream before continuing as if no data was read
+     * The number of milliseconds a CGMPRelay will block waiting to read from a socket's
+     * input stream before continuing as if no data was read
      */
     public static int READ_TIMEOUT = 10;
 
@@ -214,7 +219,12 @@ public final class CGMPSpecification {
 
     public static boolean isValidSyntax(String op, String arg) {
         if (op.equals(REQ)) {
-            return arg.equals(PLAY) || arg.equals(VIEW) || arg.equals(ENVR) || arg.equals(MOVE) || arg.equals(CARD);
+            return arg.equals(PLAY)
+                    || arg.equals(VIEW)
+                    || arg.equals(ENVR)
+                    || arg.equals(MOVE)
+                    || arg.equals(CARD)
+                    || arg.equals(START);
         }
 
         else if (op.equals(ENVR)) {
@@ -267,8 +277,7 @@ public final class CGMPSpecification {
     }
 
     /** Creates a new instance of CGMPSpecification */
-    private CGMPSpecification() {
-    }
+    private CGMPSpecification() {}
 
     /**
      * The Error inner class contains information on errors and error codes

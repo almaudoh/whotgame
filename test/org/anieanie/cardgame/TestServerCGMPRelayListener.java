@@ -8,27 +8,32 @@ import org.anieanie.cardgame.cgmp.ServerCGMPRelayListener;
  */
 public class TestServerCGMPRelayListener implements ServerCGMPRelayListener {
     @Override
-    public boolean playRequested() {
-        return false;
+    public void playRequested() {
+
     }
 
     @Override
-    public boolean viewRequested() {
-        return false;
+    public void viewRequested() {
+
     }
 
     @Override
-    public Object envRequested() {
-        return null;
+    public void envRequested() {
+
     }
 
     @Override
-    public Object cardRequested() {
-        return null;
+    public void cardRequested() {
+
     }
 
     @Override
     public void clientConnected(String identifier) {
+
+    }
+
+    @Override
+    public void gameStartRequested() {
 
     }
 

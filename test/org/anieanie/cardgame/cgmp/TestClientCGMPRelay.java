@@ -26,9 +26,10 @@ public class TestClientCGMPRelay extends ClientCGMPRelay {
     public TestClientCGMPRelay(Socket s, ClientCGMPRelayListener sl) {
         super(s,sl);
     }
-    
-    public CGMPMessage sendMessage(CGMPMessage msg) throws CGMPException, IOException {
-        return super.sendMessage(msg);
+
+    @Override
+    public CGMPMessage sendMessage(CGMPMessage msg, boolean readBack) throws CGMPException, IOException {
+        return super.sendMessage(msg, readBack);
     }
     
 }

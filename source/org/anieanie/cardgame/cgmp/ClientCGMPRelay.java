@@ -37,6 +37,10 @@ public class ClientCGMPRelay extends CGMPRelay {
         try {
             return sendRequest(CGMPSpecification.PLAY).isAcknowledgement();
         }
+        catch (CGMPConnectionException e) {
+            // A connection exception means the request was not received. So abort and try again.
+            return false;
+        }
         catch (CGMPException e) {
             e.printStackTrace();
         }
@@ -119,11 +123,12 @@ public class ClientCGMPRelay extends CGMPRelay {
     }
     
     protected void handleResponse(CGMPMessage response) {
+        if (this.listener == null) {
+            return;
+        }
         ClientCGMPRelayListener listener = (ClientCGMPRelayListener) this.listener;
         String op = response.getKeyword();
         String arg = response.getArguments();
-        //System.out.println("op: " + op + "; arg" + arg);
-        //listener.playRequested();
         if (op.equals(CGMPSpecification.REQ)) {
             // Clients should not handle play, view, environment or card requests.
             if (arg.equals(CGMPSpecification.PLAY)

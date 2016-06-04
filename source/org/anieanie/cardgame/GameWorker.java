@@ -7,11 +7,9 @@
 package org.anieanie.cardgame;
 
 import java.io.IOException;
-import java.net.*;
 
 import org.anieanie.cardgame.cgmp.*;
-import org.anieanie.cardgame.environment.GameEnvironment.GameMonitor;
-import org.anieanie.card.whot.WhotCard;
+import org.anieanie.cardgame.utils.Debugger;
 
 /**
  *
@@ -20,31 +18,36 @@ import org.anieanie.card.whot.WhotCard;
 public class GameWorker extends Thread implements ServerCGMPRelayListener {
 
     // Socket socket;
-    private String strUserName;
+    private String username;
     private GameMonitor monitor;
     private ServerCGMPRelay relay;
 
     /** Creates a new instance of GameWorker */
-    public GameWorker(Socket s, GameMonitor gm, String userName) {
-        super(userName);
-        monitor = gm;
-        strUserName = userName;
-        relay = new ServerCGMPRelay(s, this);
+    public GameWorker(ServerCGMPRelay relay, GameMonitor monitor) {
+        super();
+        this.monitor = monitor;
+        this.relay = relay;
+        this.relay.setListener(this);
+        this.relay.addLowLevelListener(Debugger.getLowLevelListener("Port " + relay.getSocket().getPort()));
     }
 
     // -------------------run------------------------------
     public void run() {
-        try {
-            while(true) {
+        while (true) {
+            try {
+                // @todo If for some reason, the client disconnects, we need to kill this worker.
                 relay.scan();
-                Thread.sleep(50);
-            }	// End of while
+                Thread.sleep(500);
 
-        }	// End of try
-        catch(Exception e) {
-            System.out.println("Error has occurred in Worker.");
-            e.printStackTrace();
-        }	// End of exception
+            }    // End of try
+            catch (CGMPConnectionException e) {
+                // We may not always have a response from scans.
+            }
+            catch (Exception e) {
+                System.out.println("Error has occurred in Worker.");
+                e.printStackTrace();
+            }    // End of exception
+        }    // End of while
 
     }	// End of run()
 
@@ -56,60 +59,82 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
     }
 
     // Methods implemented by interface ServerCGMPRelayListener
-
     @Override
     public void clientConnected(String identifier) {
-
-    }
-
-    /** Called when worker CGMPRelay receives request to play from client CGMPRelay */
-    public boolean playRequested() {
-        System.out.println("play requested");
-        // Later route this through the GameMonitor
         try {
-            relay.sendAcknowledgement();
-            WhotCard card1 = new WhotCard(WhotCard.ANGLE, 3);
-            System.out.print("Sending card " + card1 + " waiting for acknowledgement ");
-            int ct = 0;
-            // Loop until card is received
-            relay.sendCard(card1);
-//            while (!relay.sendCard(card1) && ct++ < 10000) {
-//                try {
-//                    System.out.print(".");
-//                    Thread.sleep(50);
-//                } catch (InterruptedException ex) {
-//                    ex.printStackTrace();
-//                }
-//            }
-            System.out.print("\n");
-            relay.requestMove();
+            // The initial hello message from the user. So acknowledge.
+            username = identifier;
+            relay.sendAcknowledgement(username);
+            monitor.addUser(username, relay);
         }
-        catch (CGMPException ex) {
-            ex.printStackTrace();
+        catch (CGMPException e) {
+            e.printStackTrace();
         }
         catch (IOException e) {
             e.printStackTrace();
         }
-        return true;
+    }
+
+    /** Called when worker CGMPRelay receives request to play from client CGMPRelay */
+    public void playRequested() {
+        if (monitor.canPlayGame(username)) {
+            try {
+                relay.sendAcknowledgement();
+                monitor.addPlayer(username);
+            } catch (CGMPConnectionException e) {
+                // What to do?
+            } catch (CGMPException ex) {
+                ex.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /** Called when worker CGMPRelay receives request to watch from client CGMPRelay */
-    public boolean viewRequested() {
-        System.out.println("view requested");
-        return true;
+    public void viewRequested() {
+        if (monitor.canViewGame(username)) {
+            try {
+                relay.sendAcknowledgement();
+                monitor.addViewer(username);
+            } catch (CGMPConnectionException e) {
+                // What to do?
+            } catch (CGMPException ex) {
+                ex.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /** Called when worker CGMPRelay receives request for environment from client CGMPRelay */
-    public Object envRequested() {
-        System.out.println("environment requested");
-        return null;
+    public void envRequested() {
+        if (monitor.isViewer(username)) {
+            System.out.println("environment requested");
+        }
     }
 
     /** Called when worker CGMPRelay receives request for card from client CGMPRelay */
-    public Object cardRequested() {
-        System.out.println("card requested");
-        relay.sendCard(new WhotCard(3,6));
-        return null;
+    public void cardRequested() {
+        if (monitor.canHaveCard(username)) {
+            relay.sendCard(monitor.getCardForUser(username));
+        }
+    }
+
+    /** Called when worker CGMPRelay receives request to start the game from a client CGMPRelay */
+    public void gameStartRequested() {
+        try {
+            if (monitor.canStartGame()) {
+                relay.sendAcknowledgement();
+                monitor.startGame();
+            } else {
+                relay.sendRejection();
+            }
+        } catch (CGMPException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -120,8 +145,8 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         // if you terminate the relay, you must terminate the GameWorker since 
         // communication will have been breached
         try {
-            //        Socket s = (Socket)tOnlineUsers.remove(strUserName);
-            //        tOfflineUsers.put(strUserName, s);
+            //        Socket s = (Socket)tOnlineUsers.remove(username);
+            //        tOfflineUsers.put(username, s);
             System.out.println("client called for termination");
 //          System.out.println("relay terminated, cleanup needed");
             relay = null;
@@ -133,37 +158,24 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
     }
 
     @Override
-    public void messageSent(CGMPMessage message) {
-
-    }
+    public void messageSent(CGMPMessage message) {}
 
     @Override
-    public void messageReceived(CGMPMessage message) {
-
-    }
+    public void messageReceived(CGMPMessage message) {}
 
     @Override
-    public void errorSent(int errorcode) {
-
-    }
+    public void errorSent(int errorcode) {}
 
     @Override
-    public void errorReceived(int errorcode) {
-        System.out.println("error received: " + errorcode + " " + CGMPSpecification.Error.describeError(errorcode));
-    }
+    public void errorReceived(int errorcode) {}
 
     @Override
     public void finalize() throws Throwable {
         System.out.println("Finalize called!");
         if (relay != null) {
-            relay.terminateRelay();
+            relay.disconnect();
         }
         super.finalize();
     }
 
-    @Override
-    public void start() {
-        System.out.println("Worker for socket " + this.strUserName + " started");
-        super.start();
-    }
 }

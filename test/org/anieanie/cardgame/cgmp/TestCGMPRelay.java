@@ -40,9 +40,10 @@ public class TestCGMPRelay extends CGMPRelay {
     }
 
     @Override
-    public synchronized CGMPMessage sendMessage(CGMPMessage message) throws CGMPException, IOException {
-        return super.sendMessage(message);
+    public synchronized CGMPMessage sendMessage(CGMPMessage message, boolean readBack) throws CGMPException, IOException {
+        return super.sendMessage(message, readBack);
     }
+
     @Override
     protected void handleResponse(CGMPMessage response) {
 

@@ -19,7 +19,7 @@ import org.anieanie.card.Card;
 public class ServerCGMPRelay extends CGMPRelay {
 
     public ServerCGMPRelay(Socket s) {
-        super(s, null);
+        super(s);
     }
     
     /** Creates a new instance of ServerCGMPRelay */
@@ -59,11 +59,12 @@ public class ServerCGMPRelay extends CGMPRelay {
         return null;
     }
 
-    /** Used by Game Worker to accept/confirm move it received from the game client
+    /**
+     * Used by Game Worker to accept/confirm move it received from the game client
      */
     public void acceptMove(Card card) {
         try {
-            sendMessage(new CGMPMessage(CGMPSpecification.MACK, card.toString()));
+            sendMessage(new CGMPMessage(CGMPSpecification.MACK, card.toString()), false);
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -78,7 +79,7 @@ public class ServerCGMPRelay extends CGMPRelay {
      */
     public void sendEnvironment(Object env) {
         try {
-            sendMessage(new CGMPMessage(CGMPSpecification.ENVR , env.toString()));
+            sendMessage(new CGMPMessage(CGMPSpecification.ENVR , env.toString()), false);
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -94,8 +95,11 @@ public class ServerCGMPRelay extends CGMPRelay {
      */
     public boolean sendCard(Card card) {
         try {
-            CGMPMessage response = sendMessage(new CGMPMessage(CGMPSpecification.CARD , card.toString()));
-            return response.getKeyword().equals(CGMPSpecification.ACK);
+            CGMPMessage response = sendMessage(new CGMPMessage(CGMPSpecification.CARD , card.toString()), true);
+            return response.isAcknowledgement();
+        }
+        catch(CGMPConnectionException e) {
+            // We may not always have a response from scans.
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -111,7 +115,7 @@ public class ServerCGMPRelay extends CGMPRelay {
      */
     public void sendGameWon() {
         try {
-            sendMessage(new CGMPMessage(CGMPSpecification.WON));
+            sendMessage(new CGMPMessage(CGMPSpecification.WON), false);
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -125,14 +129,16 @@ public class ServerCGMPRelay extends CGMPRelay {
      * This method is called by the scan() method to handle the message received during a passive scan
      */
     protected void handleResponse(CGMPMessage response) {
+        if (this.listener == null) {
+            return;
+        }
         ServerCGMPRelayListener listener = (ServerCGMPRelayListener) this.listener;
         String op = response.getKeyword();
         String arg = response.getArguments();
-        //System.out.println("op: " + op + "; arg" + arg);
-        //listener.playRequested();
         if (op.equals(CGMPSpecification.HANDSHAKE)) {
             listener.clientConnected(arg);
         }
+
         else if (op.equals(CGMPSpecification.REQ)) {
             if (arg.equals(CGMPSpecification.PLAY)) {
                 listener.playRequested();
@@ -148,6 +154,9 @@ public class ServerCGMPRelay extends CGMPRelay {
             }
             else if (arg.equals(CGMPSpecification.CARD)) {
                 listener.cardRequested();
+            }
+            else if (arg.equals(CGMPSpecification.START)) {
+                listener.gameStartRequested();
             }
         }
 

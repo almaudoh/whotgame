@@ -8,8 +8,8 @@ import org.anieanie.cardgame.cgmp.ClientCGMPRelayListener;
  */
 public class TestClientCGMPRelayListener implements ClientCGMPRelayListener {
     @Override
-    public Object moveRequested() {
-        return null;
+    public void moveRequested() {
+
     }
 
     @Override
