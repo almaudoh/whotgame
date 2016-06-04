@@ -15,8 +15,8 @@ public abstract class AbstractCard implements Comparable, java.io.Serializable, 
     protected int shape;
     protected static String __subclass;
     
-    static {
-        AbstractCard.__subclass = "org.anieanie.card.whot.WhotCard";
+    public static String getSubClass() {
+        return "org.anieanie.card.whot.WhotCard";
     }
     
     /** Creates a new instance of AbstractCard */
@@ -42,7 +42,7 @@ public abstract class AbstractCard implements Comparable, java.io.Serializable, 
      */
     public static AbstractCard fromString(String cardspec) {
         try {
-            return ((AbstractCard)Class.forName(__subclass).newInstance()).getInstance(cardspec);
+            return ((AbstractCard)Class.forName(getSubClass()).newInstance()).getInstance(cardspec);
         }
         catch (ClassNotFoundException cnfe) {
             cnfe.printStackTrace();

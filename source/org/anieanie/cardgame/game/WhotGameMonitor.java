@@ -3,12 +3,15 @@
 // The monitor class also provides the interface that allows Watcher objects to watch
 // the proceedings
 package org.anieanie.cardgame.game;
+import org.anieanie.card.Card;
+import org.anieanie.card.CardSet;
 import org.anieanie.card.whot.WhotCardSet;
+import org.anieanie.cardgame.AbstractGameMonitor;
 
 import java.util.*;
 import java.lang.*;
 
-public class WhotGameMonitor extends Thread {
+public class WhotGameMonitor extends AbstractGameMonitor {
   // Each new WhotGameMonitor starts a new game
   // and should normally be on a new thread
   // static initializer for random number generator
@@ -18,61 +21,44 @@ public class WhotGameMonitor extends Thread {
   // the game environment
   //public class Environment {
 
-  	// private instance fields
-    private WhotCardSet vGamepack;// the virtual gamepack: used to ensure cards are not manufactured or changed
-    private WhotCardSet reserve;	// the 'market' from which players replenish their supply
-    private WhotCardSet used;			// the cards that have been played
-    private boolean gameRunning;	// true if a game is currently going on
-    private LinkedList players;		// the list of all players in the game
-  //}
 
   // constructors
   public WhotGameMonitor() {
-    vGamepack = new WhotCardSet();	// Obtain a brand new card pack (virtual)
-    reserve = (WhotCardSet)vGamepack.clone();		// the reserve is the same as the virtual pack at first
-    used = new WhotCardSet();			// empty
-    players = new LinkedList();		// players list is empty
-    start();					// The thread starts on creation
+     super();
   }
 
-  public void run() {		// this is the thread body
-    requestPlayers();		// request for interested players
-    reserve.shuffle(20);	// shuffle the cards
-    shareCards();		// share the cards to each player
-//    playGame();			// play the game
+  protected void initCardDecks() {
+    exposed = new WhotCardSet();
+    dealed = new CardSet();
+    covered = getFullCardSet();
   }
 
-  private void requestPlayers() {
-    // the current implementation is simply to add two players
-    for (int i=0; i<2; i++) {
-//      players.add(new CardPlayer());
-    }
+  public CardSet getFullCardSet() {
+    return new WhotCardSet();
   }
 
-  private void shareCards() {	// share the cards to the players
-    Iterator reserveIter = reserve.iterator();	// reserve iterator to be used to share cards
-    int num_cards = generator.nextInt(7) + 3; 	// number of cards each player is to get (random b/w 3 and 9 inclusive)
-    for (int i=0; i<num_cards; i++) {
-      for (Iterator iter = players.iterator(); iter.hasNext();) {
-//        if (((CardPlayer)iter.next()).recieveCard((WhotCard)reserveIter.next())) {
-//          reserveIter.remove();
-          // send the card above to the player object then remove it from
-          // reserve if successful
-//        }
-      }
+    @Override
+    public boolean canPlayGame(String identifier) {
+        // A user cannot join a game that has already started or exceeds 4 players.
+        return !gameStarted && players.size() <= 4;
     }
 
-    // place the first card that will begin the game and remove it from the reserve
-    used.add(reserveIter.next());
-    reserveIter.remove();
-  }
+    @Override
+    public boolean canViewGame(String identifier) {
+        return true;
+    }
 
-  private void pick2(CardPlayer player) {
+    @Override
+    public Card getCardForUser(String identifier) {
+        return covered.removeFirst();
+    }
+
+    private void pick2(CardPlayer player) {
 //    Iterator reserveIter = reserve.iterator();
 //    ((CardPlayer)iter.next()).recieveCard((WhotCard)reserveIter.next());
 //    reserveIter.remove();
 //    ((CardPlayer)iter.next()).recieveCard((WhotCard)reserveIter.next());
 //    reserveIter.remove();
   }
-}
 
+}

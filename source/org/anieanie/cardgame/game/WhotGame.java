@@ -1,5 +1,6 @@
 package org.anieanie.cardgame.game;
 
+import org.anieanie.cardgame.GameServer;
 import org.anieanie.cardgame.ui.GameFrame;
 
 import javax.swing.UIManager;
@@ -10,44 +11,49 @@ import java.awt.*;
  * Description:  A complete Whot playing environment consisting players, spectators and the umpire (or game monitor).~nThe user can play Whot in this program
  * Copyright:    Copyright (c) 1998
  * Company:      KaySoft Intelligent Solutions
+ *
  * @author Aniebiet Udoh
- * @version 
  */
 
 public class WhotGame {
-  boolean packFrame = false;
+    boolean packFrame = false;
 
-  /**Construct the application*/
-  public WhotGame() {
-    GameFrame frame = new GameFrame();
-    //Validate frames that have preset sizes
-    //Pack frames that have useful preferred size info, e.g. from their layout
-    if (packFrame) {
-      frame.pack();
+    /**
+     * Main method
+     */
+    public static void main(String[] args) {
+        WhotGameMonitor monitor = new WhotGameMonitor();
+        GameServer server = new GameServer(monitor, 5550);
+
+        server.start();
     }
-    else {
-      frame.validate();
+
+    public WhotGame () {
+
     }
-    //Center the window
-    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    Dimension frameSize = frame.getSize();
-    if (frameSize.height > screenSize.height) {
-      frameSize.height = screenSize.height;
+
+    /**
+     * Construct the application
+     */
+    public void __WhotGame() {
+        GameFrame frame = new GameFrame();
+        //Validate frames that have preset sizes
+        //Pack frames that have useful preferred size info, e.g. from their layout
+        if (packFrame) {
+            frame.pack();
+        } else {
+            frame.validate();
+        }
+        //Center the window
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension frameSize = frame.getSize();
+        if (frameSize.height > screenSize.height) {
+            frameSize.height = screenSize.height;
+        }
+        if (frameSize.width > screenSize.width) {
+            frameSize.width = screenSize.width;
+        }
+        frame.setLocation((screenSize.width - frameSize.width) / 2, (screenSize.height - frameSize.height) / 2);
+        frame.setVisible(true);
     }
-    if (frameSize.width > screenSize.width) {
-      frameSize.width = screenSize.width;
-    }
-    frame.setLocation((screenSize.width - frameSize.width) / 2, (screenSize.height - frameSize.height) / 2);
-    frame.setVisible(true);
-  }
-  /**Main method*/
-  public static void main(String[] args) {
-    try {
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    }
-    catch(Exception e) {
-      e.printStackTrace();
-    }
-    new WhotGame();
-  }
 }

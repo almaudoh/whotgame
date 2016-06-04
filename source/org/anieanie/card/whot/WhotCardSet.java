@@ -11,7 +11,9 @@ public class WhotCardSet extends CardSet {
     // in the org.anieanie.Whot.WhotCard class
 
     // Constructor
-    public WhotCardSet() {
+    public WhotCardSet() {}
+
+    public void fillCardSet() {
         for (int shape = WhotCard.STAR; shape < WhotCard.WHOT; shape++) {
             for (int label = WhotCard.L_LIMIT; label <= WhotCard.U_LIMIT; label++) {
                 if (!WhotCard.isIllegal(shape, label)) {
@@ -21,14 +23,10 @@ public class WhotCardSet extends CardSet {
                 }
             }
         }
-
-        //    WhotCard.reset_whots(); // this is necessary to allow 5 identical Whot 20's to
-        //            // to be inserted into the CardSet (which doesn't allow duplicate entries)
         for (int i = 0; i < WhotCard.N_WHOT; i++) {
             // add the whots themselves (ie. the jokers)
             add(new WhotCard(WhotCard.WHOT, 20));
         }
-
     }
 
     // private constructor for clone method
