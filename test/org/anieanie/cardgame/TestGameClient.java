@@ -191,7 +191,7 @@ public class TestGameClient extends AbstractGameClient {
     }
 
     @Override
-    public void envReceived(String envSpec) {
+    public void environmentReceived(String envSpec) {
     }
 
     @Override

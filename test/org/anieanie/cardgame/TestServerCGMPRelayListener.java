@@ -18,7 +18,7 @@ public class TestServerCGMPRelayListener implements ServerCGMPRelayListener {
     }
 
     @Override
-    public void envRequested() {
+    public void environmentRequested() {
 
     }
 

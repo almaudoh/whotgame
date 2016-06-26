@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.*;
 
 import org.anieanie.card.Card;
+import org.anieanie.cardgame.environment.GameEnvironment;
 
 /**
  *
@@ -50,8 +51,8 @@ public class ServerCGMPRelay extends CGMPRelay {
     /** Used by Game Worker to send a copy of the Game Environment to the Game Clients
      * @param env The environment object to be sent
      */
-    public void sendEnvironment(Object env) throws IOException, CGMPException {
-        sendMessage(new CGMPMessage(CGMPSpecification.ENVR , env.toString()), false);
+    public void sendEnvironment(GameEnvironment env) throws IOException, CGMPException {
+        sendMessage(new CGMPMessage(CGMPSpecification.ENVR , env.toCGMPString()), false);
     }
 
     /** Used by Game Worker to send a card to the Game client
@@ -116,7 +117,7 @@ public class ServerCGMPRelay extends CGMPRelay {
                 listener.viewRequested();
             }
             else if (arg.equals(CGMPSpecification.ENVR)) {
-                listener.envRequested();
+                listener.environmentRequested();
             }
             else if (arg.equals(CGMPSpecification.MOVE)) {
                 sendError(CGMPSpecification.Error.BAD_MSG);
@@ -130,7 +131,7 @@ public class ServerCGMPRelay extends CGMPRelay {
         }
 
         else if (op.equals(CGMPSpecification.ENVR)) {
-            // listener.envReceived(arg);
+            // listener.environmentReceived(arg);
         }
 
         else if (op.equals(CGMPSpecification.CARD)) {

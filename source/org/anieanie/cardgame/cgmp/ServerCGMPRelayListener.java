@@ -19,7 +19,7 @@ public interface ServerCGMPRelayListener extends CGMPRelayListener {
     void viewRequested();
 
     /** Called when worker CGMPRelay receives request for environment from client CGMPRelay */
-    void envRequested();
+    void environmentRequested();
 
     /** Called when worker CGMPRelay receives request for card from client CGMPRelay */
     void cardRequested();

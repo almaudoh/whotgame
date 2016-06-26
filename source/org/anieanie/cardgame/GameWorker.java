@@ -8,7 +8,6 @@ package org.anieanie.cardgame;
 
 import java.io.IOException;
 
-import org.anieanie.card.AbstractCard;
 import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.cardgame.utils.Debugger;
 
@@ -123,9 +122,17 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
     }
 
     /** Called when worker CGMPRelay receives request for environment from client CGMPRelay */
-    public void envRequested() {
-        if (monitor.isViewer(username)) {
-            System.out.println("environment requested");
+    public void environmentRequested() {
+        try {
+            if (monitor.isPlayer(username) || monitor.isViewer(username)) {
+                relay.sendEnvironment(monitor.getEnvironment());
+            } else {
+                relay.sendRejection();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (CGMPException e) {
+            e.printStackTrace();
         }
     }
 

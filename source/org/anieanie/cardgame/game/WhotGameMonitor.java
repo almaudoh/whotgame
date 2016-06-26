@@ -10,6 +10,7 @@ import org.anieanie.card.whot.WhotCard;
 import org.anieanie.card.whot.WhotCardSet;
 import org.anieanie.cardgame.AbstractGameMonitor;
 import org.anieanie.cardgame.cgmp.CGMPException;
+import org.anieanie.cardgame.environment.GameEnvironment;
 
 import java.io.IOException;
 import java.lang.*;
@@ -53,9 +54,9 @@ public class WhotGameMonitor extends AbstractGameMonitor {
     }
 
     @Override
-    public String getEnvironment() {
-        return String.format("CurrentPlayer: %s; TopCard: %s; CalledCard: %s;",
-                players.get(currentPlayer), exposed.getFirst(), calledCard);
+    public void updateEnvironment() {
+        super.updateEnvironment();
+        environment.put("CalledCard", calledCard);
     }
 
     @Override

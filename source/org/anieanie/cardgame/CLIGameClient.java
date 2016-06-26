@@ -11,6 +11,7 @@ import org.anieanie.card.CardSet;
 import org.anieanie.card.whot.WhotCard;
 import org.anieanie.card.whot.WhotCardSet;
 import org.anieanie.cardgame.cgmp.*;
+import org.anieanie.cardgame.environment.GameEnvironment;
 import org.anieanie.cardgame.utils.CommandLineReader;
 import org.anieanie.cardgame.utils.Debugger;
 
@@ -19,8 +20,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.Socket;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -30,8 +29,6 @@ public class CLIGameClient extends AbstractGameClient {
 
     private CardSet cards;
     protected static BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-    private Card topCard;
-    private String calledCard;
 
     @Override
     public String getUsername() {
@@ -143,11 +140,17 @@ public class CLIGameClient extends AbstractGameClient {
     }
 
     public Card getTopCard() {
-        return topCard;
+        String topCard = environment.get("TopCard");
+        if (topCard != null) {
+            return WhotCard.fromString(topCard);
+        }
+        else {
+            return null;
+        }
     }
 
     public String getCalledCard() {
-        return calledCard;
+        return environment.get("CalledCard");
     }
 
     /**
@@ -160,7 +163,7 @@ public class CLIGameClient extends AbstractGameClient {
      *       start unless there are at least two players in the game area.                      **
      *    2. When game is started, the game server                                              **
      *       - shuffles and distributes cards to all players - callback cardReceived() invoked  **
-     *       - sends the current game environment state      - callback envReceived() invoked   **
+     *       - sends the current game environment state      - callback environmentReceived() invoked   **
      *       - informs each player by turn to play           - callback moveRequested() invoked **
      *    3. playCard() - the player whose turn it is to play sends a card to the game server   **
      *       and waits for next turn if the card is accepted. If the card is rejected, another  **
@@ -269,17 +272,8 @@ public class CLIGameClient extends AbstractGameClient {
     }
     
     /** Called when client CGMPRelay receives game environment state from worker CGMPRelay */
-    public void envReceived(String envSpec) {
-        // For now only the top card is recognized.
-        Matcher matcher = Pattern.compile("TopCard: ([^;]+);").matcher(envSpec);
-        if (matcher.find()) {
-            topCard = WhotCard.fromString(matcher.group(1));
-        }
-        matcher = Pattern.compile("CalledCard: ([^;]+);").matcher(envSpec);
-        if (matcher.find()) {
-            calledCard = matcher.group(1);
-        }
-        System.out.println("environment received: " + envSpec);
+    public void environmentReceived(String envSpec) {
+        environment = GameEnvironment.fromCGMPString(envSpec);
     }
 
 
@@ -287,7 +281,7 @@ public class CLIGameClient extends AbstractGameClient {
     /** Called when client CGMPRelay receives information from worker CGMPRelay */
     public void infoReceived(String info) {
         // Information received and it's a request to call shape.
-        if (info.equals("CALL") && topCard.getShape() == WhotCard.WHOT) {
+        if (info.equals("CALL") && this.getTopCard().getShape() == WhotCard.WHOT) {
             try {
                 String shape = "";
                 do {

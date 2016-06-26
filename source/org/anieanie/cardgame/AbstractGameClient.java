@@ -13,6 +13,7 @@ import java.io.*;
 
 import org.anieanie.card.CardSet;
 import org.anieanie.cardgame.cgmp.*;
+import org.anieanie.cardgame.environment.GameEnvironment;
 
 /**
  *
@@ -27,6 +28,7 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     public static final int STATUS_GAME_WON = 3;
     public static final int STATUS_TERMINATE = 10;
 
+    protected GameEnvironment environment;
     protected ClientCGMPRelay relay;
     protected String name;
     protected int clientStatus = STATUS_UNDEFINED;
@@ -37,6 +39,7 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     public AbstractGameClient(ClientCGMPRelay relay, String name) {
         this.relay = relay;
         this.name = name;
+        this.environment = new GameEnvironment();
     }
     
     /**
@@ -46,6 +49,7 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
         /** @todo Generate random user name if function call returns null */
         this.relay = relay;
         this.name = null;
+        this.environment = new GameEnvironment();
     }
     
     public void connect() throws CGMPException, IOException {
@@ -69,6 +73,15 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
      */
     public int getClientStatus() {
         return clientStatus;
+    }
+
+    public void refreshClientStatus() {
+        environment = relay.requestEnvironment();
+        // @todo: Need to look deeper into this.
+        String currentPlayer = environment.get("CurrentPlayer");
+        if (currentPlayer != null && currentPlayer.equals(getUsername())) {
+            clientStatus = STATUS_WAITING_FOR_USER;
+        }
     }
 
     // Game management methods.

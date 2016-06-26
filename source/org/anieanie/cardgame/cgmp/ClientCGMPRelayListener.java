@@ -16,7 +16,7 @@ public interface ClientCGMPRelayListener extends CGMPRelayListener {
     void moveRequested();
 
     /** Called when client CGMPRelay receives environment from worker CGMPRelay */
-    void envReceived(String envSpec);
+    void environmentReceived(String envSpec);
 
     /** Called when the client CGMPRelay receives card from the worker CGMPRelay */
     void cardReceived(String cardSpec);

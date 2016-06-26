@@ -3,6 +3,7 @@ package org.anieanie.cardgame;
 import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
 import org.anieanie.cardgame.cgmp.ServerCGMPRelay;
+import org.anieanie.cardgame.environment.GameEnvironment;
 
 /**
  * An interface implemented by all game monitors which act as referees to enforce the rules of a game.
@@ -112,4 +113,12 @@ public interface GameMonitor {
      * Handles information received from client via the INFO CGMP command
      */
     void handleInfoReceived(String info, String user);
+
+    /**
+     * Gets the current game environment.
+     *
+     * @return GameEnvironment
+     */
+    GameEnvironment getEnvironment();
+
 }

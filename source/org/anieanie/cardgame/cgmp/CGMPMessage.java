@@ -22,7 +22,7 @@ public class CGMPMessage {
         String message = stringResponse.substring(MARKER.length()).trim();
         String[] parts = message.split(" ", 2);
         String arguments = (parts.length > 1) ? parts[1] : "";
-        return new CGMPMessage(stringResponse.substring(0, MARKER.length()).trim(), parts[0], arguments);
+        return new CGMPMessage(parts[0], arguments);
     }
 
     public static boolean isValidProtocol(String response) {

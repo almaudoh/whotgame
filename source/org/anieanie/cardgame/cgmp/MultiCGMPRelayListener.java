@@ -130,9 +130,9 @@ public class MultiCGMPRelayListener implements CGMPRelayListener {
         }
 
         @Override
-        public void envRequested() {
+        public void environmentRequested() {
             for (ServerCGMPRelayListener listener : (ServerCGMPRelayListener[]) listeners) {
-                listener.envRequested();
+                listener.environmentRequested();
             }
         }
 
@@ -184,9 +184,9 @@ public class MultiCGMPRelayListener implements CGMPRelayListener {
         }
 
         @Override
-        public void envReceived(String envSpec) {
+        public void environmentReceived(String envSpec) {
             for (ClientCGMPRelayListener listener : (ClientCGMPRelayListener[]) listeners) {
-                listener.envReceived(envSpec);
+                listener.environmentReceived(envSpec);
             }
         }
 

@@ -6,7 +6,7 @@
 
 package org.anieanie.cardgame.cgmp;
 
-import org.anieanie.cardgame.environment.GameLoop;
+import org.anieanie.cardgame.environment.GameEnvironment;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -72,22 +72,12 @@ public class ClientCGMPRelay extends CGMPRelay {
      * @return Object An object representing the current Game Environment
      *    or null if unsuccessful
      */
-   public Object requestEnvironment(GameLoop env) {
+   public GameEnvironment requestEnvironment() {
         try {
-            int trials = 0;
             CGMPMessage msg = sendRequest(CGMPSpecification.ENVR);
-            String op = msg.getKeyword();
-    
-            // Loop until you get a valid message or maximum number of tries is exceeded
-            while (!op.equals(CGMPSpecification.ENVR) && ++trials < CGMPSpecification.MAX_TRIES) {
-                sendError(CGMPSpecification.Error.BAD_MSG);
-                msg = sendRequest(CGMPSpecification.ENVR);
-                op = msg.getKeyword();
+            if (msg.getKeyword().equals(CGMPSpecification.ENVR)) {
+                return GameEnvironment.fromCGMPString(msg.getArguments());
             }
-            if (!op.equals(CGMPSpecification.ENVR)) return null;
-            String arg = msg.getArguments();
-            //return env.fromString(arg);
-            return null;
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -134,7 +124,7 @@ public class ClientCGMPRelay extends CGMPRelay {
         }
         
         else if (op.equals(CGMPSpecification.ENVR)) {
-            listener.envReceived(arg);
+            listener.environmentReceived(arg);
         }
         
         else if (op.equals(CGMPSpecification.CARD)) {

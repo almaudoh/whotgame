@@ -13,7 +13,7 @@ public class TestClientCGMPRelayListener implements ClientCGMPRelayListener {
     }
 
     @Override
-    public void envReceived(String envSpec) {
+    public void environmentReceived(String envSpec) {
 
     }
 

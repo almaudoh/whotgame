@@ -4,6 +4,7 @@ import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
 import org.anieanie.cardgame.cgmp.CGMPException;
 import org.anieanie.cardgame.cgmp.ServerCGMPRelay;
+import org.anieanie.cardgame.environment.GameEnvironment;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,6 +20,9 @@ import java.util.Hashtable;
  */
 
 public abstract class AbstractGameMonitor implements GameMonitor {
+    // Contains information on the game environment.
+    protected final GameEnvironment environment;
+
     /**
      * The users participating in this card game.
      */
@@ -52,6 +56,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         users = new Hashtable<String, ServerCGMPRelay>();
         players = new ArrayList<String>();
         viewers = new ArrayList<String>();
+        environment = new GameEnvironment();
         initCardDecks();
     }
 
@@ -93,7 +98,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
 
     @Override
     public boolean requestStartGame() {
-        if (users.size() > 1) {
+        if (users.size() > 1 && !gameStarted) {
             gameStartRequested = true;
             return true;
         }
@@ -151,15 +156,16 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         // Place the first card that will begin the game and remove it from the reserve.
         exposed.addFirst(covered.removeFirst());
 
-        // Send top card to all players and watchers.
+        // Send game environment to all users.
         broadcastEnvironment();
     }
 
     /** Broadcasts the current environment to all users in the game */
     protected void broadcastEnvironment() {
         try {
+            updateEnvironment();
             for (ServerCGMPRelay user : users.values()) {
-                user.sendEnvironment(getEnvironment());
+                user.sendEnvironment(environment);
             }
         }
         catch (CGMPException e) {
@@ -175,7 +181,20 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         currentPlayer = ++currentPlayer % players.size();
     }
 
-    public String getEnvironment() {
-        return String.format("CurrentPlayer: %s; TopCard: %s;", exposed.getFirst(), players.get(currentPlayer));
+    protected void updateEnvironment() {
+        if (players.size() > 0 && currentPlayer > -1) {
+            environment.put("CurrentPlayer", players.get(currentPlayer));
+        }
+        if (exposed.size() > 0) {
+            environment.put("TopCard", exposed.getFirst().toString());
+        }
+        environment.put("Players", players.toString());
+        environment.put("Viewers", viewers.toString());
+    }
+
+    @Override
+    public GameEnvironment getEnvironment() {
+        updateEnvironment();
+        return environment;
     }
 }
