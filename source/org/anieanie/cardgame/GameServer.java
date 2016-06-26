@@ -12,6 +12,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 import org.anieanie.cardgame.cgmp.ServerCGMPRelay;
+import org.anieanie.cardgame.environment.GameLoop;
 
 /**
  *
@@ -31,13 +32,15 @@ public class GameServer {
 
     public void start() {
         try {
-//            ServerCGMPRelay relay;
-//            CGMPMessage response;
-
             // Create a socket on server
             ss = new ServerSocket(serverPort);
 
             System.out.println("Server running on port " + ss.getLocalPort());
+
+            // Create a new GameLoop Thread where the game loop happens.
+            GameLoop gameloop = new GameLoop(gameMonitor);
+            gameloop.start();
+
             // ---------------------------------------------------------------
             // Now start accepting connections from clients in a while loop
             // The server should run in an infinite loop
@@ -52,7 +55,8 @@ public class GameServer {
                 workers.add(worker);
                 worker.start();
 
-                // Allow worker thread
+                // Free CPU cycles.
+                Thread.sleep(100);
             }	// End of while
 
         }	// End of try

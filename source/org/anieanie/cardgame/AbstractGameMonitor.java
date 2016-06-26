@@ -2,8 +2,10 @@ package org.anieanie.cardgame;
 
 import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
+import org.anieanie.cardgame.cgmp.CGMPException;
 import org.anieanie.cardgame.cgmp.ServerCGMPRelay;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
@@ -21,9 +23,18 @@ public abstract class AbstractGameMonitor implements GameMonitor {
      * The users participating in this card game.
      */
     protected Hashtable<String, ServerCGMPRelay> users;
-    protected ArrayList<String> players;	// the list of all players in the game
-    protected ArrayList<String> viewers;	// the list of all those watching the game
-    protected boolean gameStarted;	// true if a game is currently going on
+
+    // The list of all players in the game
+    protected ArrayList<String> players;
+
+    // The list of all those watching the game
+    protected ArrayList<String> viewers;
+
+    // Flag to mark that the game has already started.
+    protected boolean gameStarted = false;
+
+    // Flag to mark that the game should be started at the next scan.
+    protected boolean gameStartRequested = false;
 
     /**
      * The card decks for this game.
@@ -32,7 +43,9 @@ public abstract class AbstractGameMonitor implements GameMonitor {
     protected CardSet covered;
     protected CardSet dealed;
 
-    protected int stack_nums;
+    protected boolean gameWon;
+
+    protected int currentPlayer = 0;
 
 
     public AbstractGameMonitor() {
@@ -54,40 +67,62 @@ public abstract class AbstractGameMonitor implements GameMonitor {
     }
 
     @Override
-    public void addPlayer(String identifier) {
-        players.add(identifier);
+    public void addPlayer(String user) {
+        players.add(user);
     }
 
     @Override
-    public void addViewer(String identifier) {
-        viewers.add(identifier);
+    public void addViewer(String user) {
+        viewers.add(user);
     }
 
     @Override
-    public boolean isPlayer(String identifier) {
-        return players.contains(identifier);
+    public boolean isPlayer(String user) {
+        return players.contains(user);
     }
 
     @Override
-    public boolean isViewer(String identifier) {
-        return viewers.contains(identifier);
+    public boolean isViewer(String user) {
+        return viewers.contains(user);
     }
 
     @Override
-    public boolean canHaveCard(String identifier) {
-        return players.contains(identifier);
+    public boolean canHaveCard(String user) {
+        return players.get(currentPlayer).equals(user);
     }
 
     @Override
-    public boolean canStartGame() {
-        return users.size() > 1;
+    public boolean requestStartGame() {
+        if (users.size() > 1) {
+            gameStartRequested = true;
+            return true;
+        }
+        else {
+            gameStartRequested = false;
+            return false;
+        }
     }
 
     @Override
     public void startGame() {
-        covered.shuffle(20);    // shuffle the cards
-        dealCards();        // share the cards to each player
-        gameStarted = true;
+        // Only start if someone has requested game to start.
+        if (gameStartRequested && !gameStarted) {
+            covered.initialize();
+            covered.shuffle(20);    // shuffle the cards
+            dealCards();        // share the cards to each player
+            gameStarted = true;
+            gameStartRequested = false;
+        }
+    }
+
+    @Override
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
+
+    @Override
+    public boolean isGameWon() {
+        return gameWon;
     }
 
     protected void dealCards() {    // share the cards to the players
@@ -105,7 +140,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
                 // Remove topmost card and give to next player in line
                 // If she doesn't receive it put back it at the bottom of the pack
                 relay = users.get(player);
-                if (relay.sendCard(nextCard)) {
+                if (relay.sendCard(new Card[] {nextCard})) {
                     dealed.addFirst(nextCard);
                 }
                 else {
@@ -115,6 +150,32 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         }
         // Place the first card that will begin the game and remove it from the reserve.
         exposed.addFirst(covered.removeFirst());
+
+        // Send top card to all players and watchers.
+        broadcastEnvironment();
     }
 
+    /** Broadcasts the current environment to all users in the game */
+    protected void broadcastEnvironment() {
+        try {
+            for (ServerCGMPRelay user : users.values()) {
+                user.sendEnvironment(getEnvironment());
+            }
+        }
+        catch (CGMPException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void advanceGameTurn() {
+        // Increment the player position and broadcast position.
+        currentPlayer = ++currentPlayer % players.size();
+    }
+
+    public String getEnvironment() {
+        return String.format("CurrentPlayer: %s; TopCard: %s;", exposed.getFirst(), players.get(currentPlayer));
+    }
 }

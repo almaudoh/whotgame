@@ -8,7 +8,7 @@ import org.anieanie.card.AbstractCard;
 import org.anieanie.card.Card;
 
 public class WhotCard extends AbstractCard {
-    // static initializer for ramdom number generator
+    // static initializer for random number generator
     private static Random generator = new Random(System.currentTimeMillis());
     
     // class constants that specify the information for the whot cards
@@ -46,6 +46,12 @@ public class WhotCard extends AbstractCard {
     public static final int WHOT  = 5;
 
     // Static methods
+    public static boolean isIllegalCardSpec(String cardspec) {
+        String[] specs = cardspec.split(" ", 2);
+        int shape = Arrays.binarySearch(SHAPES, specs[0], null);
+        return specs.length < 2 || shape < 0 || WhotCard.isIllegal(shape, Integer.parseInt(specs[1]));
+    }
+
     /** 
      * This method returns true if that combination of shape and label is not allowed
      * False otherwise
@@ -93,7 +99,25 @@ public class WhotCard extends AbstractCard {
         this.label = label;
         this.shape = shape;
     }
-    
+
+    /**
+     * Creates a new WhotCard from the provided card specifications
+     */
+    public static WhotCard fromString(String cardspec) {
+        String[] parts = cardspec.split(" ", 2);
+        int intshape = -1;
+        for (int i = 0; i < 6; i++) {
+            if (parts[0].equalsIgnoreCase(SHAPES[i])) {
+                intshape = i;
+                break;
+            }
+        }
+        int intlabel = Integer.parseInt(parts[1].trim());
+        // Ensure the right label is used for the specified shape.
+        assertLegal(intshape, intlabel, parts[0]);
+        return new WhotCard(intshape, intlabel);
+    }
+
     public String getShapeString() {
         return SHAPES[this.shape];
     }
@@ -178,18 +202,4 @@ public class WhotCard extends AbstractCard {
         }
     }
     
-    protected AbstractCard getInstance(String string) {
-        String shape = string.substring(0, string.indexOf(' '));
-        int intshape = -1;
-        for (int i = 0; i < 6; i++) {
-            if (shape.equals(SHAPES[i])) {
-                intshape = i;
-                break;
-            }
-        }
-        int intlabel = Integer.parseInt(string.substring(string.indexOf(' ')).trim());
-        // Ensure the right label is used for the specified shape.
-        assertLegal(intshape, intlabel, shape);
-        return new WhotCard(intshape, intlabel);
-    }
 }

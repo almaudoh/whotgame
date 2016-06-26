@@ -28,6 +28,11 @@ public class TestServerCGMPRelayListener implements ServerCGMPRelayListener {
     }
 
     @Override
+    public void moveReceived(String move) {
+
+    }
+
+    @Override
     public void clientConnected(String identifier) {
 
     }
@@ -59,6 +64,11 @@ public class TestServerCGMPRelayListener implements ServerCGMPRelayListener {
 
     @Override
     public void errorReceived(int errorcode) {
+
+    }
+
+    @Override
+    public void infoReceived(String info) {
 
     }
 }

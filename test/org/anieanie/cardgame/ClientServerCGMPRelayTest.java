@@ -68,7 +68,6 @@ public class ClientServerCGMPRelayTest {
 
         assertTrue(clientRelay.connect("game_client"));
         assertTrue(clientRelay.requestPlay());
-        assertEquals(clientRelay.requestCard(), AbstractCard.fromString("Circle 10"));
         assertEquals(clientRelay.sendRequest(START), CGMPMessage.acknowledgement());
 
         new Verifications() {{

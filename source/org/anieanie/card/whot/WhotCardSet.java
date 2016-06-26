@@ -13,7 +13,7 @@ public class WhotCardSet extends CardSet {
     // Constructor
     public WhotCardSet() {}
 
-    public void fillCardSet() {
+    public void initialize() {
         for (int shape = WhotCard.STAR; shape < WhotCard.WHOT; shape++) {
             for (int label = WhotCard.L_LIMIT; label <= WhotCard.U_LIMIT; label++) {
                 if (!WhotCard.isIllegal(shape, label)) {
@@ -29,11 +29,6 @@ public class WhotCardSet extends CardSet {
         }
     }
 
-    // private constructor for clone method
-//    protected WhotCardSet(LinkedList<Card> list) {
-//        cardlist = list;
-//    }
-
     public boolean isDuplicate(Card card) {
         // WhotCards are not considered as duplicate unless they are more than 5.
         return cardlist.contains(card) && (card.getShape() != WhotCard.WHOT || countWhots() >= 5);
@@ -47,10 +42,4 @@ public class WhotCardSet extends CardSet {
         return numwhots;
     }
 
-//    // Public methods overriding Object
-//    public Object clone() {
-//        LinkedList<Card> list = new LinkedList<Card>();
-//        Collections.copy(list, cardlist);
-//        return new WhotCardSet(list);
-//    }
 }

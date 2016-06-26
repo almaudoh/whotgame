@@ -45,7 +45,7 @@ public class TestCGMPRelay extends CGMPRelay {
     }
 
     @Override
-    protected void handleResponse(CGMPMessage response) {
+    protected void handleMessage(CGMPMessage response) {
 
     }
 }

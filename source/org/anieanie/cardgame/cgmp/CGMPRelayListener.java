@@ -32,4 +32,5 @@ public interface CGMPRelayListener {
 
     void errorReceived(int errorcode);
 
+    void infoReceived(String info);
 }

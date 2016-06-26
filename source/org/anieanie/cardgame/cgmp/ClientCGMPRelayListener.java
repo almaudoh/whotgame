@@ -15,9 +15,6 @@ public interface ClientCGMPRelayListener extends CGMPRelayListener {
     /** Called when client CGMPRelay receives request for move from worker CGMPRelay */
     void moveRequested();
 
-    /** Called when client CGMPRelay receives confirmation of validity of move from worker CGMPRelay */
-    void moveAccepted(String moveSpec);
-
     /** Called when client CGMPRelay receives environment from worker CGMPRelay */
     void envReceived(String envSpec);
 
@@ -27,5 +24,4 @@ public interface ClientCGMPRelayListener extends CGMPRelayListener {
     /** Called when the client CGMPRelay receives notice that someone has won from the worker CGMPRelay
      * @param winner*/
     void gameWon(String winner);
-
 }

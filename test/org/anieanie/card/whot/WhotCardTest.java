@@ -97,7 +97,7 @@ public class WhotCardTest {
     @Test(dataProvider = "from_string", dataProviderClass = WhotCardTestProvider.class)
     public void FromString(String string, WhotCard card) {
         // @todo Move this to AbstractCardTest when mocking is available.
-        WhotCard newCard = (WhotCard) WhotCard.fromString(string);
+        WhotCard newCard = WhotCard.fromString(string);
         assertEquals(newCard, card);
     }
     

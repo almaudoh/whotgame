@@ -37,6 +37,7 @@ import java.lang.reflect.Field;
  * <ol>
  * <li>Environment (game position) &nbsp; &nbsp; server to client &nbsp; &nbsp; &nbsp; &nbsp; ACK, NAK
  * <li>Confirmation of move &nbsp; &nbsp; &nbsp; server to client &nbsp; &nbsp; &nbsp; &nbsp; ACK, NAK
+ * <li>Rejection of move &nbsp; &nbsp; &nbsp; server to client &nbsp; &nbsp; &nbsp; &nbsp; ACK, NAK
  * <li>Send Move &nbsp; &nbsp; &nbsp;  &nbsp; client to server &nbsp; &nbsp; &nbsp; &nbsp; ACK, NAK
  * <li>Send Card &nbsp; &nbsp; &nbsp;  &nbsp; server to client &nbsp; &nbsp; &nbsp; &nbsp; ACK, NAK
  * <li>State Game winner &nbsp; &nbsp; &nbsp; server to client &nbsp; &nbsp; &nbsp; &nbsp; ACK, NAK
@@ -93,6 +94,8 @@ import java.lang.reflect.Field;
  * Wait while processing  &nbsp; &nbsp; &nbsp;   WAIT
  * Error in syntax  &nbsp; &nbsp; &nbsp; &nbsp;  ERR
  *
+ * Free form information                         INFO [free form information]
+ *
  * @author  aaudoh1
  */
 public final class CGMPSpecification {
@@ -135,6 +138,11 @@ public final class CGMPSpecification {
     public static final String MACK = "MACK";
 
     /**
+     * Constant holding value of move reject keyword
+     */
+    public static final String MNAK = "MNAK";
+
+    /**
      * Constant holding value of card keyword
      */
     public static final String CARD = "CARD";
@@ -170,9 +178,14 @@ public final class CGMPSpecification {
     public static final String TERM = "TERM";
 
     /**
+     * Constant holding value of information keyword
+     */
+    public static final String INFO = "INFO";
+
+    /**
      * Constant holding the value for the client-server handshake.
      */
-    public static final java.lang.String HANDSHAKE = "HELLO";
+    public static final String HANDSHAKE = "HELLO";
 
     /**
      * Constant holding the value for the game start keywork.
@@ -189,7 +202,7 @@ public final class CGMPSpecification {
      * The number of milliseconds a CGMPRelay will block waiting to read from a socket's
      * input stream before continuing as if no data was read
      */
-    public static int READ_TIMEOUT = 10;
+    public static int READ_TIMEOUT = 100;
 
     /**
      * Compare the supplied argument with the valid keywords in this class
@@ -220,11 +233,11 @@ public final class CGMPSpecification {
     public static boolean isValidSyntax(String op, String arg) {
         if (op.equals(REQ)) {
             return arg.equals(PLAY)
-                    || arg.equals(VIEW)
-                    || arg.equals(ENVR)
-                    || arg.equals(MOVE)
-                    || arg.equals(CARD)
-                    || arg.equals(START);
+                || arg.equals(VIEW)
+                || arg.equals(ENVR)
+                || arg.equals(MOVE)
+                || arg.equals(CARD)
+                || arg.equals(START);
         }
 
         else if (op.equals(ENVR)) {
@@ -240,6 +253,10 @@ public final class CGMPSpecification {
         }
 
         else if (op.equals(MACK)) {
+            return true;
+        }
+
+        else if (op.equals(MNAK)) {
             return true;
         }
 
@@ -260,6 +277,10 @@ public final class CGMPSpecification {
         }
 
         else if (op.equals(WAIT)) {
+            return true;
+        }
+
+        else if (op.equals(INFO)) {
             return true;
         }
 

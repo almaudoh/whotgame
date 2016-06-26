@@ -2,6 +2,7 @@ package org.anieanie.cardgame.utils;
 
 import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
+import org.anieanie.card.whot.WhotCard;
 import org.anieanie.cardgame.AbstractGameClient;
 import org.anieanie.cardgame.CLIGameClient;
 import org.anieanie.cardgame.cgmp.CGMPException;
@@ -27,10 +28,8 @@ public class CommandLineReader implements Runnable {
 
     // Wait for input on a separate thread
     public void run() {
-        // ---------------------------------
-        String choice = "z";
-        String chmod = "@";
-        String card = "";
+        char choice = 'z';
+        String cardSpec = "";
 
         // Display the initial help menu and game status.
         showHelpMenu();
@@ -41,47 +40,65 @@ public class CommandLineReader implements Runnable {
          *
          * This loop continues until there is a winner as announced by the server or you resign.
          */
-        while (gameClient.getClientStatus() != AbstractGameClient.STATUS_GAME_WON && choice.charAt(0) != '#') {
-            // Show a prompt
-            System.out.print(">> ");
+        while (gameClient.getClientStatus() != AbstractGameClient.STATUS_GAME_WON && choice != '#') {
             choice = getValidInput();
 
-            if (choice.equals("?")) {
-                showHelpMenu();
-            }
-            else if (choice.equals("1")) {
-                gameClient.startGame();
-            }
-            else if (choice.equals(("2"))) {
-                showGameStatus();
-            }
-            else if (choice.equals("3")) {
-                displayCards(gameClient.getCards());
-            }
-            else if (choice.equals("4")) {
-                // Play allowed only if it is our turn.
-                if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_FOR_USER) {
-                    try {
-                        card = input.readLine();
-                        gameClient.playCard(card);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+            switch (choice) {
+                case '?':
+                    showHelpMenu();
+                    break;
+                case '1':
+                    gameClient.startGame();
+                    System.out.println("Game start requested");
+                    break;
+                case '2':
+                    // Show current game status.
+                    showGameStatus();
+                    // Play allowed only if it is our turn.
+                    if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_FOR_USER) {
+                        try {
+                            while (true) {
+                                System.out.println("Type the card you wish to play (e.g. Circle 3), type MARKET to go market or # to go back");
+                                System.out.print(">>");
+                                cardSpec = input.readLine();
+                                if (cardSpec.charAt(0) == '#') {
+                                    break;
+                                }
+                                else if (cardSpec.equalsIgnoreCase("MARKET")) {
+                                    gameClient.requestCard();
+                                    break;
+                                }
+                                else {
+                                    // Validate the card before playing.
+                                    if (WhotCard.isIllegalCardSpec(cardSpec)) {
+                                        System.out.println("Illegal card specified '" + cardSpec + "'");
+                                    }
+                                    else {
+                                        gameClient.playCard(cardSpec);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
-                }
-                else {
-                    System.out.println("Not your turn to play yet!");
-                }
+                    else {
+                        System.out.println("Not your turn to play yet!");
+                    }
+                    break;
+
+                default:
+
             }
-            else if (choice.equals("5")) {
-                // Play allowed only if it is our turn.
-                if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_FOR_USER) {
-                    gameClient.requestCard();
-                }
-                else {
-                    System.out.println("Not your turn to play yet!");
-                }
+            // Release CPU cycles.
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        }
+        }   // End game loop while
 
         try {
             gameClient.close();
@@ -120,14 +137,11 @@ public class CommandLineReader implements Runnable {
     private void showHelpMenu() {
         // Give the user a menu .
         System.out.println(
-                "\n\nEnter:\n"
+                "\nType:\n"
                         + "      (#) to disconnect from server.\n"
                         + "      (?) to show this help menu.\n\n"
                         + "      (1) To start a new game.\n"
-                        + "      (2) To view game status.\n"
-                        + "      (3) To view your hand.\n"
-                        + "      (4) To play a card.\n"
-                        + "      (5) To pick market."
+                        + "      (2) To play a move."
         );
         System.out.println("Choose an option:");
     }
@@ -137,31 +151,39 @@ public class CommandLineReader implements Runnable {
         for (Card card : cards.getCardlist()) {
             displayedCards.append(card).append(" | ");
         }
-        System.out.println("Your cards: " + displayedCards);
+        System.out.printf("Your cards: %s%n", displayedCards);
+
         // @todo: Need to abstract this top card for non-Whot games.
-        System.out.println("Top card: " + ((CLIGameClient)gameClient).getTopCard());
+        System.out.printf("Top card: %s", ((CLIGameClient) gameClient).getTopCard());
+
+        String calledCard = ((CLIGameClient) gameClient).getCalledCard();
+        if (calledCard != null && !calledCard.equals("")) {
+            System.out.printf("Top card: %s", calledCard);
+        }
+        System.out.print('\n');
     }
 
-    private String getValidInput() {
-        String strInput = "";
+    private char getValidInput() {
+        String line;
         while (true) {
             try {
-                while (strInput.length() <= 0) {
-                    strInput = input.readLine();
-                    switch (strInput.charAt(0)) {
-                        case '#': // Disconnect from the server.
-                        case '1': // Start a new game.
-                        case '2': // View game status (all card stacks).
-                        case '3': // View your card stack.
-                        case '4': // Play a card.
-                        case '5': // Pick market.
-                            return strInput;
-                        default:    // Wrong entry, ask for a correct entry.
-                            System.out.println("Type [1 - 5] or #, type ? for help:");
-                    }
+                // Show a prompt
+                System.out.print(">> ");
+                line = input.readLine();
+                switch (line.charAt(0)) {
+                    case '#': // Disconnect from the server.
+                    case '?': // Disconnect from the server.
+                    case '1': // Start a new game.
+                    case '2': // Play a move
+                        return line.charAt(0);
+                    default:    // Wrong entry, ask for a correct entry.
+                        System.out.println("Type 1 to start, 2 to play, '#' to exit game or '?' for help " + Thread.currentThread());
                 }
+                Thread.sleep(50);
             } catch (IOException ex) {
                 ex.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
 

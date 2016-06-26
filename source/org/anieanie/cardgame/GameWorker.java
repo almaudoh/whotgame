@@ -8,6 +8,7 @@ package org.anieanie.cardgame;
 
 import java.io.IOException;
 
+import org.anieanie.card.AbstractCard;
 import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.cardgame.utils.Debugger;
 
@@ -17,7 +18,6 @@ import org.anieanie.cardgame.utils.Debugger;
  */
 public class GameWorker extends Thread implements ServerCGMPRelayListener {
 
-    // Socket socket;
     private String username;
     private GameMonitor monitor;
     private ServerCGMPRelay relay;
@@ -52,7 +52,7 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
     }	// End of run()
 
     /**
-     * getter for the CGMPRelay so that they can be accessed directly
+     * Getter for the CGMPRelay so that they can be accessed directly
      */
     public CGMPRelay getRelay() {
         return this.relay;
@@ -107,6 +107,21 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         }
     }
 
+    /** Called when worker CGMPRelay receives request to start the game from a client CGMPRelay */
+    public void gameStartRequested() {
+        try {
+            if (monitor.requestStartGame()) {
+                relay.sendAcknowledgement();
+            } else {
+                relay.sendRejection();
+            }
+        } catch (CGMPException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     /** Called when worker CGMPRelay receives request for environment from client CGMPRelay */
     public void envRequested() {
         if (monitor.isViewer(username)) {
@@ -116,25 +131,47 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
 
     /** Called when worker CGMPRelay receives request for card from client CGMPRelay */
     public void cardRequested() {
+        // Only if it's the player's turn will a card be sent.
         if (monitor.canHaveCard(username)) {
             relay.sendCard(monitor.getCardForUser(username));
         }
+        else {
+            try {
+                relay.sendRejection();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            catch (CGMPException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
-    /** Called when worker CGMPRelay receives request to start the game from a client CGMPRelay */
-    public void gameStartRequested() {
+    public void moveReceived(String move) {
         try {
-            if (monitor.canStartGame()) {
-                relay.sendAcknowledgement();
-                monitor.startGame();
-            } else {
-                relay.sendRejection();
+            // Check if it is the user's turn.
+            if (monitor.canMakeMove(username)) {
+                if (monitor.receiveMoveFromUser(move, username)) {
+                    relay.sendMoveAcknowledgment(move);
+                }
+                else {
+                    relay.sendMoveRejection(move);
+                }
+            }
+            else {
+                // @todo A better way to send more specific error messages to the client.
+                relay.sendError(CGMPSpecification.Error.BAD_SYN);
             }
         } catch (CGMPException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void infoReceived(String info) {
+        monitor.handleInfoReceived(info, username);
     }
 
     /**

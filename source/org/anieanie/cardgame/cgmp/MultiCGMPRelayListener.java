@@ -97,6 +97,13 @@ public class MultiCGMPRelayListener implements CGMPRelayListener {
         }
     }
 
+    @Override
+    public void infoReceived(String info) {
+        for (CGMPRelayListener listener : listeners) {
+            listener.infoReceived(info);
+        }
+    }
+
     public static class ServerMultiCGMPRelayListener extends MultiCGMPRelayListener implements ServerCGMPRelayListener {
 
         // Constructors
@@ -137,6 +144,13 @@ public class MultiCGMPRelayListener implements CGMPRelayListener {
         }
 
         @Override
+        public void moveReceived(String move) {
+            for (ServerCGMPRelayListener listener : (ServerCGMPRelayListener[]) listeners) {
+                listener.moveReceived(move);
+            }
+        }
+
+        @Override
         public void clientConnected(String identifier) {
             for (ServerCGMPRelayListener listener : (ServerCGMPRelayListener[]) listeners) {
                 listener.clientConnected(identifier);
@@ -166,13 +180,6 @@ public class MultiCGMPRelayListener implements CGMPRelayListener {
         public void moveRequested() {
             for (ClientCGMPRelayListener listener : (ClientCGMPRelayListener[]) listeners) {
                 listener.moveRequested();
-            }
-        }
-
-        @Override
-        public void moveAccepted(String moveSpec) {
-            for (ClientCGMPRelayListener listener : (ClientCGMPRelayListener[]) listeners) {
-                listener.moveAccepted(moveSpec);
             }
         }
 

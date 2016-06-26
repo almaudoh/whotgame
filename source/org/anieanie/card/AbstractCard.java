@@ -13,10 +13,10 @@ package org.anieanie.card;
 public abstract class AbstractCard implements Comparable, java.io.Serializable, Cloneable, Card {
     protected int label;
     protected int shape;
-    protected static String __subclass;
+    protected static String __subclass = "org.anieanie.card.whot.WhotCard";
     
     public static String getSubClass() {
-        return "org.anieanie.card.whot.WhotCard";
+        return __subclass;
     }
     
     /** Creates a new instance of AbstractCard */
@@ -36,29 +36,7 @@ public abstract class AbstractCard implements Comparable, java.io.Serializable, 
     public String toString() {
         return shape + " " + label;
     }
-    
-    /**
-     * Creates a new AbstractCard subclass whose type is specified
-     */
-    public static AbstractCard fromString(String cardspec) {
-        try {
-            return ((AbstractCard)Class.forName(getSubClass()).newInstance()).getInstance(cardspec);
-        }
-        catch (ClassNotFoundException cnfe) {
-            cnfe.printStackTrace();
-        }
-        catch (InstantiationException ie) {
-            ie.printStackTrace();
-        }
-        catch (IllegalAccessException iae) {
-            iae.printStackTrace();
-        }
-        catch (ClassCastException cce) {
-            cce.printStackTrace();
-        }
-        return null;
-    }
-    
+
     /**
      * Specifies subclass of AbstractClass currently active
      */
@@ -66,13 +44,6 @@ public abstract class AbstractCard implements Comparable, java.io.Serializable, 
         __subclass = subclass;
     }
     
-    /** 
-     * This method is needed to create a valid instance of a subclass of AbstractCard
-     * @param cardspec The string from which the Card object is created
-     * @return A card object created from a string
-     */
-    protected abstract AbstractCard getInstance(String cardspec);
-
     /**
      * Creates a new object that is <code>equal()</code> to this object
      * This method must be overridden by its concrete subclass

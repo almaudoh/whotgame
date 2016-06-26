@@ -13,11 +13,6 @@ public class TestClientCGMPRelayListener implements ClientCGMPRelayListener {
     }
 
     @Override
-    public void moveAccepted(String moveSpec) {
-
-    }
-
-    @Override
     public void envReceived(String envSpec) {
 
     }
@@ -54,6 +49,11 @@ public class TestClientCGMPRelayListener implements ClientCGMPRelayListener {
 
     @Override
     public void errorReceived(int errorcode) {
+
+    }
+
+    @Override
+    public void infoReceived(String info) {
 
     }
 }

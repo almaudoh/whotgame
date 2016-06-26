@@ -71,21 +71,6 @@ public abstract class CGMPRelay {
         }
     }
 
-    /**
-     * Scans the socket for any outstanding or impending messages from the other end.
-     *
-     * This method must be called frequently (every 0.2 - 0.5 seconds recommended) from
-     * a separate thread to ensure that messages don't get locked in for too long and that
-     * the socket input buffer doesn't overflow.
-     * The action of this method is to call the relevant function of its <CODE>listener
-     * (CGMPRelayListener)</CODE> according to the message received.
-     */
-    public CGMPMessage scan() throws IOException, CGMPException {
-        CGMPMessage response = readMessage(0);
-        handleResponse(response);
-        return response;
-    }
-    
     public Socket getSocket() {
         return this.socket;
     }
@@ -131,6 +116,21 @@ public abstract class CGMPRelay {
     }
 
     /**
+     * Scans the socket for any outstanding or impending messages from the other end.
+     *
+     * This method must be called frequently (every 0.2 - 0.5 seconds recommended) from
+     * a separate thread to ensure that messages don't get locked in for too long and that
+     * the socket input buffer doesn't overflow.
+     * The action of this method is to call the relevant function of its <CODE>listener
+     * (CGMPRelayListener)</CODE> according to the message received.
+     */
+    public CGMPMessage scan() throws IOException, CGMPException {
+        CGMPMessage message = readMessage(0);
+        handleMessage(message);
+        return message;
+    }
+
+    /**
      * Used by Game Client or Worker to terminate the connection before closing
      */
     public void terminateRelay() throws IOException, CGMPException {
@@ -151,6 +151,14 @@ public abstract class CGMPRelay {
 
     public CGMPMessage sendRequest(String request) throws CGMPException, IOException {
         return sendMessage(CGMPMessage.request(request), true);
+    }
+
+    public void sendNonBlockingRequest(String request) throws CGMPException, IOException {
+        sendMessage(CGMPMessage.request(request), false);
+    }
+
+    public void sendInformation(String information) throws CGMPException, IOException {
+        sendMessage(new CGMPMessage(CGMPSpecification.INFO, information), false);
     }
 
     /**
@@ -175,20 +183,19 @@ public abstract class CGMPRelay {
         CGMPMessage response;
         // Clear read and write buffers.
         pr.flush();
-        while (br.ready() && br.read() != 0) {
-        }
+        while (br.ready() && br.read() != 0) {}
         bufferOut(msg);
         onSendMessage(msg);
 
         // Only read back if needed.
         if (readBack) {
             response = readMessage(0);
-        /* Error handling code */
-            if (response.isError()) {
+            /* Error handling code */
+//            if (response.isError()) {
                 // @todo Should we be pushing out ACK's for errors too???
-                bufferOut(CGMPMessage.acknowledgement());
-                onReceiveError(response.getError());
-            }
+//                bufferOut(CGMPMessage.acknowledgement());
+//                onReceiveError(response.getError());
+//            }
             return response;
         }
         return null;
@@ -266,11 +273,19 @@ public abstract class CGMPRelay {
         onBufferOut(message.toString());
     }
 
+    /**
+     *
+     * @param timeout The duration in milliseconds to keep trying to read before timing out.
+     * @return The input read as a string or null if timed out.
+     * @throws IOException
+     */
     protected String bufferIn(int timeout) throws IOException {
-        int time = 0;
-        while (!br.ready() && time++ < CGMPSpecification.MAX_TRIES) {
+        int max_cycles = 100;
+
+        // Make at most 100 attempts within the specified timeout.
+        for (int cycles = 0; !br.ready() && cycles < max_cycles; cycles++) {
             try {
-                Thread.sleep(timeout);
+                Thread.sleep(timeout / max_cycles);
             } catch (InterruptedException e) {
                 // TODO: 5/21/16
                 e.printStackTrace();
@@ -300,7 +315,7 @@ public abstract class CGMPRelay {
         return false;
     }
     
-    protected abstract void handleResponse(CGMPMessage response);
+    protected abstract void handleMessage(CGMPMessage response);
 
     // Events
     protected void onSendMessage(CGMPMessage message) {

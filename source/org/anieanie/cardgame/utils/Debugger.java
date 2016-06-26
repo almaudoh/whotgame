@@ -25,6 +25,9 @@ public class Debugger {
             public void errorReceived(int errorcode) {}
 
             @Override
+            public void infoReceived(String info) {}
+
+            @Override
             public void onBufferOut(String message) {
                 System.out.println(name + ": ==> " + message + " [Thread " + Thread.currentThread().getName() + "]");
             }

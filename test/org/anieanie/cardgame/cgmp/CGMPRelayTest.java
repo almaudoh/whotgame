@@ -28,7 +28,7 @@ public class CGMPRelayTest {
 
 //    @Test
     public void testScan() throws Exception {
-        // @TODO add assertion / expectation that handleResponse() is invoked.
+        // @TODO add assertion / expectation that handleMessage() is invoked.
 
     }
 
@@ -231,6 +231,30 @@ public class CGMPRelayTest {
         relay.sendAcknowledgement();
 
         assertEquals(bais.available(), 0);
+    }
+
+    @Test
+    public void bufferInTimeout() throws Exception {
+        final PipedOutputStream pos = new PipedOutputStream();
+        final PipedInputStream pis = new PipedInputStream(pos);
+
+        // Expectations.
+        new Expectations() {{
+            socket.getOutputStream(); returns(new PipedOutputStream());
+            socket.getInputStream(); returns(pis);
+        }};
+
+        long start = System.currentTimeMillis();
+
+        // Exercise method under test. Attempt buffer in and .
+        CGMPRelay relay = new TestCGMPRelay(socket, null);
+        String response = relay.bufferIn(12000);
+
+        long end = System.currentTimeMillis();
+
+        // Check equality to the significant hundreds, i.e. 12000 / 100.
+        assertEquals(Math.floor((end - start)/100), 120.0);
+        assertEquals(response, null);
     }
 
     @Test

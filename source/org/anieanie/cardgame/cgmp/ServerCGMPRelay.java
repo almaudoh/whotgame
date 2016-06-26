@@ -9,7 +9,6 @@ package org.anieanie.cardgame.cgmp;
 import java.io.IOException;
 import java.net.*;
 
-import org.anieanie.card.AbstractCard;
 import org.anieanie.card.Card;
 
 /**
@@ -27,85 +26,55 @@ public class ServerCGMPRelay extends CGMPRelay {
         super(s, sl);
     }
     
-    /** Used by Game Worker to request a move from the client
-     * @return Object A (Card) object representing the move chosen by the client or null if unsuccessful
+    /**
+     * Used by Game Worker to request a move from the client. This tells the client that it is his turn to play.
      */
-    public Card requestMove() {
-        try {
-            int trials = 0;
-            CGMPMessage response = sendRequest(CGMPSpecification.MOVE);
-            String op = response.getKeyword();
-
-            // Loop until you get a valid message or maximum number of tries is exceeded
-            while (!op.equals(CGMPSpecification.MOVE) && ++trials < CGMPSpecification.MAX_TRIES) {
-                if (!op.equals("")) sendError(CGMPSpecification.Error.BAD_MSG);
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-                response = sendRequest(CGMPSpecification.MOVE);
-                op = response.getKeyword();
-            }
-            if (!op.equals(CGMPSpecification.MOVE)) return null;
-            return AbstractCard.fromString(response.getArguments());
-        }
-        catch (CGMPException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+    public void requestMove() throws IOException, CGMPException {
+        sendMessage(CGMPMessage.request(CGMPSpecification.MOVE), false);
     }
 
     /**
-     * Used by Game Worker to accept/confirm move it received from the game client
+     * Used by Game Worker to accept a move it received from the game client
      */
-    public void acceptMove(Card card) {
-        try {
-            sendMessage(new CGMPMessage(CGMPSpecification.MACK, card.toString()), false);
-        }
-        catch (CGMPException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void sendMoveAcknowledgment(String move) throws IOException, CGMPException {
+        sendMessage(new CGMPMessage(CGMPSpecification.MACK, move), false);
+    }
+
+    /**
+     * Used by Game Worker to reject a move it received from the game client
+     */
+    public void sendMoveRejection(String move) throws IOException, CGMPException {
+        sendMessage(new CGMPMessage(CGMPSpecification.MNAK, move), false);
     }
 
     /** Used by Game Worker to send a copy of the Game Environment to the Game Clients
      * @param env The environment object to be sent
      */
-    public void sendEnvironment(Object env) {
-        try {
-            sendMessage(new CGMPMessage(CGMPSpecification.ENVR , env.toString()), false);
-        }
-        catch (CGMPException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void sendEnvironment(Object env) throws IOException, CGMPException {
+        sendMessage(new CGMPMessage(CGMPSpecification.ENVR , env.toString()), false);
     }
 
     /** Used by Game Worker to send a card to the Game client
-     * @param card The Card object to be sent
+     * @param cards An array of Card objects to be sent
      * @return boolean true if card was successfully received, false otherwise
      */
-    public boolean sendCard(Card card) {
-        try {
-            CGMPMessage response = sendMessage(new CGMPMessage(CGMPSpecification.CARD , card.toString()), true);
-            return response.isAcknowledgement();
-        }
-        catch(CGMPConnectionException e) {
-            // We may not always have a response from scans.
-        }
-        catch (CGMPException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
+    public boolean sendCard(Card[] cards) {
+        if (cards.length > 0) {
+            try {
+                StringBuilder strCards = new StringBuilder();
+                for (Card card : cards) {
+                    strCards.append(card.toString()).append(';');
+                }
+                strCards.deleteCharAt(strCards.length() - 1);
+                CGMPMessage response = sendMessage(new CGMPMessage(CGMPSpecification.CARD, strCards.toString()), true);
+                return response.isAcknowledgement();
+            } catch (CGMPConnectionException e) {
+                // We may not always have a response from scans.
+            } catch (CGMPException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return false;
     }
@@ -126,9 +95,9 @@ public class ServerCGMPRelay extends CGMPRelay {
     }
 
     /**
-     * This method is called by the scan() method to handle the message received during a passive scan
+     * This method is called by the scan() method to handle the message received during a passive scan.
      */
-    protected void handleResponse(CGMPMessage response) {
+    protected void handleMessage(CGMPMessage response) {
         if (this.listener == null) {
             return;
         }
@@ -170,15 +139,7 @@ public class ServerCGMPRelay extends CGMPRelay {
 
         else if (op.equals(CGMPSpecification.MOVE)) {
             // Can't receive a move without asking for it
-            // listener.moveReceived(Card.fromString(arg));
-        }
-
-        else if (op.equals(CGMPSpecification.MACK)) {
-            // listener.moveAccepted(arg);
-        }
-
-        else if (op.equals(CGMPSpecification.WON)) {
-            // listener.gameWon();
+            listener.moveReceived(arg);
         }
 
         else if (op.equals(CGMPSpecification.TERM)) {

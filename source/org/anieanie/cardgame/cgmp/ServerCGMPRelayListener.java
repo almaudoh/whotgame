@@ -24,6 +24,9 @@ public interface ServerCGMPRelayListener extends CGMPRelayListener {
     /** Called when worker CGMPRelay receives request for card from client CGMPRelay */
     void cardRequested();
 
+    /** Called when the worker CGMPRelay receives a move from the client CGMPRelay */
+    void moveReceived(String move);
+
     /**
      * Called when worker CGMPRelay receives a connection request from client CGMPRelay
      *

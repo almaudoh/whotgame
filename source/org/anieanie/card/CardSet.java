@@ -54,7 +54,11 @@ public class CardSet extends AbstractSet implements Cloneable, Serializable, Set
     public LinkedList<Card> getCardlist() {
         return cardlist;
     }
-    
+
+
+    /** Initializes the cardset with its actual contents */
+    public void initialize() {}
+
     // public instance methods
     public boolean add(Card card) {
         if (isDuplicate(card)) {
@@ -187,5 +191,5 @@ public class CardSet extends AbstractSet implements Cloneable, Serializable, Set
     public int indexOf(Card card) {
         return cardlist.indexOf(card);
     }
-    
+
 }

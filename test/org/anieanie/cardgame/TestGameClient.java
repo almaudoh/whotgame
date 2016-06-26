@@ -85,6 +85,7 @@ public class TestGameClient extends AbstractGameClient {
         }
     }
 
+    @Override
     protected void run() {
         try {
             // Declarations to manage connection
@@ -156,7 +157,8 @@ public class TestGameClient extends AbstractGameClient {
             System.exit(0);
         }	// End of exception
     }
-    
+
+    @Override
     public String getUsername() {
         String strUserName = "";	// User name of client
         try {
@@ -170,7 +172,7 @@ public class TestGameClient extends AbstractGameClient {
             return null;
         }
     }
-    
+
     public static void doAction(int actioncode) {
 
     }
@@ -178,33 +180,40 @@ public class TestGameClient extends AbstractGameClient {
     /*
      * Methods implemented by interface ClientCGMPRelayListener
      */
-    
+    @Override
     public void finalize() throws Throwable {
         System.out.println("Finalize called!");
         super.finalize();
     }
-    
+
+    @Override
     public void moveRequested() {
     }
-    
-    public void moveAccepted(String moveSpec) {
-    }
-    
+
+    @Override
     public void envReceived(String envSpec) {
     }
-    
+
+    @Override
     public void cardReceived(String cardSpec) {
 
     }
-    
+
+    @Override
     public void gameWon(String winner) {
     }
-    
+
+    @Override
     public void relayTerminated() {
 
     }
-    
+
+    @Override
     public void errorReceived(int errorcode) {
+    }
+
+    @Override
+    public void infoReceived(String info) {
     }
 
 }

@@ -6,9 +6,7 @@
 
 package org.anieanie.cardgame.cgmp;
 
-import org.anieanie.card.AbstractCard;
-import org.anieanie.card.Card;
-import org.anieanie.cardgame.environment.GameEnvironment;
+import org.anieanie.cardgame.environment.GameLoop;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -74,7 +72,7 @@ public class ClientCGMPRelay extends CGMPRelay {
      * @return Object An object representing the current Game Environment
      *    or null if unsuccessful
      */
-   public Object requestEnvironment(GameEnvironment env) {
+   public Object requestEnvironment(GameLoop env) {
         try {
             int trials = 0;
             CGMPMessage msg = sendRequest(CGMPSpecification.ENVR);
@@ -100,29 +98,21 @@ public class ClientCGMPRelay extends CGMPRelay {
        return null;
     }
     
-    /**
-     * Used by Game Client to request a card to be given to them.
-     *
-     * @return Object An object (Card) representing the card given or null if unsuccessful
-     */
-    public Card requestCard() throws CGMPException, IOException {
-        int trials = 0;
-        CGMPMessage msg = sendRequest(CGMPSpecification.CARD);
-        String op = msg.getKeyword();
-
-        // Loop until you get a valid message or maximum number of tries is exceeded
-        while (!op.equals(CGMPSpecification.CARD) && ++trials < CGMPSpecification.MAX_TRIES) {
-            sendError(CGMPSpecification.Error.BAD_MSG);
-            msg = sendRequest(CGMPSpecification.CARD);
-            op = msg.getKeyword();
+    public boolean sendCard(String cardspec) throws IOException, CGMPException {
+        CGMPMessage response = sendMessage(new CGMPMessage(CGMPSpecification.MOVE, cardspec), true);
+        if (response.getKeyword().equals(CGMPSpecification.MACK)) {
+            // Server returns invalid response.
+            return true;
         }
-        if (!op.equals(CGMPSpecification.CARD)) {
-            throw new CGMPException("Invalid card specifications given");
+        else if (response.getKeyword().equals(CGMPSpecification.MNAK)) {
+            return false;
         }
-        return AbstractCard.fromString(msg.getArguments());
+        else {
+            throw new CGMPException("Invalid response from server");
+        }
     }
     
-    protected void handleResponse(CGMPMessage response) {
+    protected void handleMessage(CGMPMessage response) {
         if (this.listener == null) {
             return;
         }
@@ -150,16 +140,11 @@ public class ClientCGMPRelay extends CGMPRelay {
         else if (op.equals(CGMPSpecification.CARD)) {
             listener.cardReceived(arg);
         }
-        
-        else if (op.equals(CGMPSpecification.MOVE)) {
-            // Can't receive a move without asking for it
-            // listener.moveReceived(Card.fromString(arg));
+
+        else if (op.equals(CGMPSpecification.INFO)) {
+            listener.infoReceived(arg);
         }
-        
-        else if (op.equals(CGMPSpecification.MACK)) {
-            listener.moveAccepted(arg);
-        }
-        
+
         else if (op.equals(CGMPSpecification.WON)) {
             listener.gameWon(arg);
         }
