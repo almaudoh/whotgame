@@ -48,8 +48,15 @@ public class CommandLineReader implements Runnable {
                     showHelpMenu();
                     break;
                 case '1':
-                    gameClient.startGame();
-                    System.out.println("Game start requested");
+                    if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_TO_START) {
+                        gameClient.startGame();
+                        System.out.println("Game start requested");
+                    }
+                    else {
+                        System.out.println("Game already started");
+                        showGameStatus();
+                    }
+                    gameClient.refreshClientStatus();
                     break;
                 case '2':
                     // Show current game status.
