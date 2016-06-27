@@ -21,34 +21,39 @@ public class WhotCard extends AbstractCard {
     public static final int N_ANGLE  = 12;
     public static final int N_WHOT = 5;
     public static final int N_SHAPES = 6;
-    public static final String[] SHAPES =  {
-        "Star",
-        "Cross",
-        "Circle",
-        "Square",
-        "Triangle",
-        "Whot"
-    };
-    //this array must be sorted
-    public static final int[][] EXCLUDED_NUMBERS = {
-        {6, 9, 10, 11, 12, 13, 14},
-        {4, 6, 8, 9, 12},
-        {6, 9},
-        {4, 6, 8, 9, 12},
-        {6, 9},
-        {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
-    };
     public static final int STAR = 0;
     public static final int CROSS = 1;
     public static final int BALL = 2;
     public static final int CARPET = 3;
     public static final int ANGLE  = 4;
     public static final int WHOT  = 5;
+    public static final ArrayList<String> SHAPES;
+    public static final ArrayList<int[]> EXCLUDED_NUMBERS;
+    static {
+        // Initialize shapes.
+        SHAPES = new ArrayList<>();
+        SHAPES.add(STAR, "star");
+        SHAPES.add(CROSS, "cross");
+        SHAPES.add(BALL, "circle");
+        SHAPES.add(CARPET, "square");
+        SHAPES.add(ANGLE, "triangle");
+        SHAPES.add(WHOT, "whot");
+        
+        // Initialize excluded numbers for the shapes.
+        EXCLUDED_NUMBERS = new ArrayList<>();
+        EXCLUDED_NUMBERS.add(STAR, new int[]{6, 9, 10, 11, 12, 13, 14});
+        EXCLUDED_NUMBERS.add(CROSS, new int[]{4, 6, 8, 9, 12});
+        EXCLUDED_NUMBERS.add(BALL, new int[]{6, 9});
+        EXCLUDED_NUMBERS.add(CARPET, new int[]{4, 6, 8, 9, 12});
+        EXCLUDED_NUMBERS.add(ANGLE, new int[]{6, 9});
+        EXCLUDED_NUMBERS.add(WHOT, new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14});
+
+    }
 
     // Static methods
     public static boolean isIllegalCardSpec(String cardspec) {
         String[] specs = cardspec.split(" ", 2);
-        int shape = Arrays.binarySearch(SHAPES, specs[0], null);
+        int shape = SHAPES.indexOf(specs[0].toLowerCase());
         return specs.length < 2 || shape < 0 || WhotCard.isIllegal(shape, Integer.parseInt(specs[1]));
     }
 
@@ -59,7 +64,7 @@ public class WhotCard extends AbstractCard {
     public static boolean isIllegal(int shape, int label) {
         return shape < STAR || shape > WHOT     // shape in set (STAR, CROSS, BALL, CARPET, ANGLE, WHOT).
                 || label < 1 || (shape !=  WHOT && label > 14)      // 1 <= label <= 14 for non-WHOT shapes.
-                || (Arrays.binarySearch(EXCLUDED_NUMBERS[shape], label) >= 0)   // label is excluded for the shape.
+                || (Arrays.binarySearch(EXCLUDED_NUMBERS.get(shape), label) >= 0)   // label is excluded for the shape.
                 || (shape == WHOT && label != 20);  // WHOT shape can only have 20 label.
     }
 
@@ -68,7 +73,7 @@ public class WhotCard extends AbstractCard {
             throw new IllegalArgumentException("Illegal shape '" + shapeStr + "' specified.");
 
         if (isIllegal(shape, label))
-            throw new IllegalArgumentException("Number " + label + " not allowed for the shape '" + SHAPES[shape] + "'.");
+            throw new IllegalArgumentException("Number " + label + " not allowed for the shape '" + SHAPES.get(shape) + "'.");
     }
     
     //Constructors: a card is generated randomly if no arguments are specified
@@ -88,8 +93,6 @@ public class WhotCard extends AbstractCard {
             label = 20;
         }
         else {
-            // sort EXCLUDED_NUMBERS array to enable binary search.
-            Arrays.sort(EXCLUDED_NUMBERS[shape]);
             // Ensure that the label generated is not in the excluded list for that particular shapeL
             while (isIllegal(shape, label)) {
                 label = WhotCard.generator.nextInt(U_LIMIT) + 1; // random number from 1 to U_LIMIT
@@ -107,7 +110,7 @@ public class WhotCard extends AbstractCard {
         String[] parts = cardspec.split(" ", 2);
         int intshape = -1;
         for (int i = 0; i < 6; i++) {
-            if (parts[0].equalsIgnoreCase(SHAPES[i])) {
+            if (parts[0].equalsIgnoreCase(SHAPES.get(i))) {
                 intshape = i;
                 break;
             }
@@ -119,7 +122,7 @@ public class WhotCard extends AbstractCard {
     }
 
     public String getShapeString() {
-        return SHAPES[this.shape];
+        return SHAPES.get(this.shape);
     }
     
     private void setLabel(int label) {
@@ -136,7 +139,7 @@ public class WhotCard extends AbstractCard {
     
     private void setShape(String shape) {
         for (int i=0; i<5; i++) {
-            if (shape.equals(SHAPES[i])) {
+            if (shape.equals(SHAPES.get(i))) {
                 this.shape = i;
                 break;
             }
@@ -190,7 +193,7 @@ public class WhotCard extends AbstractCard {
     }
     
     public String toString() {
-        return SHAPES[this.shape] + " " + Integer.toString(this.label);
+        return SHAPES.get(this.shape) + " " + Integer.toString(this.label);
     }
     
     public boolean equals(Object anObject) {

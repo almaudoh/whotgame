@@ -13,11 +13,6 @@ import org.anieanie.cardgame.environment.GameEnvironment;
 public interface GameMonitor {
 
     /**
-     * Gets a full card set for this game type.
-     */
-    CardSet getFullCardSet();
-
-    /**
      * Adds a user to the game environment.
      *
      * Users must be added before they can communicate or participate.

@@ -7,8 +7,7 @@ import org.anieanie.cardgame.cgmp.ServerCGMPRelay;
 import org.anieanie.cardgame.environment.GameEnvironment;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.*;
 
 /**
  * Title:        A Complete Whot Playing Environment
@@ -48,8 +47,11 @@ public abstract class AbstractGameMonitor implements GameMonitor {
     protected CardSet dealed;
 
     protected boolean gameWon;
-
+    protected int gameWinner;
     protected int currentPlayer = 0;
+
+    // The number of cards held by each player.
+    protected HashMap<String, Integer> playerCardCount;
 
 
     public AbstractGameMonitor() {
@@ -57,13 +59,14 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         players = new ArrayList<String>();
         viewers = new ArrayList<String>();
         environment = new GameEnvironment();
+        playerCardCount = new HashMap<>();
         initCardDecks();
     }
 
     protected void initCardDecks() {
         exposed = new CardSet();
         dealed = new CardSet();
-        covered = getFullCardSet();
+        covered = new CardSet();
     }
 
     @Override
@@ -113,10 +116,14 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         // Only start if someone has requested game to start.
         if (gameStartRequested && !gameStarted) {
             covered.initialize();
-            covered.shuffle(20);    // shuffle the cards
-            dealCards();        // share the cards to each player
+            // shuffle the cards
+            covered.shuffle(20);
+            // share the cards to each player
+            dealCards();
             gameStarted = true;
             gameStartRequested = false;
+            // Send game environment to all users.
+            broadcastEnvironment();
         }
     }
 
@@ -132,32 +139,30 @@ public abstract class AbstractGameMonitor implements GameMonitor {
 
     protected void dealCards() {    // share the cards to the players
         java.util.Random generator = new java.util.Random(System.currentTimeMillis());
-        covered.iterator();    // iterator to be used to share cards
 
         // Number of cards each player is to get (random b/w 3 and 9 inclusive)
-        int num_cards = Math.max(generator.nextInt(7) + 3, covered.size() / (players.size() * 2));
-        Card nextCard;
+//        int num_cards = Math.min(generator.nextInt(7) + 3, covered.size() / (players.size() * 2));
+        int num_cards = 3;
         ServerCGMPRelay relay;
-        for (int i = 0; i < num_cards; i++) {
-            for (String player : players) {
-                nextCard = covered.removeFirst();
+        Card[] cards;
+        for (String player: players) {
+            playerCardCount.put(player, num_cards);
+            cards = new Card[num_cards];
 
-                // Remove topmost card and give to next player in line
-                // If she doesn't receive it put back it at the bottom of the pack
-                relay = users.get(player);
-                if (relay.sendCard(new Card[] {nextCard})) {
-                    dealed.addFirst(nextCard);
-                }
-                else {
-                    covered.addLast(nextCard);
-                }
+            // Remove random cards and give to this user.
+            for (int i = 0; i < num_cards; i++) {
+                cards[i] = covered.remove(i * players.size());
+            }
+            relay = users.get(player);
+            if (relay.sendCard(cards)) {
+                dealed.addAll(Arrays.asList(cards));
+            } else {
+                // @todo: Potential bug here.
+                covered.addAll(Arrays.asList(cards));
             }
         }
         // Place the first card that will begin the game and remove it from the reserve.
         exposed.addFirst(covered.removeFirst());
-
-        // Send game environment to all users.
-        broadcastEnvironment();
     }
 
     /** Broadcasts the current environment to all users in the game */
@@ -197,4 +202,12 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         updateEnvironment();
         return environment;
     }
+
+    /** Broadcasts to all users in the game that the current has been won */
+    protected void broadcastGameWon() {
+        for (ServerCGMPRelay user : users.values()) {
+            user.sendGameWon(players.get(gameWinner));
+        }
+    }
+
 }

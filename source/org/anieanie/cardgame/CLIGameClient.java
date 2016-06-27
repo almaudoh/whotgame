@@ -11,7 +11,6 @@ import org.anieanie.card.CardSet;
 import org.anieanie.card.whot.WhotCard;
 import org.anieanie.card.whot.WhotCardSet;
 import org.anieanie.cardgame.cgmp.*;
-import org.anieanie.cardgame.environment.GameEnvironment;
 import org.anieanie.cardgame.utils.CommandLineReader;
 import org.anieanie.cardgame.utils.Debugger;
 
@@ -251,46 +250,37 @@ public class CLIGameClient extends AbstractGameClient {
      *
      * These are methods for reacting to requests from the game server / worker.
      */
-    
-    /** Called when the client CGMPRelay receives card from the worker CGMPRelay at the start of the game */
+
+    @Override
     public void cardReceived(String cardSpec) {
-        try {
-            relay.sendAcknowledgement();
-        }
-        catch (CGMPException ex) {
-            ex.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        // Now waiting for server to ask for move.
-        clientStatus = STATUS_WAITING_FOR_TURN;
+        super.cardReceived(cardSpec);
         // add card to card pack
         for (String spec: cardSpec.split(";")) {
             cards.add(WhotCard.fromString(spec.trim()));
         }
     }
-    
-    /** Called when client CGMPRelay receives game environment state from worker CGMPRelay */
-    public void environmentReceived(String envSpec) {
-        environment = GameEnvironment.fromCGMPString(envSpec);
-    }
-
 
     @Override
     /** Called when client CGMPRelay receives information from worker CGMPRelay */
     public void infoReceived(String info) {
+        // @todo This needs to be refactored to the commandline reader.
         // Information received and it's a request to call shape.
         if (info.equals("CALL") && this.getTopCard().getShape() == WhotCard.WHOT) {
             try {
                 String shape = "";
+                String message = "Whot 20 played, call your shape ("
+                        + String.join(", ", WhotCard.SHAPES).replaceFirst(", whot", "")
+                        + "): ";
                 do {
-                    System.out.printf("Whot 20 played, call your shape (%s): ", String.join(",", WhotCard.SHAPES));
+                    System.out.println(message);
+                    System.out.print(">>");
                     shape = input.readLine();
+                    System.out.println("Shape: '" + shape + "'");
                 }
                 // 1's exist in all shapes except WHOT so this is a great shortcut.
                 while (WhotCard.isIllegalCardSpec(shape + " 1"));
                 relay.sendInformation("CALL " + shape);
+                System.out.println("CALL for " + shape + " sent");
             }
             catch (CGMPException e) {
                 e.printStackTrace();
@@ -301,35 +291,6 @@ public class CLIGameClient extends AbstractGameClient {
         }
         else {
             System.out.println(info);
-        }
-    }
-
-    /** Called when client CGMPRelay receives request for move from worker CGMPRelay */
-    public void moveRequested() {
-        clientStatus = STATUS_WAITING_FOR_USER;  // Now waiting for user to make move
-    }
-
-    public void gameWon(String winner) {
-        System.out.println("game won");
-    }
-    
-
-    /** Called when the client or server is terminated */
-    public void relayTerminated() {
-        try {
-            // Now, close the socket after deleting that socket from online list
-            //        Socket s = (Socket)tOnlineUsers.remove(getUsername());
-            //        tOfflineUsers.put(getUsername(), s);
-            System.out.println("relay terminated, cleanup needed");
-            //relay = null;
-            System.out.println("finalizing worker");
-            //this.finalize();
-        }
-        catch (Exception e) {
-
-        }
-        catch (Throwable t) {
-
         }
     }
 

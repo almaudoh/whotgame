@@ -5,6 +5,7 @@ import org.anieanie.card.CardSet;
 import org.anieanie.card.whot.WhotCard;
 import org.anieanie.cardgame.AbstractGameClient;
 import org.anieanie.cardgame.CLIGameClient;
+import org.anieanie.cardgame.cgmp.CGMPConnectionException;
 import org.anieanie.cardgame.cgmp.CGMPException;
 
 import java.io.BufferedReader;
@@ -13,7 +14,7 @@ import java.io.InputStreamReader;
 
 /**
  * Used to get input from the command line for interacting with the game.
- *
+ * <p>
  * Created by almaudoh on 6/2/16.
  */
 public class CommandLineReader implements Runnable {
@@ -43,61 +44,56 @@ public class CommandLineReader implements Runnable {
         while (gameClient.getClientStatus() != AbstractGameClient.STATUS_GAME_WON && choice != '#') {
             choice = getValidInput();
 
-            switch (choice) {
-                case '?':
-                    showHelpMenu();
-                    break;
-                case '1':
-                    if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_TO_START) {
-                        gameClient.startGame();
-                        System.out.println("Game start requested");
-                    }
-                    else {
-                        System.out.println("Game already started");
+            try {
+                switch (choice) {
+                    case '?':
+                        showHelpMenu();
+                        break;
+                    case '1':
+                        if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_TO_START) {
+                            gameClient.startGame();
+                            System.out.println("Game start requested");
+                        } else {
+                            System.out.println("Game already started");
+                            showGameStatus();
+                        }
+                        gameClient.refreshClientStatus();
+                        break;
+                    case '2':
+                        // Show current game status.
                         showGameStatus();
-                    }
-                    gameClient.refreshClientStatus();
-                    break;
-                case '2':
-                    // Show current game status.
-                    showGameStatus();
-                    // Play allowed only if it is our turn.
-                    if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_FOR_USER) {
-                        try {
+                        // Play allowed only if it is our turn.
+                        if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_FOR_USER) {
                             while (true) {
                                 System.out.println("Type the card you wish to play (e.g. Circle 3), type MARKET to go market or # to go back");
                                 System.out.print(">>");
                                 cardSpec = input.readLine();
                                 if (cardSpec.charAt(0) == '#') {
                                     break;
-                                }
-                                else if (cardSpec.equalsIgnoreCase("MARKET")) {
+                                } else if (cardSpec.equalsIgnoreCase("MARKET")) {
                                     gameClient.requestCard();
                                     break;
-                                }
-                                else {
+                                } else {
                                     // Validate the card before playing.
                                     if (WhotCard.isIllegalCardSpec(cardSpec)) {
                                         System.out.println("Illegal card specified '" + cardSpec + "'");
-                                    }
-                                    else {
+                                    } else {
                                         gameClient.playCard(cardSpec);
                                         break;
                                     }
                                 }
                             }
                         }
-                        catch (IOException e) {
-                            e.printStackTrace();
+                        else {
+                            System.out.println("Not your turn to play yet!");
                         }
-                    }
-                    else {
-                        System.out.println("Not your turn to play yet!");
-                    }
-                    break;
+                        break;
 
-                default:
+                    default:
+                }
 
+            } catch (IOException e) {
+                e.printStackTrace();
             }
             // Release CPU cycles.
             try {
@@ -109,11 +105,9 @@ public class CommandLineReader implements Runnable {
 
         try {
             gameClient.close();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
-        }
-        catch (CGMPException e) {
+        } catch (CGMPException e) {
             e.printStackTrace();
         }
     }
@@ -165,7 +159,7 @@ public class CommandLineReader implements Runnable {
 
         String calledCard = ((CLIGameClient) gameClient).getCalledCard();
         if (calledCard != null && !calledCard.equals("")) {
-            System.out.printf("Top card: %s", calledCard);
+            System.out.printf("; Called card: %s", calledCard);
         }
         System.out.print('\n');
     }
@@ -177,14 +171,16 @@ public class CommandLineReader implements Runnable {
                 // Show a prompt
                 System.out.print(">> ");
                 line = input.readLine();
-                switch (line.charAt(0)) {
-                    case '#': // Disconnect from the server.
-                    case '?': // Disconnect from the server.
-                    case '1': // Start a new game.
-                    case '2': // Play a move
-                        return line.charAt(0);
-                    default:    // Wrong entry, ask for a correct entry.
-                        System.out.println("Type 1 to start, 2 to play, '#' to exit game or '?' for help " + Thread.currentThread());
+                if (line.length() > 0) {
+                    switch (line.charAt(0)) {
+                        case '#': // Disconnect from the server.
+                        case '?': // Disconnect from the server.
+                        case '1': // Start a new game.
+                        case '2': // Play a move
+                            return line.charAt(0);
+                        default:    // Wrong entry, ask for a correct entry.
+                            System.out.println("Type 1 to start, 2 to play, '#' to exit game or '?' for help " + Thread.currentThread());
+                    }
                 }
                 Thread.sleep(50);
             } catch (IOException ex) {

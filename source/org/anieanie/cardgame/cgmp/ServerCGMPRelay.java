@@ -83,9 +83,9 @@ public class ServerCGMPRelay extends CGMPRelay {
     /** 
      * Used by Game Worker to send a notification that someone has won to the Game client
      */
-    public void sendGameWon() {
+    public void sendGameWon(String gameWinner) {
         try {
-            sendMessage(new CGMPMessage(CGMPSpecification.WON), false);
+            sendMessage(new CGMPMessage(CGMPSpecification.WON, gameWinner), false);
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -141,6 +141,10 @@ public class ServerCGMPRelay extends CGMPRelay {
         else if (op.equals(CGMPSpecification.MOVE)) {
             // Can't receive a move without asking for it
             listener.moveReceived(arg);
+        }
+
+        else if (op.equals(CGMPSpecification.INFO)) {
+            listener.infoReceived(arg);
         }
 
         else if (op.equals(CGMPSpecification.TERM)) {

@@ -2,15 +2,15 @@
 package org.anieanie.card;
 
 public interface Card extends Comparable, Cloneable {
-    public int getLabel();
-    public int getShape();
+    int getLabel();
+    int getShape();
 
     /**
      * Creates a new object that is <code>equal()</code> to this object
      * This method must be overridden by its concrete subclass
      * @return A card object created from a string
      */
-    public Card clone();
+    Card clone();
 
     /**
      * This method must be overridden by its concrete subclass
@@ -18,6 +18,6 @@ public interface Card extends Comparable, Cloneable {
      * @param basis  An object of type card which will be used to create a new instance
      * @return A card object created from a string
      */
-    //public AbstractCard getInstance(String string);
+    //AbstractCard getInstance(String string);
     
 }

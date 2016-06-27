@@ -49,8 +49,12 @@ public class WhotGameMonitor extends AbstractGameMonitor {
         covered = new WhotCardSet();
     }
 
-    public CardSet getFullCardSet() {
-        return new WhotCardSet();
+    protected void dealCards() {
+        super.dealCards();
+        // whot 20 should not be on top the first time.
+        while (exposed.getFirst().getShape() ==  WhotCard.WHOT) {
+            exposed.addFirst(covered.removeFirst());
+        }
     }
 
     @Override
@@ -96,6 +100,14 @@ public class WhotGameMonitor extends AbstractGameMonitor {
                 }
             }
 
+            // Check if the game has been won.
+            if (playerCardCount.get(players.get(currentPlayer)) <= 0) {
+                gameWon = true;
+                gameWinner = currentPlayer;
+                broadcastGameWon();
+                return;
+            }
+
             // Things to do before advancing the turn to the next user.
             if (isGeneralMarket()) {
                 // Mark the player who played general market, so he can play again.
@@ -106,7 +118,8 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             }
 
             // A player who played Whot 20 should make a call which card they want.
-            if (exposed.getFirst().getShape() == WhotCard.WHOT) {
+            if (exposed.getFirst().getShape() == WhotCard.WHOT && calledCard.equals("")) {
+                broadcastEnvironment();
                 users.get(players.get(currentPlayer)).sendInformation("CALL");
                 waitingForCall = true;
                 while (waitingForCall) {
@@ -133,8 +146,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             // If someone played a pick-two, then tell the next player.
             if (pickTwoCount > 0) {
                 users.get(players.get(currentPlayer)).sendInformation("PICK " + (pickTwoCount * 2) + " CARDS");
-            }
-            else if (isGeneralMarket()) {
+            } else if (isGeneralMarket()) {
                 users.get(players.get(currentPlayer)).sendInformation("GENERAL MARKET");
             }
         }
@@ -150,16 +162,20 @@ public class WhotGameMonitor extends AbstractGameMonitor {
     public Card[] getCardForUser(String user) {
         waitingForMove = false;
         Card[] cards;
+        if (covered.size() < Math.max(pickTwoCount * 2, 1)) {
+            reloadCovered();
+        }
         // If pick-two, then send the player two cards.
         if (pickTwoCount > 0) {
             cards = new Card[pickTwoCount * 2];
             while (pickTwoCount > 0) {
                 pickTwoCount -= 1;
-                cards[pickTwoCount * 2] = exposed.removeFirst();
-                cards[pickTwoCount * 2 + 1] = exposed.removeFirst();
+                cards[pickTwoCount * 2] = covered.removeFirst();
+                cards[pickTwoCount * 2 + 1] = covered.removeFirst();
             }
+            playerCardCount.put(user, playerCardCount.get(user) + pickTwoCount * 2);
         } else {
-            cards = new Card[]{exposed.removeFirst()};
+            cards = new Card[]{covered.removeFirst()};
         }
         return cards;
     }
@@ -176,6 +192,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             if (move.getLabel() == PICK_TWO_LABEL) {
                 pickTwoCount += 1;
             }
+            playerCardCount.put(user, playerCardCount.get(user) - 1);
             return true;
         }
         else {
@@ -197,15 +214,29 @@ public class WhotGameMonitor extends AbstractGameMonitor {
         }
     }
 
+
+    /** Reloads the covered set by transferring everything from the exposed set except the topmost card */
+    private void reloadCovered() {
+        System.out.printf("Before reload: exposed: %s; covered %s;%n", exposed.toString(), covered.toString());
+        Card first = exposed.removeFirst();
+        exposed.shuffle(20);
+        covered.addAll(exposed);
+        exposed.removeAll(exposed);
+        exposed.addFirst(first);
+        System.out.printf("After reload: exposed: %s; covered %s;%n", exposed.toString(), covered.toString());
+    }
+
     /** Check that the move follows rules */
     private boolean isValidMove(Card move) {
-        return matchesTopCard(move) && isPickTwoCounter(move) && (!isGeneralMarket() || currentPlayer == generalMarketPlayer);
+        return matchesTopCard(move) && isPickTwoCounter(move)
+                && (!isGeneralMarket() || currentPlayer == generalMarketPlayer)
+                && !exposed.isDuplicate(move);
     }
 
     private boolean matchesTopCard(Card move) {
         Card top = exposed.getFirst();
         return move.getLabel() == top.getLabel() || move.getShape() == top.getShape() ||
-                move.getShape() == WhotCard.WHOT || WhotCard.SHAPES[move.getShape()].equals(calledCard);
+                move.getShape() == WhotCard.WHOT || WhotCard.SHAPES.get(move.getShape()).equals(calledCard);
     }
 
     private boolean isPickTwoCounter(Card move) {

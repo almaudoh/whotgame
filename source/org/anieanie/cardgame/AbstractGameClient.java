@@ -76,11 +76,26 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     }
 
     public void refreshClientStatus() {
-        environment = relay.requestEnvironment();
+        try {
+            environment = relay.requestEnvironment();
+            updateClientStatus();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (CGMPConnectionException e) {
+            e.printStackTrace();
+        } catch (CGMPException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void updateClientStatus() {
         // @todo: Need to look deeper into this.
         String currentPlayer = environment.get("CurrentPlayer");
         if (currentPlayer != null && currentPlayer.equals(getUsername())) {
             clientStatus = STATUS_WAITING_FOR_USER;
+        }
+        else {
+            clientStatus = STATUS_WAITING_FOR_TURN;
         }
     }
 
@@ -136,5 +151,55 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
 //            default:
 //                throw new CGMPException("Unknown error in message");
 //        }
+    }
+
+    /** Called when client CGMPRelay receives game environment state from worker CGMPRelay */
+    public void environmentReceived(String envSpec) {
+        environment = GameEnvironment.fromCGMPString(envSpec);
+        updateClientStatus();
+    }
+
+    /** Called when client CGMPRelay receives request for move from worker CGMPRelay */
+    public void moveRequested() {
+        // Now waiting for user to make move.
+        clientStatus = STATUS_WAITING_FOR_USER;
+    }
+
+    /** Called when the client CGMPRelay receives card from the worker CGMPRelay at the start of the game */
+    public void cardReceived(String cardSpec) {
+        try {
+            relay.sendAcknowledgement();
+        }
+        catch (CGMPException ex) {
+            ex.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        // Now waiting for server to ask for move.
+        clientStatus = STATUS_WAITING_FOR_TURN;
+    }
+
+    public void gameWon(String winner) {
+        System.out.println("game won by " + winner);
+    }
+
+    /** Called when the client or server is terminated */
+    public void relayTerminated() {
+        try {
+            // Now, close the socket after deleting that socket from online list
+            //        Socket s = (Socket)tOnlineUsers.remove(getUsername());
+            //        tOfflineUsers.put(getUsername(), s);
+            System.out.println("relay terminated, cleanup needed");
+            //relay = null;
+            System.out.println("finalizing worker");
+            //this.finalize();
+        }
+        catch (Exception e) {
+
+        }
+        catch (Throwable t) {
+
+        }
     }
 }

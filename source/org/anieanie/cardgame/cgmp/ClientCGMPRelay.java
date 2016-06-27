@@ -57,6 +57,10 @@ public class ClientCGMPRelay extends CGMPRelay {
         try {
             return sendRequest(CGMPSpecification.VIEW).getKeyword().equals(CGMPSpecification.ACK);
         }
+        catch (CGMPConnectionException e) {
+            // A connection exception means the request was not received. So abort and try again.
+            return false;
+        }
         catch (CGMPException e) {
             e.printStackTrace();
         }
@@ -72,21 +76,15 @@ public class ClientCGMPRelay extends CGMPRelay {
      * @return Object An object representing the current Game Environment
      *    or null if unsuccessful
      */
-   public GameEnvironment requestEnvironment() {
-        try {
-            CGMPMessage msg = sendRequest(CGMPSpecification.ENVR);
-            if (msg.getKeyword().equals(CGMPSpecification.ENVR)) {
-                return GameEnvironment.fromCGMPString(msg.getArguments());
-            }
-        }
-        catch (CGMPException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-       return null;
-    }
+   public GameEnvironment requestEnvironment() throws IOException, CGMPException {
+       CGMPMessage msg = sendRequest(CGMPSpecification.ENVR);
+       if (msg.getKeyword().equals(CGMPSpecification.ENVR)) {
+           return GameEnvironment.fromCGMPString(msg.getArguments());
+       }
+       else {
+           return null;
+       }
+   }
     
     public boolean sendCard(String cardspec) throws IOException, CGMPException {
         CGMPMessage response = sendMessage(new CGMPMessage(CGMPSpecification.MOVE, cardspec), true);
