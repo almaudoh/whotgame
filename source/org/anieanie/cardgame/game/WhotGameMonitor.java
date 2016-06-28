@@ -176,6 +176,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             playerCardCount.put(user, playerCardCount.get(user) + pickTwoCount * 2);
         } else {
             cards = new Card[]{covered.removeFirst()};
+            playerCardCount.put(user, playerCardCount.get(user) + 1);
         }
         return cards;
     }
