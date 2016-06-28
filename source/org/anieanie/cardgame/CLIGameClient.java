@@ -266,31 +266,35 @@ public class CLIGameClient extends AbstractGameClient {
         // @todo This needs to be refactored to the commandline reader.
         // Information received and it's a request to call shape.
         if (info.equals("CALL") && this.getTopCard().getShape() == WhotCard.WHOT) {
-            try {
-                String shape = "";
-                String message = "Whot 20 played, call your shape ("
-                        + String.join(", ", WhotCard.SHAPES).replaceFirst(", whot", "")
-                        + "): ";
-                do {
-                    System.out.println(message);
-                    System.out.print(">>");
-                    shape = input.readLine();
-                    System.out.println("Shape: '" + shape + "'");
-                }
-                // 1's exist in all shapes except WHOT so this is a great shortcut.
-                while (WhotCard.isIllegalCardSpec(shape + " 1"));
-                relay.sendInformation("CALL " + shape);
-                System.out.println("CALL for " + shape + " sent");
-            }
-            catch (CGMPException e) {
-                e.printStackTrace();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
+            getWhotCallAndPlay();
         }
         else {
             System.out.println(info);
+        }
+    }
+
+    private synchronized void getWhotCallAndPlay() {
+        try {
+            String shape = "";
+            String message = "Whot 20 played, call your shape ("
+                    + String.join(", ", WhotCard.SHAPES).replaceFirst(", whot", "")
+                    + "): ";
+            do {
+                System.out.println(message);
+                System.out.print(">>");
+                shape = input.readLine();
+                System.out.println("Shape: '" + shape + "'");
+            }
+            // 1's exist in all shapes except WHOT so this is a great shortcut.
+            while (WhotCard.isIllegalCardSpec(shape + " 1"));
+            relay.sendInformation("CALL " + shape);
+            System.out.println("CALL for " + shape + " sent");
+        }
+        catch (CGMPException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

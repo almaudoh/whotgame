@@ -85,6 +85,8 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
             e.printStackTrace();
         } catch (CGMPException e) {
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

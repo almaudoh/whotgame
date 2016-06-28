@@ -5,7 +5,6 @@ import org.anieanie.card.CardSet;
 import org.anieanie.card.whot.WhotCard;
 import org.anieanie.cardgame.AbstractGameClient;
 import org.anieanie.cardgame.CLIGameClient;
-import org.anieanie.cardgame.cgmp.CGMPConnectionException;
 import org.anieanie.cardgame.cgmp.CGMPException;
 
 import java.io.BufferedReader;
@@ -29,9 +28,6 @@ public class CommandLineReader implements Runnable {
 
     // Wait for input on a separate thread
     public void run() {
-        char choice = 'z';
-        String cardSpec = "";
-
         // Display the initial help menu and game status.
         showHelpMenu();
         showGameStatus();
@@ -41,8 +37,9 @@ public class CommandLineReader implements Runnable {
          *
          * This loop continues until there is a winner as announced by the server or you resign.
          */
+        char choice = 'z';
         while (gameClient.getClientStatus() != AbstractGameClient.STATUS_GAME_WON && choice != '#') {
-            choice = getValidInput();
+            choice = getActionInput();
 
             try {
                 switch (choice) {
@@ -62,31 +59,7 @@ public class CommandLineReader implements Runnable {
                     case '2':
                         // Show current game status.
                         showGameStatus();
-                        // Play allowed only if it is our turn.
-                        if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_FOR_USER) {
-                            while (true) {
-                                System.out.println("Type the card you wish to play (e.g. Circle 3), type MARKET to go market or # to go back");
-                                System.out.print(">>");
-                                cardSpec = input.readLine();
-                                if (cardSpec.charAt(0) == '#') {
-                                    break;
-                                } else if (cardSpec.equalsIgnoreCase("MARKET")) {
-                                    gameClient.requestCard();
-                                    break;
-                                } else {
-                                    // Validate the card before playing.
-                                    if (WhotCard.isIllegalCardSpec(cardSpec)) {
-                                        System.out.println("Illegal card specified '" + cardSpec + "'");
-                                    } else {
-                                        gameClient.playCard(cardSpec);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            System.out.println("Not your turn to play yet!");
-                        }
+                        getMoveAndPlay();
                         break;
 
                     default:
@@ -164,7 +137,7 @@ public class CommandLineReader implements Runnable {
         System.out.print('\n');
     }
 
-    private char getValidInput() {
+    private synchronized char getActionInput() {
         String line;
         while (true) {
             try {
@@ -190,6 +163,35 @@ public class CommandLineReader implements Runnable {
             }
         }
 
+    }
+
+    private synchronized void getMoveAndPlay() throws IOException {
+        // Play allowed only if it is our turn.
+        String cardSpec = "";
+        if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_FOR_USER) {
+            while (true) {
+                System.out.println("Type the card you wish to play (e.g. Circle 3), type MARKET to go market or # to go back");
+                System.out.print(">>");
+                cardSpec = input.readLine();
+                if (cardSpec.charAt(0) == '#') {
+                    break;
+                } else if (cardSpec.equalsIgnoreCase("MARKET")) {
+                    gameClient.requestCard();
+                    break;
+                } else {
+                    // Validate the card before playing.
+                    if (WhotCard.isIllegalCardSpec(cardSpec)) {
+                        System.out.println("Illegal card specified '" + cardSpec + "'");
+                    } else {
+                        gameClient.playCard(cardSpec);
+                        break;
+                    }
+                }
+            }
+        }
+        else {
+            System.out.println("Not your turn to play yet!");
+        }
     }
 
 }
