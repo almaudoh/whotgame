@@ -14,6 +14,9 @@ import java.net.Socket;
 
 import org.anieanie.card.CardSet;
 import org.anieanie.cardgame.cgmp.*;
+import org.anieanie.cardgame.gameplay.AbstractGameClient;
+import org.anieanie.cardgame.gameplay.GameClientException;
+import org.anieanie.cardgame.ui.Display;
 
 /**
  *
@@ -26,8 +29,8 @@ public class TestGameClient extends AbstractGameClient {
     /**
      * Creates a new instance of TestGameClient
      */
-    public TestGameClient(ClientCGMPRelay relay, String name) {
-        super(relay, name);
+    public TestGameClient(ClientCGMPRelay relay, String name, Display display) {
+        super(relay, name, display);
     }
     
     /**
@@ -43,23 +46,18 @@ public class TestGameClient extends AbstractGameClient {
     }
 
     @Override
-    public void playCard(String card) {
+    public void startGame() {
 
     }
 
     @Override
-    public void startGame() {
+    public void playMove(String cardSpec) {
 
     }
 
     @Override
     public int getClientStatus() {
         return 0;
-    }
-
-    @Override
-    public void requestCard() {
-
     }
 
     public static void main(String [] args) {

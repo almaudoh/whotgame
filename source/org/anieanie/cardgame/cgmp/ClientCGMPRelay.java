@@ -6,7 +6,7 @@
 
 package org.anieanie.cardgame.cgmp;
 
-import org.anieanie.cardgame.environment.GameEnvironment;
+import org.anieanie.cardgame.gameplay.GameEnvironment;
 
 import java.io.IOException;
 import java.net.Socket;

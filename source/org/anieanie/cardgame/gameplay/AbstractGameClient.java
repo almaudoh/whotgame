@@ -7,19 +7,20 @@
  * and open the template in the editor.
  */
 
-package org.anieanie.cardgame;
+package org.anieanie.cardgame.gameplay;
 
 import java.io.*;
 
 import org.anieanie.card.CardSet;
 import org.anieanie.cardgame.cgmp.*;
-import org.anieanie.cardgame.environment.GameEnvironment;
+import org.anieanie.cardgame.ui.cli.CommandLineDisplay;
+import org.anieanie.cardgame.ui.Display;
 
 /**
  *
  * @author Aniebiet
  */
-public abstract class AbstractGameClient implements ClientCGMPRelayListener {
+public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayListener {
 
     public static final int STATUS_UNDEFINED = -1;
     public static final int STATUS_WAITING_TO_START = 0;
@@ -32,14 +33,16 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     protected ClientCGMPRelay relay;
     protected String name;
     protected int clientStatus = STATUS_UNDEFINED;
+    protected Display display;
 
     /**
      * Creates a new instance of AbstractGameClient
      */
-    public AbstractGameClient(ClientCGMPRelay relay, String name) {
+    public AbstractGameClient(ClientCGMPRelay relay, String name, Display display) {
         this.relay = relay;
         this.name = name;
         this.environment = new GameEnvironment();
+        this.display = display;
     }
     
     /**
@@ -50,8 +53,10 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
         this.relay = relay;
         this.name = null;
         this.environment = new GameEnvironment();
+        this.display = new CommandLineDisplay();
     }
     
+    @Override
     public void connect() throws CGMPException, IOException {
         if (!relay.connect(name)) {
             throw new GameClientException(String.format("Server not responding on ip address %s and port %s",
@@ -59,13 +64,14 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
         }
     }
 
+    @Override
     public void close() throws IOException, CGMPException {
         relay.disconnect();
     }
 
     /* Possible values for client status
      * -1 - Undefined
-     *  0 - Waiting to start game
+     *  0 - Waiting to start whot
      *  1 - Waiting for turn
      *  2 - Waiting for user input (action)
      *  3 - Game has been won
@@ -104,11 +110,7 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     // Game management methods.
     public abstract CardSet getCards();
 
-    public abstract void playCard(String card);
-
     public abstract void startGame();
-
-    public abstract void requestCard();
 
     protected abstract void run();
     
@@ -125,13 +127,13 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     @Override
     public void errorSent(int errorcode) {
         // Let's log the errors to console for now.
-        System.out.println("An error was sent: " + errorcode + " [" + CGMPSpecification.Error.describeError(errorcode) + "]");
+        display.showNotification(String.format("An error was sent: %d [%s]", errorcode, CGMPSpecification.Error.describeError(errorcode)));
     }
 
     @Override
     public void errorReceived(int errorcode) {
         // Let's log the errors to console for now.
-        System.out.println("An error occurred: " + errorcode + " [" + CGMPSpecification.Error.describeError(errorcode) + "]");
+        display.showNotification(String.format("An error occurred: %d [%s]", errorcode, CGMPSpecification.Error.describeError(errorcode)));
 
         // @todo: Should we throw exceptions on CGMP errors here? or in the listener?
 //        switch (errorcode) {
@@ -155,7 +157,7 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
 //        }
     }
 
-    /** Called when client CGMPRelay receives game environment state from worker CGMPRelay */
+    /** Called when client CGMPRelay receives whot gameplay state from worker CGMPRelay */
     public void environmentReceived(String envSpec) {
         environment = GameEnvironment.fromCGMPString(envSpec);
         updateClientStatus();
@@ -167,7 +169,7 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
         clientStatus = STATUS_WAITING_FOR_USER;
     }
 
-    /** Called when the client CGMPRelay receives card from the worker CGMPRelay at the start of the game */
+    /** Called when the client CGMPRelay receives card from the worker CGMPRelay at the start of the whot */
     public void cardReceived(String cardSpec) {
         try {
             relay.sendAcknowledgement();
@@ -183,7 +185,7 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
     }
 
     public void gameWon(String winner) {
-        System.out.println("game won by " + winner);
+        clientStatus = STATUS_GAME_WON;
     }
 
     /** Called when the client or server is terminated */
@@ -192,6 +194,7 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
             // Now, close the socket after deleting that socket from online list
             //        Socket s = (Socket)tOnlineUsers.remove(getUsername());
             //        tOfflineUsers.put(getUsername(), s);
+            clientStatus = STATUS_TERMINATE;
             System.out.println("relay terminated, cleanup needed");
             //relay = null;
             System.out.println("finalizing worker");
@@ -203,5 +206,9 @@ public abstract class AbstractGameClient implements ClientCGMPRelayListener {
         catch (Throwable t) {
 
         }
+    }
+
+    public GameEnvironment getEnvironment() {
+        return environment;
     }
 }

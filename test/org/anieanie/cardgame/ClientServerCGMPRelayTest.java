@@ -2,7 +2,6 @@ package org.anieanie.cardgame;
 
 import mockit.*;
 
-import org.anieanie.card.AbstractCard;
 import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.cardgame.utils.Debugger;
 import org.testng.annotations.Test;

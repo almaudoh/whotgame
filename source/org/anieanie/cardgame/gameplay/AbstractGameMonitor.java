@@ -1,17 +1,16 @@
-package org.anieanie.cardgame;
+package org.anieanie.cardgame.gameplay;
 
 import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
 import org.anieanie.cardgame.cgmp.CGMPException;
 import org.anieanie.cardgame.cgmp.ServerCGMPRelay;
-import org.anieanie.cardgame.environment.GameEnvironment;
 
 import java.io.IOException;
 import java.util.*;
 
 /**
  * Title:        A Complete Whot Playing Environment
- * Description:  A complete Whot playing environment consisting players, spectators and the umpire (or game monitor).~nThe user can play Whot in this program
+ * Description:  A complete Whot playing gameplay consisting players, spectators and the umpire (or whot monitor).~nThe user can play Whot in this program
  * Copyright:    Copyright (c) 1998
  * Company:      KaySoft Intelligent Solutions
  *
@@ -19,28 +18,28 @@ import java.util.*;
  */
 
 public abstract class AbstractGameMonitor implements GameMonitor {
-    // Contains information on the game environment.
+    // Contains information on the whot gameplay.
     protected final GameEnvironment environment;
 
     /**
-     * The users participating in this card game.
+     * The users participating in this card whot.
      */
     protected Hashtable<String, ServerCGMPRelay> users;
 
-    // The list of all players in the game
+    // The list of all players in the whot
     protected ArrayList<String> players;
 
-    // The list of all those watching the game
+    // The list of all those watching the whot
     protected ArrayList<String> viewers;
 
-    // Flag to mark that the game has already started.
+    // Flag to mark that the whot has already started.
     protected boolean gameStarted = false;
 
-    // Flag to mark that the game should be started at the next scan.
+    // Flag to mark that the whot should be started at the next scan.
     protected boolean gameStartRequested = false;
 
     /**
-     * The card decks for this game.
+     * The card decks for this whot.
      */
     protected CardSet exposed;
     protected CardSet covered;
@@ -113,7 +112,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
 
     @Override
     public void startGame() {
-        // Only start if someone has requested game to start.
+        // Only start if someone has requested whot to start.
         if (gameStartRequested && !gameStarted) {
             covered.initialize();
             // shuffle the cards
@@ -122,7 +121,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
             dealCards();
             gameStarted = true;
             gameStartRequested = false;
-            // Send game environment to all users.
+            // Send whot gameplay to all users.
             broadcastEnvironment();
         }
     }
@@ -161,11 +160,11 @@ public abstract class AbstractGameMonitor implements GameMonitor {
                 covered.addAll(Arrays.asList(cards));
             }
         }
-        // Place the first card that will begin the game and remove it from the reserve.
+        // Place the first card that will begin the whot and remove it from the reserve.
         exposed.addFirst(covered.removeFirst());
     }
 
-    /** Broadcasts the current environment to all users in the game */
+    /** Broadcasts the current gameplay to all users in the whot */
     protected void broadcastEnvironment() {
         try {
             updateEnvironment();
@@ -203,7 +202,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         return environment;
     }
 
-    /** Broadcasts to all users in the game that the current has been won */
+    /** Broadcasts to all users in the whot that the current has been won */
     protected void broadcastGameWon() {
         for (ServerCGMPRelay user : users.values()) {
             user.sendGameWon(players.get(gameWinner));

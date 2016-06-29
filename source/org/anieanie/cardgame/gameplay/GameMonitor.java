@@ -1,9 +1,7 @@
-package org.anieanie.cardgame;
+package org.anieanie.cardgame.gameplay;
 
 import org.anieanie.card.Card;
-import org.anieanie.card.CardSet;
 import org.anieanie.cardgame.cgmp.ServerCGMPRelay;
-import org.anieanie.cardgame.environment.GameEnvironment;
 
 /**
  * An interface implemented by all game monitors which act as referees to enforce the rules of a game.
@@ -13,7 +11,7 @@ import org.anieanie.cardgame.environment.GameEnvironment;
 public interface GameMonitor {
 
     /**
-     * Adds a user to the game environment.
+     * Adds a user to the game gameplay.
      *
      * Users must be added before they can communicate or participate.
      */
@@ -110,7 +108,7 @@ public interface GameMonitor {
     void handleInfoReceived(String info, String user);
 
     /**
-     * Gets the current game environment.
+     * Gets the current game gameplay.
      *
      * @return GameEnvironment
      */

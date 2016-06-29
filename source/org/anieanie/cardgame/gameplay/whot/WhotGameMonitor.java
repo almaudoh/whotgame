@@ -2,15 +2,13 @@
 // It deals the cards and signifies to each player that it is its turn to play
 // The monitor class also provides the interface that allows Watcher objects to watch
 // the proceedings
-package org.anieanie.cardgame.game;
+package org.anieanie.cardgame.gameplay.whot;
 
 import org.anieanie.card.Card;
-import org.anieanie.card.CardSet;
 import org.anieanie.card.whot.WhotCard;
 import org.anieanie.card.whot.WhotCardSet;
-import org.anieanie.cardgame.AbstractGameMonitor;
+import org.anieanie.cardgame.gameplay.AbstractGameMonitor;
 import org.anieanie.cardgame.cgmp.CGMPException;
-import org.anieanie.cardgame.environment.GameEnvironment;
 
 import java.io.IOException;
 import java.lang.*;
@@ -21,7 +19,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
     private static final int GENERAL_MARKET_LABEL = 4;
     private static final int SUSPENSION_LABEL = 8;
 
-    // Each new WhotGameMonitor starts a new game
+    // Each new WhotGameMonitor starts a new whot
     // and should normally be on a new thread
 
     // Indicates that the monitor is waiting for a move from the client. Loop control variable.
@@ -65,7 +63,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
     @Override
     public boolean canPlayGame(String user) {
-        // A user cannot join a game that has already started or exceeds 4 players.
+        // A user cannot join a whot that has already started or exceeds 4 players.
         return !gameStarted && players.size() <= 4;
     }
 
@@ -81,9 +79,9 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
     @Override
     public void nextMove() {
-        // Main game control method.
+        // Main whot control method.
         try {
-            // Send the current game status, request move from the next user and then wait for him to play.
+            // Send the current whot status, request move from the next user and then wait for him to play.
             broadcastEnvironment();
             users.get(players.get(currentPlayer)).requestMove();
             waitingForMove = true;
@@ -100,7 +98,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
                 }
             }
 
-            // Check if the game has been won.
+            // Check if the whot has been won.
             if (playerCardCount.get(players.get(currentPlayer)) <= 0) {
                 gameWon = true;
                 gameWinner = currentPlayer;

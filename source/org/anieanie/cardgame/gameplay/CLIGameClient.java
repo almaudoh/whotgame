@@ -4,14 +4,17 @@
  * Created on February 24, 2005, 12:29 AM
  */
 
-package org.anieanie.cardgame;
+package org.anieanie.cardgame.gameplay;
 
 import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
 import org.anieanie.card.whot.WhotCard;
 import org.anieanie.card.whot.WhotCardSet;
 import org.anieanie.cardgame.cgmp.*;
-import org.anieanie.cardgame.utils.CommandLineReader;
+import org.anieanie.cardgame.ui.cli.CommandLineDisplay;
+import org.anieanie.cardgame.ui.cli.CommandLineReader;
+import org.anieanie.cardgame.ui.Display;
+import org.anieanie.cardgame.ui.cli.InputLoop;
 import org.anieanie.cardgame.utils.Debugger;
 
 import java.io.BufferedReader;
@@ -37,12 +40,13 @@ public class CLIGameClient extends AbstractGameClient {
     /**
      * Creates a new instance of CLIGameClient
      */
-    public CLIGameClient(ClientCGMPRelay relay, String name) {
-        super(relay, name);
+    public CLIGameClient(ClientCGMPRelay relay, String name, Display display) {
+        super(relay, name, display);
         cards = new WhotCardSet();
     }
 
     public static void main(String [] args) {
+        Display display = new CommandLineDisplay();
         try {
             // create a new socket
             /** @todo Update this line to search for unused ports in case DEFAULT_PORT  is used already */
@@ -51,7 +55,7 @@ public class CLIGameClient extends AbstractGameClient {
             Socket socket = new Socket(ip, port);
 
             ClientCGMPRelay relay = new ClientCGMPRelay(socket);
-            CLIGameClient client = new CLIGameClient(relay, inputUserName());
+            CLIGameClient client = new CLIGameClient(relay, inputUserName(), display);
             relay.setListener(client);
             relay.addLowLevelListener(Debugger.getLowLevelListener(client.getUsername()));
 
@@ -60,12 +64,12 @@ public class CLIGameClient extends AbstractGameClient {
             client.run();
         }
         catch (ConnectException e) {
-            System.out.println("I could not connect to the server.");
+            display.showNotification("I could not connect to the server.");
             e.printStackTrace();
             System.exit(0);
         }	// End of exception
         catch (Exception e) {
-            System.out.println("Some kind of error has occurred.");
+            display.showNotification("Some kind of error has occurred.");
             e.printStackTrace();
             System.exit(0);
         }	// End of exception
@@ -83,7 +87,7 @@ public class CLIGameClient extends AbstractGameClient {
             while (true) {
                 if (relay.requestPlay()) break;
                 else if (count++ > 20) {
-                    System.out.println("Server did not grant request to play");
+                    display.showNotification("Server did not grant request to play");
                     return;
                 }
                 // Free CPU cycles.
@@ -92,8 +96,8 @@ public class CLIGameClient extends AbstractGameClient {
             
             clientStatus = 0;
             
-            // This thread to wait for user input and play the game.
-            Thread t = new Thread(new CommandLineReader(this), "CLI-Thread");
+            // This thread to wait for user input and play the whot.
+            Thread t = new Thread(new CommandLineReader(this, display), "CLI-Thread");
             t.start();
             
             // ... while current thread scans server and updates client asynchronously
@@ -158,13 +162,13 @@ public class CLIGameClient extends AbstractGameClient {
      *                                                                                          **
      *    Game play sequence.                                                                   **
      *                                                                                          **
-     *    1. startGame() - requests game server to start the game. Game server will not         **
-     *       start unless there are at least two players in the game area.                      **
-     *    2. When game is started, the game server                                              **
+     *    1. startGame() - requests whot server to start the whot. Game server will not         **
+     *       start unless there are at least two players in the whot area.                      **
+     *    2. When whot is started, the whot server                                              **
      *       - shuffles and distributes cards to all players - callback cardReceived() invoked  **
-     *       - sends the current game environment state      - callback environmentReceived() invoked   **
+     *       - sends the current whot gameplay state      - callback environmentReceived() invoked   **
      *       - informs each player by turn to play           - callback moveRequested() invoked **
-     *    3. playCard() - the player whose turn it is to play sends a card to the game server   **
+     *    3. playCard() - the player whose turn it is to play sends a card to the whot server   **
      *       and waits for next turn if the card is accepted. If the card is rejected, another  **
      *       card should be played or a new card requested.                                     **
      *    4. requestCard() - the player whose turn it is to play requests a card from the       **
@@ -194,7 +198,16 @@ public class CLIGameClient extends AbstractGameClient {
     }
 
     @Override
-    public void playCard(String cardspec) {
+    public void playMove(String moveSpec) {
+        if (moveSpec.equalsIgnoreCase("MARKET")) {
+            requestCard();
+        }
+        else {
+            playCard(moveSpec);
+        }
+    }
+
+    private void playCard(String cardspec) {
         Card card;
         if (!WhotCard.isIllegalCardSpec(cardspec)) {
             // Just to ensure valid card is created.
@@ -206,7 +219,7 @@ public class CLIGameClient extends AbstractGameClient {
 
         // User cannot play a card he doesn't have.
         if (!cards.contains(card)) {
-            System.out.println("You don't have '" + cardspec + "'.");
+            display.showNotification("You don't have '" + cardspec + "'.");
             return;
         }
 
@@ -218,7 +231,7 @@ public class CLIGameClient extends AbstractGameClient {
                 cards.remove(card);
             }
             else {
-                System.out.println("Card '" + cardspec + "' was rejected. Please play another card.");
+                display.showNotification("Card '" + cardspec + "' was rejected. Please play another card.");
             }
         }
         catch (IOException e) {
@@ -229,8 +242,7 @@ public class CLIGameClient extends AbstractGameClient {
         }
     }
 
-    @Override
-    public void requestCard() {
+    private void requestCard() {
         try {
             CGMPMessage response = relay.sendRequest(CGMPSpecification.CARD);
             if (response.isCard()) {
@@ -248,7 +260,7 @@ public class CLIGameClient extends AbstractGameClient {
     /*
      * Methods implemented by interface ClientCGMPRelayListener.
      *
-     * These are methods for reacting to requests from the game server / worker.
+     * These are methods for reacting to requests from the whot server / worker.
      */
 
     @Override
@@ -263,37 +275,40 @@ public class CLIGameClient extends AbstractGameClient {
     @Override
     /** Called when client CGMPRelay receives information from worker CGMPRelay */
     public void infoReceived(String info) {
-        // @todo This needs to be refactored to the commandline reader.
+        // @todo This needs to be refactored to the cli reader.
         // Information received and it's a request to call shape.
         if (info.equals("CALL") && this.getTopCard().getShape() == WhotCard.WHOT) {
-            getWhotCallAndPlay();
+            sendWhotCallInfo();
         }
         else {
-            System.out.println(info);
+            display.showNotification(info);
         }
     }
 
-    private synchronized void getWhotCallAndPlay() {
-        try {
-            String shape = "";
-            String message = "Whot 20 played, call your shape ("
-                    + String.join(", ", WhotCard.SHAPES).replaceFirst(", whot", "")
-                    + "): ";
-            do {
-                System.out.println(message);
-                System.out.print(">>");
-                shape = input.readLine();
-                System.out.println("Shape: '" + shape + "'");
+    private void sendWhotCallInfo() {
+        // Get input loop for calling the card after whot 20 is played.
+        String shape = (new InputLoop(display)).runLoop(new InputLoop.InputLoopConstraint() {
+
+            @Override
+            public boolean isSatisfied(String input) {
+                // 1's exist in all shapes except WHOT so this is a great shortcut to evaluate if the shape
+                // is legal.
+                return !WhotCard.isIllegalCardSpec(input + " 1");
             }
-            // 1's exist in all shapes except WHOT so this is a great shortcut.
-            while (WhotCard.isIllegalCardSpec(shape + " 1"));
+
+            @Override
+            public String promptMessage() {
+                return "Whot 20 played, call your shape ("
+                        + String.join(", ", WhotCard.SHAPES).replaceFirst(", whot", "")
+                        + "): ";
+            }
+        });
+        display.showNotification("CALL for '" + shape + "' made");
+        try {
             relay.sendInformation("CALL " + shape);
-            System.out.println("CALL for " + shape + " sent");
-        }
-        catch (CGMPException e) {
+        } catch (CGMPException e) {
             e.printStackTrace();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

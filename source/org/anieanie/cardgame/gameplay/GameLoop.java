@@ -12,9 +12,7 @@
  * Created on February 23, 2005, 11:31 AM
  */
 
-package org.anieanie.cardgame.environment;
-
-import org.anieanie.cardgame.GameMonitor;
+package org.anieanie.cardgame.gameplay;
 
 /**
  * A GameLoop refers to a single game and should run on a separate thread

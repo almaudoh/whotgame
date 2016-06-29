@@ -4,7 +4,7 @@
  * Created on February 20, 2005, 1:07 AM
  */
 
-package org.anieanie.cardgame;
+package org.anieanie.cardgame.gameplay;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -12,7 +12,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 import org.anieanie.cardgame.cgmp.ServerCGMPRelay;
-import org.anieanie.cardgame.environment.GameLoop;
 
 /**
  *

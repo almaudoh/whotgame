@@ -1,14 +1,13 @@
-package org.anieanie.cardgame.game;
+package org.anieanie.cardgame.gameplay.whot;
 
-import org.anieanie.cardgame.GameServer;
-import org.anieanie.cardgame.ui.GameFrame;
+import org.anieanie.cardgame.gameplay.GameServer;
+import org.anieanie.cardgame.ui.gui.GameFrame;
 
-import javax.swing.UIManager;
 import java.awt.*;
 
 /**
  * Title:        A Complete Whot Playing Environment
- * Description:  A complete Whot playing environment consisting players, spectators and the umpire (or game monitor).~nThe user can play Whot in this program
+ * Description:  A complete Whot playing gameplay consisting players, spectators and the umpire (or whot monitor).~nThe user can play Whot in this program
  * Copyright:    Copyright (c) 1998
  * Company:      KaySoft Intelligent Solutions
  *

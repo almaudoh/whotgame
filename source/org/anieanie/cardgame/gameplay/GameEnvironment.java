@@ -1,4 +1,4 @@
-package org.anieanie.cardgame.environment;
+package org.anieanie.cardgame.gameplay;
 
 import java.util.HashMap;
 

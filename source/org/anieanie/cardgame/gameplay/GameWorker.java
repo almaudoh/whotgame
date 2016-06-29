@@ -4,7 +4,7 @@
  * Created on February 20, 2005, 11:08 PM
  */
 
-package org.anieanie.cardgame;
+package org.anieanie.cardgame.gameplay;
 
 import java.io.IOException;
 
@@ -121,7 +121,7 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         }
     }
 
-    /** Called when worker CGMPRelay receives request for environment from client CGMPRelay */
+    /** Called when worker CGMPRelay receives request for gameplay from client CGMPRelay */
     public void environmentRequested() {
         try {
             if (monitor.isPlayer(username) || monitor.isViewer(username)) {

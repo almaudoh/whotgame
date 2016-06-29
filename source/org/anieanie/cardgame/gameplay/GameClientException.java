@@ -1,4 +1,4 @@
-package org.anieanie.cardgame;
+package org.anieanie.cardgame.gameplay;
 
 import org.anieanie.cardgame.cgmp.CGMPException;
 

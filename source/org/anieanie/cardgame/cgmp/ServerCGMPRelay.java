@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.net.*;
 
 import org.anieanie.card.Card;
-import org.anieanie.cardgame.environment.GameEnvironment;
+import org.anieanie.cardgame.gameplay.GameEnvironment;
 
 /**
  *
