@@ -19,7 +19,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
     private static final int GENERAL_MARKET_LABEL = 4;
     private static final int SUSPENSION_LABEL = 8;
 
-    // Each new WhotGameMonitor starts a new whot
+    // Each new WhotGameMonitor starts a new game
     // and should normally be on a new thread
 
     // Indicates that the monitor is waiting for a move from the client. Loop control variable.
@@ -32,6 +32,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
     private int pickTwoCount = 0;
 
     private int generalMarketPlayer = -1;
+    private boolean isGeneralMarket = false;
 
     // The card that is called by a player who played Whot 20.  `
     private String calledCard = "";
@@ -106,15 +107,6 @@ public class WhotGameMonitor extends AbstractGameMonitor {
                 return;
             }
 
-            // Things to do before advancing the turn to the next user.
-            if (isGeneralMarket()) {
-                // Mark the player who played general market, so he can play again.
-                generalMarketPlayer = currentPlayer;
-            }
-            else {
-                generalMarketPlayer = -1;
-            }
-
             // A player who played Whot 20 should make a call which card they want.
             if (exposed.getFirst().getShape() == WhotCard.WHOT && calledCard.equals("")) {
                 broadcastEnvironment();
@@ -144,7 +136,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             // If someone played a pick-two, then tell the next player.
             if (pickTwoCount > 0) {
                 users.get(players.get(currentPlayer)).sendInformation("PICK " + (pickTwoCount * 2) + " CARDS");
-            } else if (isGeneralMarket()) {
+            } else if (isGeneralMarket) {
                 users.get(players.get(currentPlayer)).sendInformation("GENERAL MARKET");
             }
         }
@@ -176,6 +168,11 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             cards = new Card[]{covered.removeFirst()};
             playerCardCount.put(user, playerCardCount.get(user) + 1);
         }
+        // If everyone has picked general, then reset.
+        if (currentPlayer == generalMarketPlayer && isGeneralMarket) {
+            generalMarketPlayer = -1;
+            isGeneralMarket = false;
+        }
         return cards;
     }
 
@@ -192,6 +189,16 @@ public class WhotGameMonitor extends AbstractGameMonitor {
                 pickTwoCount += 1;
             }
             playerCardCount.put(user, playerCardCount.get(user) - 1);
+
+            // Initialize or reset general market conditions.
+            if (move.getLabel() == GENERAL_MARKET_LABEL) {
+                generalMarketPlayer = currentPlayer;
+                isGeneralMarket = true;
+            }
+            else {
+                generalMarketPlayer = -1;
+                isGeneralMarket = false;
+            }
             return true;
         }
         else {
@@ -228,7 +235,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
     /** Check that the move follows rules */
     private boolean isValidMove(Card move) {
         return matchesTopCard(move) && isPickTwoCounter(move)
-                && (!isGeneralMarket() || currentPlayer == generalMarketPlayer)
+                && (!isGeneralMarket || currentPlayer == generalMarketPlayer)
                 && !exposed.isDuplicate(move);
     }
 
@@ -240,10 +247,6 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
     private boolean isPickTwoCounter(Card move) {
         return pickTwoCount < 1 || move.getLabel() == PICK_TWO_LABEL;
-    }
-
-    private boolean isGeneralMarket() {
-        return exposed.getFirst().getLabel() == GENERAL_MARKET_LABEL;
     }
 
     private boolean isSuspensionCard() {

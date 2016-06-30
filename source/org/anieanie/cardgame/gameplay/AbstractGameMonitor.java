@@ -140,8 +140,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         java.util.Random generator = new java.util.Random(System.currentTimeMillis());
 
         // Number of cards each player is to get (random b/w 3 and 9 inclusive)
-//        int num_cards = Math.min(generator.nextInt(7) + 3, covered.size() / (players.size() * 2));
-        int num_cards = 3;
+        int num_cards = Math.min(generator.nextInt(7) + 3, covered.size() / (players.size() * 2));
         ServerCGMPRelay relay;
         Card[] cards;
         for (String player: players) {

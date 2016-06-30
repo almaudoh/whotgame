@@ -1,9 +1,13 @@
 package org.anieanie.cardgame.ui.cli;
 
 import org.anieanie.card.whot.WhotCard;
+import org.anieanie.cardgame.cgmp.CGMPException;
 import org.anieanie.cardgame.gameplay.AbstractGameClient;
+import org.anieanie.cardgame.gameplay.CLIGameClient;
 import org.anieanie.cardgame.gameplay.GameClient;
 import org.anieanie.cardgame.ui.Display;
+
+import java.io.IOException;
 
 /**
  * Used to get input from the command line for interacting with the whot.
@@ -61,10 +65,13 @@ public class CommandLineReader implements Runnable {
             // @todo: Using thread sleep delay to manage the timing between WHOT 20 playing and card CALL seems
             // brittle at this time and would need further review.
             try {
-                Thread.sleep(5000);
+                Thread.sleep(3000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            // Post move actions.
+            postMoveActions();
 
         }   // End whot loop while
 
@@ -85,7 +92,7 @@ public class CommandLineReader implements Runnable {
                     switch (input.charAt(0)) {
                         case '#': // Disconnect from the server.
                         case '?': // Disconnect from the server.
-                        case '1': // Start a new whot.
+                        case '1': // Start a new game.
                         case '2': // Play a move
                             return true;
                         default:    // Wrong entry, ask for a correct entry.
@@ -135,4 +142,30 @@ public class CommandLineReader implements Runnable {
             display.showNotification("Not yet your turn to play!");
         }
     }
+
+    private void postMoveActions() {
+        CLIGameClient client = (CLIGameClient)gameClient;
+        if (client.isAwaitingWhotCallInfo()) {
+            // Get input loop for calling the card after whot 20 is played.
+            String shape = (new InputLoop(display)).runLoop(new InputLoop.InputLoopConstraint() {
+
+                @Override
+                public boolean isSatisfied(String input) {
+                    // 1's exist in all shapes except WHOT so this is a great shortcut to evaluate if the shape
+                    // is legal.
+                    return !WhotCard.isIllegalCardSpec(input + " 1");
+                }
+
+                @Override
+                public String promptMessage() {
+                    return "Whot 20 played, call your shape ("
+                            + String.join(", ", WhotCard.SHAPES).replaceFirst(", whot", "")
+                            + "): ";
+                }
+            });
+            display.showNotification("CALL for '" + shape + "' made");
+            client.sendWhotCallShape(shape);
+        }
+    }
+
 }

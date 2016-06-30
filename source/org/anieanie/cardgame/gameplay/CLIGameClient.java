@@ -14,7 +14,6 @@ import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.cardgame.ui.cli.CommandLineDisplay;
 import org.anieanie.cardgame.ui.cli.CommandLineReader;
 import org.anieanie.cardgame.ui.Display;
-import org.anieanie.cardgame.ui.cli.InputLoop;
 import org.anieanie.cardgame.utils.Debugger;
 
 import java.io.BufferedReader;
@@ -31,6 +30,7 @@ public class CLIGameClient extends AbstractGameClient {
 
     private CardSet cards;
     protected static BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
+    private boolean awaitingWhotCallInfo = false;
 
     @Override
     public String getUsername() {
@@ -278,44 +278,30 @@ public class CLIGameClient extends AbstractGameClient {
         // @todo This needs to be refactored to the cli reader.
         // Information received and it's a request to call shape.
         if (info.equals("CALL") && this.getTopCard().getShape() == WhotCard.WHOT) {
-            sendWhotCallInfo();
+            awaitingWhotCallInfo = true;
         }
         else {
             display.showNotification(info);
         }
     }
 
-    private void sendWhotCallInfo() {
-        // Get input loop for calling the card after whot 20 is played.
-        String shape = (new InputLoop(display)).runLoop(new InputLoop.InputLoopConstraint() {
 
-            @Override
-            public boolean isSatisfied(String input) {
-                // 1's exist in all shapes except WHOT so this is a great shortcut to evaluate if the shape
-                // is legal.
-                return !WhotCard.isIllegalCardSpec(input + " 1");
-            }
-
-            @Override
-            public String promptMessage() {
-                return "Whot 20 played, call your shape ("
-                        + String.join(", ", WhotCard.SHAPES).replaceFirst(", whot", "")
-                        + "): ";
-            }
-        });
-        display.showNotification("CALL for '" + shape + "' made");
+    public void sendWhotCallShape(String shape) {
         try {
             relay.sendInformation("CALL " + shape);
+            awaitingWhotCallInfo = false;
         } catch (CGMPException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
     public void finalize() throws Throwable {
         System.out.println("Finalize called!");
         super.finalize();
     }
 
+    public boolean isAwaitingWhotCallInfo() {
+        return awaitingWhotCallInfo;
+    }
 }

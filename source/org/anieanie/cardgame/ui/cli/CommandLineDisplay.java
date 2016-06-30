@@ -47,7 +47,7 @@ public class CommandLineDisplay implements Display {
                 "\nType:\n"
                         + "      (#) to disconnect from server.\n"
                         + "      (?) to show this help menu.\n\n"
-                        + "      (1) To start a new whot.\n"
+                        + "      (1) To start a new game.\n"
                         + "      (2) To play a move."
         );
         System.out.println("Choose an option:");
