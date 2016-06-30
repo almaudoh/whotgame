@@ -12,12 +12,13 @@ import org.anieanie.cardgame.cgmp.CGMPException;
 
 import java.io.IOException;
 import java.lang.*;
+import java.util.Collections;
 
 public class WhotGameMonitor extends AbstractGameMonitor {
     // The number that is used as the pick two number.
-    private static final int PICK_TWO_LABEL = 7;
-    private static final int GENERAL_MARKET_LABEL = 4;
-    private static final int SUSPENSION_LABEL = 8;
+    public static final int PICK_TWO_LABEL = 7;
+    public static final int GENERAL_MARKET_LABEL = 4;
+    public static final int SUSPENSION_LABEL = 8;
 
     // Each new WhotGameMonitor starts a new game
     // and should normally be on a new thread
@@ -60,6 +61,15 @@ public class WhotGameMonitor extends AbstractGameMonitor {
     public void updateEnvironment() {
         super.updateEnvironment();
         environment.put("CalledCard", calledCard);
+        if (pickTwoCount > 0) {
+            environment.put("MarketMode", "PickTwo");
+        }
+        else if (isGeneralMarket) {
+            environment.put("MarketMode", "General");
+        }
+        else {
+            environment.put("MarketMode", "Normal");
+        }
     }
 
     @Override
@@ -99,8 +109,9 @@ public class WhotGameMonitor extends AbstractGameMonitor {
                 }
             }
 
-            // Check if the whot has been won.
+            // Check if the game has been won.
             if (playerCardCount.get(players.get(currentPlayer)) <= 0) {
+                // @todo Consistency checks are needed here.
                 gameWon = true;
                 gameWinner = currentPlayer;
                 broadcastGameWon();
@@ -123,7 +134,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
                 }
             }
 
-            // Only advance to next player if current player has made a call.
+            // Only advance to next player after current player has made a call.
             advanceGameTurn();
 
             // If a suspension was played, inform the current player and then move on.
@@ -157,22 +168,23 @@ public class WhotGameMonitor extends AbstractGameMonitor {
         }
         // If pick-two, then send the player two cards.
         if (pickTwoCount > 0) {
+            playerCardCount.put(user, playerCardCount.get(user) + pickTwoCount * 2);
             cards = new Card[pickTwoCount * 2];
             while (pickTwoCount > 0) {
                 pickTwoCount -= 1;
                 cards[pickTwoCount * 2] = covered.removeFirst();
                 cards[pickTwoCount * 2 + 1] = covered.removeFirst();
             }
-            playerCardCount.put(user, playerCardCount.get(user) + pickTwoCount * 2);
         } else {
-            cards = new Card[]{covered.removeFirst()};
             playerCardCount.put(user, playerCardCount.get(user) + 1);
+            cards = new Card[]{covered.removeFirst()};
         }
         // If everyone has picked general, then reset.
         if (currentPlayer == generalMarketPlayer && isGeneralMarket) {
             generalMarketPlayer = -1;
             isGeneralMarket = false;
         }
+        Collections.addAll(dealed, cards);
         return cards;
     }
 

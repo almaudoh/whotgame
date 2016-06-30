@@ -12,6 +12,8 @@ package org.anieanie.cardgame.gameplay;
 import java.io.*;
 
 import org.anieanie.card.CardSet;
+import org.anieanie.card.whot.WhotCardSet;
+import org.anieanie.cardgame.agent.GameAgent;
 import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.cardgame.ui.cli.CommandLineDisplay;
 import org.anieanie.cardgame.ui.Display;
@@ -22,18 +24,12 @@ import org.anieanie.cardgame.ui.Display;
  */
 public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayListener {
 
-    public static final int STATUS_UNDEFINED = -1;
-    public static final int STATUS_WAITING_TO_START = 0;
-    public static final int STATUS_WAITING_FOR_TURN = 1;
-    public static final int STATUS_WAITING_FOR_USER = 2;
-    public static final int STATUS_GAME_WON = 3;
-    public static final int STATUS_TERMINATE = 10;
-
     protected GameEnvironment environment;
     protected ClientCGMPRelay relay;
     protected String name;
     protected int clientStatus = STATUS_UNDEFINED;
     protected Display display;
+    protected CardSet cards;
 
     /**
      * Creates a new instance of AbstractGameClient
@@ -43,6 +39,7 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
         this.name = name;
         this.environment = new GameEnvironment();
         this.display = display;
+        cards = new WhotCardSet();
     }
     
     /**
@@ -107,12 +104,53 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
         }
     }
 
-    // Game management methods.
-    public abstract CardSet getCards();
+    @Override
+    public CardSet getCards() {
+        return cards;
+    }
 
-    public abstract void startGame();
+    /**
+     *********************************************************************************************
+     *********************************************************************************************
+     *                                                                                          **
+     *    Game play sequence.                                                                   **
+     *                                                                                          **
+     *    1. startGame() - requests whot server to start the game. Game server will not         **
+     *       start unless there are at least two players in the game area.                      **
+     *    2. When whot is started, the whot server                                              **
+     *       - shuffles and distributes cards to all players - callback cardReceived() invoked  **
+     *       - sends the current whot gameplay state      - callback environmentReceived() invoked   **
+     *       - informs each player by turn to play           - callback moveRequested() invoked **
+     *    3. playCard() - the player whose turn it is to play sends a card to the whot server   **
+     *       and waits for next turn if the card is accepted. If the card is rejected, another  **
+     *       card should be played or a new card requested.                                     **
+     *    4. requestCard() - the player whose turn it is to play requests a card from the       **
+     *       spare stack (market) if he doesn't have the right card to play.                    **
+     *                                                                                          **
+     *                                                                                          **
+     *********************************************************************************************
+     *********************************************************************************************
+     */
 
-    protected abstract void run();
+    /*
+     *  These are methods for initiating moves by the Game Client.
+     */
+
+    @Override
+    public void startGame() {
+        try {
+            relay.sendRequest(CGMPSpecification.START);
+            clientStatus = STATUS_WAITING_FOR_TURN;  // Now waiting for server to ask for move
+        }
+        catch (CGMPException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected abstract void run(GameAgent agent);
     
     // Later I may implement this to generate a random name
     public abstract String getUsername();
@@ -169,7 +207,7 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
         clientStatus = STATUS_WAITING_FOR_USER;
     }
 
-    /** Called when the client CGMPRelay receives card from the worker CGMPRelay at the start of the whot */
+    /** Called when the client CGMPRelay receives card from the worker CGMPRelay at the start of the game */
     public void cardReceived(String cardSpec) {
         try {
             relay.sendAcknowledgement();

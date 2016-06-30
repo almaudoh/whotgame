@@ -26,16 +26,16 @@ public abstract class AbstractGameMonitor implements GameMonitor {
      */
     protected Hashtable<String, ServerCGMPRelay> users;
 
-    // The list of all players in the whot
+    // The list of all players in the game
     protected ArrayList<String> players;
 
-    // The list of all those watching the whot
+    // The list of all those watching the game
     protected ArrayList<String> viewers;
 
-    // Flag to mark that the whot has already started.
+    // Flag to mark that the game has already started.
     protected boolean gameStarted = false;
 
-    // Flag to mark that the whot should be started at the next scan.
+    // Flag to mark that the game should be started at the next scan.
     protected boolean gameStartRequested = false;
 
     /**
@@ -137,10 +137,10 @@ public abstract class AbstractGameMonitor implements GameMonitor {
     }
 
     protected void dealCards() {    // share the cards to the players
-        java.util.Random generator = new java.util.Random(System.currentTimeMillis());
+        java.util.Random random = new java.util.Random(System.currentTimeMillis());
 
         // Number of cards each player is to get (random b/w 3 and 9 inclusive)
-        int num_cards = Math.min(generator.nextInt(7) + 3, covered.size() / (players.size() * 2));
+        int num_cards = Math.min(random.nextInt(7) + 3, covered.size() / (players.size() * 2));
         ServerCGMPRelay relay;
         Card[] cards;
         for (String player: players) {
@@ -152,6 +152,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
                 cards[i] = covered.remove(i * players.size());
             }
             relay = users.get(player);
+            // @todo: What to do if the cards are missed.
             if (relay.sendCard(cards)) {
                 dealed.addAll(Arrays.asList(cards));
             } else {
@@ -159,11 +160,11 @@ public abstract class AbstractGameMonitor implements GameMonitor {
                 covered.addAll(Arrays.asList(cards));
             }
         }
-        // Place the first card that will begin the whot and remove it from the reserve.
+        // Place the first card that will begin the game and remove it from the reserve.
         exposed.addFirst(covered.removeFirst());
     }
 
-    /** Broadcasts the current gameplay to all users in the whot */
+    /** Broadcasts the current gameplay to all users in the game */
     protected void broadcastEnvironment() {
         try {
             updateEnvironment();
@@ -180,7 +181,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
     }
 
     protected void advanceGameTurn() {
-        // Increment the player position and broadcast position.
+        // Increment the player position.
         currentPlayer = ++currentPlayer % players.size();
     }
 
@@ -201,7 +202,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         return environment;
     }
 
-    /** Broadcasts to all users in the whot that the current has been won */
+    /** Broadcasts to all users in the game that the current has been won */
     protected void broadcastGameWon() {
         for (ServerCGMPRelay user : users.values()) {
             user.sendGameWon(players.get(gameWinner));

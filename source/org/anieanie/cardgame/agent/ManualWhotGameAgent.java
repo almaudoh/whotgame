@@ -1,25 +1,22 @@
-package org.anieanie.cardgame.ui.cli;
+package org.anieanie.cardgame.agent;
 
 import org.anieanie.card.whot.WhotCard;
-import org.anieanie.cardgame.cgmp.CGMPException;
-import org.anieanie.cardgame.gameplay.AbstractGameClient;
-import org.anieanie.cardgame.gameplay.CLIGameClient;
 import org.anieanie.cardgame.gameplay.GameClient;
+import org.anieanie.cardgame.gameplay.whot.WhotGameClient;
 import org.anieanie.cardgame.ui.Display;
-
-import java.io.IOException;
+import org.anieanie.cardgame.ui.cli.InputLoop;
 
 /**
- * Used to get input from the command line for interacting with the whot.
+ * Used to get input from the command line for interacting with the game.
  *
  * Created by almaudoh on 6/2/16.
  */
-public class CommandLineReader implements Runnable {
+public class ManualWhotGameAgent implements GameAgent {
 
     private final Display display;
     private GameClient gameClient;
 
-    public CommandLineReader(AbstractGameClient gameClient, Display display) {
+    public ManualWhotGameAgent(GameClient gameClient, Display display) {
         this.gameClient = gameClient;
         this.display = display;
     }
@@ -36,14 +33,14 @@ public class CommandLineReader implements Runnable {
          * This loop continues until there is a winner as announced by the server or you resign.
          */
         String choice = "z";
-        while (gameClient.getClientStatus() != AbstractGameClient.STATUS_GAME_WON && !choice.equals("#")) {
+        while (gameClient.getClientStatus() != GameClient.STATUS_GAME_WON && !choice.equals("#")) {
             choice = getActionInput();
             switch (choice) {
                 case "?":
                     display.showHelpMenu();
                     break;
                 case "1":
-                    if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_TO_START) {
+                    if (gameClient.getClientStatus() == GameClient.STATUS_WAITING_TO_START) {
                         gameClient.startGame();
                         display.showNotification("Game start requested");
                     } else {
@@ -111,7 +108,7 @@ public class CommandLineReader implements Runnable {
     public void getMoveAndPlay() {
         // Play allowed only if it is our turn.
         String cardSpec = "";
-        if (gameClient.getClientStatus() == AbstractGameClient.STATUS_WAITING_FOR_USER) {
+        if (gameClient.getClientStatus() == GameClient.STATUS_WAITING_FOR_USER) {
             // Input loop for getting the move to be played.
             cardSpec = (new InputLoop(display)).runLoop(new InputLoop.InputLoopConstraint() {
                 @Override
@@ -144,7 +141,7 @@ public class CommandLineReader implements Runnable {
     }
 
     private void postMoveActions() {
-        CLIGameClient client = (CLIGameClient)gameClient;
+        WhotGameClient client = (WhotGameClient)gameClient;
         if (client.isAwaitingWhotCallInfo()) {
             // Get input loop for calling the card after whot 20 is played.
             String shape = (new InputLoop(display)).runLoop(new InputLoop.InputLoopConstraint() {

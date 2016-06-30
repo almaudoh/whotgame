@@ -12,11 +12,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
+import org.anieanie.cardgame.agent.GameAgent;
+import org.anieanie.cardgame.agent.SimpleWhotGameAgent;
 import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.cardgame.gameplay.AbstractGameClient;
 import org.anieanie.cardgame.gameplay.GameClientException;
 import org.anieanie.cardgame.ui.Display;
+import org.anieanie.cardgame.ui.cli.CommandLineDisplay;
 
 /**
  *
@@ -56,6 +60,11 @@ public class TestGameClient extends AbstractGameClient {
     }
 
     @Override
+    public void playMove(Card card) {
+
+    }
+
+    @Override
     public int getClientStatus() {
         return 0;
     }
@@ -69,8 +78,10 @@ public class TestGameClient extends AbstractGameClient {
             TestClientCGMPRelay relay = new TestClientCGMPRelay(socket);
             TestGameClient client = new TestGameClient(relay);
             relay.setListener(client);
+            Display display = new CommandLineDisplay();
+            GameAgent agent = new SimpleWhotGameAgent(client, display);
             client.connect();
-            client.run();
+            client.run(agent);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -84,7 +95,7 @@ public class TestGameClient extends AbstractGameClient {
     }
 
     @Override
-    protected void run() {
+    protected void run(GameAgent agent) {
         try {
             // Declarations to manage connection
             // ---------------------------------
