@@ -6,6 +6,7 @@
 
 package org.anieanie.cardgame.gameplay;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.anieanie.cardgame.cgmp.*;
@@ -27,16 +28,22 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         this.monitor = monitor;
         this.relay = relay;
         this.relay.setListener(this);
-        this.relay.addLowLevelListener(Debugger.getLowLevelListener("Port " + relay.getSocket().getPort()));
+        try {
+            this.relay.addLowLevelListener(Debugger.getLowLevelListener("Port " + relay.getSocket().getPort()));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     // -------------------run------------------------------
     public void run() {
         while (true) {
             try {
+                // The thread sleep needs to be done first otherwise each time relay.scan() throws
+                // an exception (which happens a lot), the Thread would never get to sleep.
+                Thread.sleep(500);
                 // @todo If for some reason, the client disconnects, we need to kill this worker.
                 relay.scan();
-                Thread.sleep(500);
 
             }    // End of try
             catch (CGMPConnectionException e) {

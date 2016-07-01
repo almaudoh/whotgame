@@ -7,7 +7,6 @@ import org.anieanie.cardgame.gameplay.GameClient;
 import org.anieanie.cardgame.gameplay.GameEnvironment;
 import org.anieanie.cardgame.gameplay.whot.WhotGameClient;
 import org.anieanie.cardgame.gameplay.whot.WhotGameMonitor;
-import org.anieanie.cardgame.ui.Display;
 
 /**
  * This Game agent follows simple WhotGame playing rules without using any strategy.
@@ -15,11 +14,9 @@ import org.anieanie.cardgame.ui.Display;
 public class SimpleWhotGameAgent implements GameAgent {
 
     private final GameClient gameClient;
-    private final Display display;
 
-    public SimpleWhotGameAgent(GameClient gameClient, Display display) {
+    public SimpleWhotGameAgent(GameClient gameClient) {
         this.gameClient = gameClient;
-        this.display = display;
     }
 
     // Wait for input on a separate thread
@@ -27,7 +24,6 @@ public class SimpleWhotGameAgent implements GameAgent {
         // [optional] Keep trying to start a game.
         while (gameClient.getClientStatus() == GameClient.STATUS_WAITING_TO_START) {
             gameClient.startGame();
-            display.showNotification("Game start requested");
             threadSleep(100);
         }
 
@@ -38,7 +34,6 @@ public class SimpleWhotGameAgent implements GameAgent {
             // Play allowed only if it is our turn.
             if (gameClient.getClientStatus() == GameClient.STATUS_WAITING_FOR_USER) {
                 // Input loop for getting the move to be played.
-                display.showGameStatus(gameClient);
                 playMove();
             }
             threadSleep(100);

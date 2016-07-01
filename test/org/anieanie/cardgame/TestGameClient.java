@@ -79,7 +79,7 @@ public class TestGameClient extends AbstractGameClient {
             TestGameClient client = new TestGameClient(relay);
             relay.setListener(client);
             Display display = new CommandLineDisplay();
-            GameAgent agent = new SimpleWhotGameAgent(client, display);
+            GameAgent agent = new SimpleWhotGameAgent(client);
             client.connect();
             client.run(agent);
         }

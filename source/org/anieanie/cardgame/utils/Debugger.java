@@ -3,12 +3,16 @@ package org.anieanie.cardgame.utils;
 import org.anieanie.cardgame.cgmp.CGMPMessage;
 import org.anieanie.cardgame.cgmp.LowLevelCGMPRelayListener;
 
+import java.io.*;
+
 /**
- * Created by almaudoh on 6/2/16.
+ * Debugger class.
  */
 public class Debugger {
-    public static LowLevelCGMPRelayListener getLowLevelListener(final String name) {
+    public static LowLevelCGMPRelayListener getLowLevelListener(final String name) throws FileNotFoundException {
         return new LowLevelCGMPRelayListener() {
+            PrintStream logStream = new PrintStream(new FileOutputStream(new File("debugger.log")));
+
             @Override
             public void relayTerminated() {}
 
@@ -29,12 +33,14 @@ public class Debugger {
 
             @Override
             public void onBufferOut(String message) {
-                System.out.println(name + ": ==> " + message + " [Thread " + Thread.currentThread().getName() + "]");
+                System.err.println(name + ": ==> " + message + " [Thread " + Thread.currentThread().getName() + "]");
+//                logStream.println(name + ": ==> " + message + " [Thread " + Thread.currentThread().getName() + "]");
             }
 
             @Override
             public void onBufferIn(String message) {
-                System.out.println(name + ": <== " + message + " [Thread " + Thread.currentThread().getName() + "]");
+                System.err.println(name + ": <== " + message + " [Thread " + Thread.currentThread().getName() + "]");
+//                logStream.println(name + ": <== " + message + " [Thread " + Thread.currentThread().getName() + "]");
             }
         };
     }

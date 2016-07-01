@@ -280,12 +280,10 @@ public abstract class CGMPRelay {
      * @throws IOException
      */
     protected String bufferIn(int timeout) throws IOException {
-        int max_cycles = 100;
-
-        // Make at most 100 attempts within the specified timeout.
-        for (int cycles = 0; !br.ready() && cycles < max_cycles; cycles++) {
+        // Make at most 10 attempts within the specified timeout.
+        for (int cycles = 0; !br.ready() && cycles < 10; cycles++) {
             try {
-                Thread.sleep(timeout / max_cycles);
+                Thread.sleep(timeout);
             } catch (InterruptedException e) {
                 // TODO: 5/21/16
                 e.printStackTrace();

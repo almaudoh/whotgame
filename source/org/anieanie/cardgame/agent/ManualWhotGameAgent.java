@@ -42,7 +42,6 @@ public class ManualWhotGameAgent implements GameAgent {
                 case "1":
                     if (gameClient.getClientStatus() == GameClient.STATUS_WAITING_TO_START) {
                         gameClient.startGame();
-                        display.showNotification("Game start requested");
                     } else {
                         display.showNotification("Game already started");
                         display.showGameStatus(gameClient);

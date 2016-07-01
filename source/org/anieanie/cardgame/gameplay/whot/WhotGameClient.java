@@ -133,6 +133,7 @@ public class WhotGameClient extends AbstractGameClient {
                 // Card was successfully played.
                 clientStatus = STATUS_WAITING_FOR_TURN;
                 cards.remove(card);
+                display.showNotification("Played " + card);
             }
             else {
                 display.showNotification("Card '" + card + "' was rejected. Please play another card.");
@@ -155,6 +156,7 @@ public class WhotGameClient extends AbstractGameClient {
                     cards.add(WhotCard.fromString(spec.trim()));
                 }
                 clientStatus = STATUS_WAITING_FOR_TURN;
+                display.showNotification("Received: " + response.getArguments().replace(";", "  "));
             }
         }
         catch (CGMPException e) {
@@ -187,6 +189,7 @@ public class WhotGameClient extends AbstractGameClient {
         // Information received and it's a request to call shape.
         if (info.equals("CALL") && this.getTopCard().getShape() == WhotCard.WHOT) {
             awaitingWhotCallInfo = true;
+            display.showNotification("Call requested");
         }
         else {
             display.showNotification(info);
@@ -198,6 +201,7 @@ public class WhotGameClient extends AbstractGameClient {
         try {
             relay.sendInformation("CALL " + shape);
             awaitingWhotCallInfo = false;
+            display.showNotification("Shape " + shape + " called");
         } catch (CGMPException e) {
             e.printStackTrace();
         } catch (IOException e) {

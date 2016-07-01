@@ -36,7 +36,7 @@ public class GameLauncher {
     public GameAgent initializeGameAgent(GameClient client, Display display) {
         switch (agent) {
             case "simple":
-                return new SimpleWhotGameAgent(client, display);
+                return new SimpleWhotGameAgent(client);
             default:
                 return new ManualWhotGameAgent(client, display);
         }

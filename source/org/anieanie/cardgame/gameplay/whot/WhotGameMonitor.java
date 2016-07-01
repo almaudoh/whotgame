@@ -34,6 +34,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
     private int generalMarketPlayer = -1;
     private boolean isGeneralMarket = false;
+    private boolean isSuspensionCard = false;
 
     // The card that is called by a player who played Whot 20.  `
     private String calledCard = "";
@@ -138,10 +139,11 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             advanceGameTurn();
 
             // If a suspension was played, inform the current player and then move on.
-            if (isSuspensionCard()) {
+            if (isSuspensionCard) {
                 users.get(players.get(currentPlayer)).sendInformation("SUSPENSION miss a turn");
                 broadcastEnvironment();
                 advanceGameTurn();
+                isSuspensionCard = false;
             }
 
             // If someone played a pick-two, then tell the next player.
@@ -211,6 +213,11 @@ public class WhotGameMonitor extends AbstractGameMonitor {
                 generalMarketPlayer = -1;
                 isGeneralMarket = false;
             }
+
+            // Set suspension card status.
+            if (move.getLabel() == SUSPENSION_LABEL) {
+                isSuspensionCard = true;
+            }
             return true;
         }
         else {
@@ -259,10 +266,6 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
     private boolean isPickTwoCounter(Card move) {
         return pickTwoCount < 1 || move.getLabel() == PICK_TWO_LABEL;
-    }
-
-    private boolean isSuspensionCard() {
-        return exposed.getFirst().getLabel() == SUSPENSION_LABEL;
     }
 
 }

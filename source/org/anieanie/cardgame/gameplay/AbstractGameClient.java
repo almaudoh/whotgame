@@ -94,14 +94,6 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
     }
 
     protected void updateClientStatus() {
-        // @todo: Need to look deeper into this.
-        String currentPlayer = environment.get("CurrentPlayer");
-        if (currentPlayer != null && currentPlayer.equals(getUsername())) {
-            clientStatus = STATUS_WAITING_FOR_USER;
-        }
-        else {
-            clientStatus = STATUS_WAITING_FOR_TURN;
-        }
     }
 
     @Override
@@ -141,6 +133,7 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
         try {
             relay.sendRequest(CGMPSpecification.START);
             clientStatus = STATUS_WAITING_FOR_TURN;  // Now waiting for server to ask for move
+            display.showNotification("Game start requested");
         }
         catch (CGMPException e) {
             e.printStackTrace();
@@ -199,6 +192,7 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
     public void environmentReceived(String envSpec) {
         environment = GameEnvironment.fromCGMPString(envSpec);
         updateClientStatus();
+        display.showGameStatus(this);
     }
 
     /** Called when client CGMPRelay receives request for move from worker CGMPRelay */
@@ -224,6 +218,8 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
 
     public void gameWon(String winner) {
         clientStatus = STATUS_GAME_WON;
+        display.showNotification("Game wone by " + winner);
+        display.showNotification("Ending game");
     }
 
     /** Called when the client or server is terminated */
