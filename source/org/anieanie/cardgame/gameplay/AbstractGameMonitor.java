@@ -209,4 +209,16 @@ public abstract class AbstractGameMonitor implements GameMonitor {
         }
     }
 
+    protected void broadcastInformation(String info) {
+        for (ServerCGMPRelay user : users.values()) {
+            try {
+                user.sendInformation(info);
+            } catch (CGMPException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }

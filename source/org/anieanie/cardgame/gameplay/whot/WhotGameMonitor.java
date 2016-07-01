@@ -17,11 +17,15 @@ import java.util.Collections;
 public class WhotGameMonitor extends AbstractGameMonitor {
     // The number that is used as the pick two number.
     public static final int PICK_TWO_LABEL = 7;
+
+    // The number that is used as the general market number.
     public static final int GENERAL_MARKET_LABEL = 4;
+
+    // The number that is used for suspension.
     public static final int SUSPENSION_LABEL = 8;
 
-    // Each new WhotGameMonitor starts a new game
-    // and should normally be on a new thread
+    // The number that is used as hold on.
+    public static final int HOLD_ON_LABEL = 1;
 
     // Indicates that the monitor is waiting for a move from the client. Loop control variable.
     private volatile boolean waitingForMove = false;
@@ -32,9 +36,17 @@ public class WhotGameMonitor extends AbstractGameMonitor {
     // Indicates that the monitor is waiting for a player to call a card (after Whot 20 is played).
     private int pickTwoCount = 0;
 
+    // Flag for which player played the general market card. -1 if not played.
     private int generalMarketPlayer = -1;
+
+    // Flag to identify that the game is in general market mode.
     private boolean isGeneralMarket = false;
+
+    // Flag to identify that the next player is in suspension.
     private boolean isSuspensionCard = false;
+
+    // Flag to identify that the HOLD ON card has been played.
+    private boolean isHoldOnCard = false;
 
     // The card that is called by a player who played Whot 20.  `
     private String calledCard = "";
@@ -136,7 +148,12 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             }
 
             // Only advance to next player after current player has made a call.
-            advanceGameTurn();
+            if (isHoldOnCard) {
+                broadcastInformation("HOLD ON");
+            }
+            else {
+                advanceGameTurn();
+            }
 
             // If a suspension was played, inform the current player and then move on.
             if (isSuspensionCard) {
@@ -187,6 +204,9 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             isGeneralMarket = false;
         }
         Collections.addAll(dealed, cards);
+
+        // If the current player has gone to market, then it's not hold on.
+        isHoldOnCard = false;
         return cards;
     }
 
@@ -218,6 +238,9 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             if (move.getLabel() == SUSPENSION_LABEL) {
                 isSuspensionCard = true;
             }
+
+            // Set hold-on card state.
+            isHoldOnCard = move.getLabel() == HOLD_ON_LABEL;
             return true;
         }
         else {

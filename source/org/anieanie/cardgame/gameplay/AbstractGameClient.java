@@ -218,7 +218,7 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
 
     public void gameWon(String winner) {
         clientStatus = STATUS_GAME_WON;
-        display.showNotification("Game wone by " + winner);
+        display.showNotification("Game won by " + winner);
         display.showNotification("Ending game");
     }
 
