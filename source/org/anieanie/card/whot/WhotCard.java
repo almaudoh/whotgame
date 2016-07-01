@@ -108,21 +108,24 @@ public class WhotCard extends AbstractCard {
      */
     public static WhotCard fromString(String cardspec) {
         String[] parts = cardspec.split(" ", 2);
-        int intshape = -1;
-        for (int i = 0; i < 6; i++) {
-            if (parts[0].equalsIgnoreCase(SHAPES.get(i))) {
-                intshape = i;
-                break;
-            }
-        }
-        int intlabel = Integer.parseInt(parts[1].trim());
         // Ensure the right label is used for the specified shape.
+        int intlabel = Integer.parseInt(parts[1].trim());
+        int intshape = getShapeInt(parts[0]);
         assertLegal(intshape, intlabel, parts[0]);
         return new WhotCard(intshape, intlabel);
     }
 
     public String getShapeString() {
         return SHAPES.get(this.shape);
+    }
+
+    public static int getShapeInt(String shape) {
+        for (int i = 0; i < 6; i++) {
+            if (shape.equalsIgnoreCase(SHAPES.get(i))) {
+                return i;
+            }
+        }
+        return -1;
     }
     
     private void setLabel(int label) {

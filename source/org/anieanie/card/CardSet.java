@@ -7,7 +7,7 @@ import java.io.*;
 import java.lang.*;
 
 
-public class CardSet extends AbstractSet implements Cloneable, Serializable, Set {
+public class CardSet extends AbstractSet<Card> implements Cloneable, Serializable, Set<Card> {
     // This class uses an internal LinkedList object to store the elements of the CardSet
     // and also to improve the functionality
 
@@ -93,19 +93,19 @@ public class CardSet extends AbstractSet implements Cloneable, Serializable, Set
     }
     
     public Card getFirst() {
-        return (Card) cardlist.getFirst();
+        return cardlist.getFirst();
     }
     
     public Card getLast() {
-        return (Card) cardlist.getLast();
+        return cardlist.getLast();
     }
     
     public Card removeFirst() {
-        return (Card) cardlist.removeFirst();
+        return cardlist.removeFirst();
     }
     
     public Card removeLast() {
-        return (Card) cardlist.removeLast();
+        return cardlist.removeLast();
     }
     
     public boolean remove(Card card) {
@@ -113,7 +113,7 @@ public class CardSet extends AbstractSet implements Cloneable, Serializable, Set
     }
     
     public Card remove(int index) {
-        return (Card) cardlist.remove(index);
+        return cardlist.remove(index);
     }
     
     public void shuffle() {
@@ -139,15 +139,6 @@ public class CardSet extends AbstractSet implements Cloneable, Serializable, Set
         Collections.sort(cardlist);
     }
     
-    public boolean add(Object obj) {
-        try {
-            return !isDuplicate((Card) obj) && cardlist.add((Card) obj);
-        }
-        catch (ClassCastException cce) {
-            return false;
-        }
-    }
-    
     public void clear() {
         cardlist.clear();
     }
@@ -160,14 +151,22 @@ public class CardSet extends AbstractSet implements Cloneable, Serializable, Set
         return (cardlist.size() < 1);
     }
     
-    public Iterator iterator() {
+    public Iterator<Card> iterator() {
         return cardlist.listIterator(0);
     }
-    
+
     public boolean remove(Object obj) {
-        return cardlist.remove((Card) obj);
+        return cardlist.remove(obj);
     }
-    
+
+    @Override
+    public boolean addAll(Collection<? extends Card> c) {
+        for (Card card: c) {
+            add(card);
+        }
+        return true;
+    }
+
     public int size() {
         return cardlist.size();
     }
@@ -178,18 +177,53 @@ public class CardSet extends AbstractSet implements Cloneable, Serializable, Set
     
     // Public methods overriding Object
     public Object clone() {
-        LinkedList<Card> list = (LinkedList) cardlist.clone();
-        Collections.copy(list, cardlist);
+        LinkedList<Card> list = (LinkedList<Card>) cardlist.clone();
+//        Collections.copy(list, cardlist);
         return new CardSet(list);
     }
     
     // trial methods
     public Card refOf(Card card) {
-        return (Card) cardlist.get(cardlist.indexOf(card));
+        return cardlist.get(cardlist.indexOf(card));
     }
     
     public int indexOf(Card card) {
         return cardlist.indexOf(card);
     }
+
+    public boolean containsShape(int shape) {
+        for (Card card: cardlist) {
+            if (card.getShape() == shape) return true;
+        }
+        return false;
+    }
+
+    public boolean containsLabel(int label) {
+        for (Card card: cardlist) {
+            if (card.getLabel() == label) return true;
+        }
+        return false;
+    }
+
+    public CardSet containingShape(int shape) {
+        LinkedList<Card> list = new LinkedList<>();
+        for (Card card: cardlist) {
+            if (card.getShape() == shape) {
+                list.add(card);
+            }
+        }
+        return new CardSet(list);
+    }
+
+    public CardSet containingLabel(int label) {
+        LinkedList<Card> list = new LinkedList<>();
+        for (Card card: cardlist) {
+            if (card.getLabel() == label) {
+                list.add(card);
+            }
+        }
+        return new CardSet(list);
+    }
+
 
 }
