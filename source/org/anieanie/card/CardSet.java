@@ -51,6 +51,10 @@ public class CardSet extends AbstractSet<Card> implements Cloneable, Serializabl
         cardlist = list;
     }
 
+    protected CardSet newInstance(LinkedList<Card> list) {
+        return new CardSet(list);
+    }
+
     public LinkedList<Card> getCardlist() {
         return cardlist;
     }
@@ -212,7 +216,7 @@ public class CardSet extends AbstractSet<Card> implements Cloneable, Serializabl
                 list.add(card);
             }
         }
-        return new CardSet(list);
+        return newInstance(list);
     }
 
     public CardSet containingLabel(int label) {
@@ -222,7 +226,7 @@ public class CardSet extends AbstractSet<Card> implements Cloneable, Serializabl
                 list.add(card);
             }
         }
-        return new CardSet(list);
+        return newInstance(list);
     }
 
 

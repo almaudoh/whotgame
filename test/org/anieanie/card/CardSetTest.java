@@ -106,6 +106,39 @@ public class CardSetTest {
         assertEquals(pack.size(), 0);
     }
 
+    @Test
+    public void ContainsShapeAndContainsLabel() {
+        CardSet pack = getCardSet(4, 13);
+        assertTrue(pack.containsShape(2));
+        assertFalse(pack.containsShape(4));
+        assertTrue(pack.containsLabel(6));
+        assertFalse(pack.containsShape(13));
+    }
+
+    @Test
+    public void ContainingShapeAndLabel() {
+        CardSet pack = new CardSet();
+        pack.add(new CardTestImpl(1, 13));
+        pack.add(new CardTestImpl(2, 10));
+        pack.add(new CardTestImpl(3, 4));
+        pack.add(new CardTestImpl(4, 4));
+        pack.add(new CardTestImpl(8, 3));
+        pack.add(new CardTestImpl(3, 3));
+        pack.add(new CardTestImpl(2, 3));
+        pack.add(new CardTestImpl(4, 12));
+        pack.add(new CardTestImpl(4, 5));
+        assertEquals(pack.containingShape(13).size(), 0);
+        assertEquals(pack.containingShape(2).size(), 2);
+        assertEquals(pack.containingShape(0).size(), 0);
+        assertEquals(pack.containingShape(4).size(), 3);
+        assertEquals(pack.containingShape(8).size(), 1);
+        assertEquals(pack.containingLabel(13).size(), 1);
+        assertEquals(pack.containingLabel(10).size(), 1);
+        assertEquals(pack.containingLabel(4).size(), 2);
+        assertEquals(pack.containingLabel(6).size(), 0);
+        assertEquals(pack.containingLabel(3).size(), 3);
+    }
+
     protected static void printCardSet(CardSet pack) {
         System.out.println("\nCardset contains: ");
         for (Card card : pack.getCardlist()) {

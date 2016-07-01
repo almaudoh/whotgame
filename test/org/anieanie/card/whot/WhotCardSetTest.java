@@ -44,6 +44,7 @@ public class WhotCardSetTest {
     @Test
     public void MultiWhots() {
         WhotCardSet newpack = new WhotCardSet();
+        newpack.initialize();
         try {
             // This should throw a RuntimeException.
             newpack.add(new WhotCard(WhotCard.WHOT, 20));
@@ -60,5 +61,21 @@ public class WhotCardSetTest {
         // This should work now.
         newpack.add(new WhotCard(WhotCard.WHOT, 20));
     }
-    
+
+
+    @Test
+    public void ProperSearchBehaviour() {
+        CardSet newPack = new WhotCardSet();
+        newPack.initialize();
+        newPack.remove(new WhotCard(WhotCard.WHOT, 20));
+        CardSet onlyWhots = newPack.containingShape(WhotCard.WHOT);
+        assertEquals(onlyWhots.size(), 4);
+        onlyWhots.add(new WhotCard(WhotCard.WHOT, 20));
+        assertEquals(onlyWhots.size(), 5);
+
+        onlyWhots = newPack.containingLabel(20);
+        assertEquals(onlyWhots.size(), 4);
+        onlyWhots.add(new WhotCard(WhotCard.WHOT, 20));
+        assertEquals(onlyWhots.size(), 5);
+    }
 }

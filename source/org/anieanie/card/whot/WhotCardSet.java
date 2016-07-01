@@ -5,6 +5,8 @@ package org.anieanie.card.whot;
 import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
 
+import java.util.LinkedList;
+
 public class WhotCardSet extends CardSet {
     // this class contains just a default constructor used to create
     // a new sorted pack of 54 WhotCards. Note that the constants used here are defined
@@ -12,6 +14,10 @@ public class WhotCardSet extends CardSet {
 
     // Constructor
     public WhotCardSet() {}
+
+    private WhotCardSet(LinkedList<Card> list) {
+        cardlist = list;
+    }
 
     public void initialize() {
         for (int shape = WhotCard.STAR; shape < WhotCard.WHOT; shape++) {
@@ -27,6 +33,11 @@ public class WhotCardSet extends CardSet {
             // add the whots themselves (ie. the jokers)
             add(new WhotCard(WhotCard.WHOT, 20));
         }
+    }
+
+    @Override
+    protected CardSet newInstance(LinkedList<Card> list) {
+        return new WhotCardSet(list);
     }
 
     public boolean isDuplicate(Card card) {
