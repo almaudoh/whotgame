@@ -11,6 +11,4 @@ public interface Display {
 
     void showGameStatus(GameClient client);
 
-    void showHelpMenu();
-
 }

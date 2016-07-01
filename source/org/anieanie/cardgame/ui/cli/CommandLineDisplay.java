@@ -13,7 +13,9 @@ import org.anieanie.cardgame.ui.Display;
 public class CommandLineDisplay implements Display {
     @Override
     public void showNotification(String message) {
-        System.out.println(message + " - " + Thread.currentThread());
+        if (message != null && !message.equals("")) {
+            System.out.println(message);
+        }
     }
 
     @Override
@@ -21,35 +23,22 @@ public class CommandLineDisplay implements Display {
         // showNotification the current whot status.
         switch (gameClient.getClientStatus()) {
             case (AbstractGameClient.STATUS_WAITING_FOR_USER):
-                System.out.print("My turn ... ");
+//                System.out.print("My turn ... ");
                 break;
 
             case (AbstractGameClient.STATUS_WAITING_FOR_TURN):
-                System.out.print("Awaiting turn ... ");
+//                System.out.print("Awaiting turn ... ");
                 break;
 
             case (AbstractGameClient.STATUS_WAITING_TO_START):
-                System.out.print("Waiting to start ... ");
+//                System.out.print("Waiting to start ... ");
                 break;
 
             case (AbstractGameClient.STATUS_GAME_WON):
-                System.out.print("Game won!!");
+//                System.out.print("Game won!!");
                 break;
         }
         displayCards(gameClient.getCards(), gameClient.getEnvironment());
-    }
-
-    @Override
-    public void showHelpMenu() {
-        // Give the user a menu.
-        System.out.println(
-                "\nType:\n"
-                        + "      (#) to disconnect from server.\n"
-                        + "      (?) to show this help menu.\n\n"
-                        + "      (1) To start a new game.\n"
-                        + "      (2) To play a move."
-        );
-        System.out.println("Choose an option:");
     }
 
     private void displayCards(CardSet cards, GameEnvironment environment) {

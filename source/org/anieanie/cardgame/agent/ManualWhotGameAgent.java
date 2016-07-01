@@ -24,22 +24,29 @@ public class ManualWhotGameAgent implements GameAgent {
     // Wait for input on a separate thread
     public void run() {
         // showNotification the initial help menu and whot status.
-        display.showHelpMenu();
         display.showGameStatus(gameClient);
 
+        boolean startPromptDone = false;
+        boolean gamePromptDone = false;
         /*
          * Main whot control while loop.
          *
          * This loop continues until there is a winner as announced by the server or you resign.
          */
-        String choice = "z";
+        String choice = "";
         while (gameClient.getClientStatus() != GameClient.STATUS_GAME_WON && !choice.equals("#")) {
+            if (gameClient.getClientStatus() == GameClient.STATUS_WAITING_TO_START && !startPromptDone) {
+                display.showNotification("Type 'START' to start the game or '#' to exit");
+                startPromptDone = true;
+            }
+            else if (!gamePromptDone) {
+                display.showNotification("Type the card you wish to play (e.g. 'Circle 3'), type 'MARKET' to go market, 'STATUS' for game status or '#' to exit");
+                gamePromptDone = true;
+            }
+
             choice = getActionInput();
             switch (choice) {
-                case "?":
-                    display.showHelpMenu();
-                    break;
-                case "1":
+                case "start":
                     if (gameClient.getClientStatus() == GameClient.STATUS_WAITING_TO_START) {
                         gameClient.startGame();
                     } else {
@@ -48,13 +55,19 @@ public class ManualWhotGameAgent implements GameAgent {
                     }
                     gameClient.refreshClientStatus();
                     break;
-                case "2":
+                case "status":
                     // Show current whot status.
                     display.showGameStatus(gameClient);
-                    getMoveAndPlay();
                     break;
 
+                case "market":
                 default:
+                    if (gameClient.getClientStatus() == GameClient.STATUS_WAITING_FOR_USER) {
+                        gameClient.playMove(choice);
+                    }
+                    else {
+                        display.showNotification("Not yet your turn to play!");
+                    }
             }
 
             // Release CPU cycles.
@@ -69,7 +82,7 @@ public class ManualWhotGameAgent implements GameAgent {
             // Post move actions.
             postMoveActions();
 
-        }   // End whot loop while
+        }   // End game loop while
 
 //        try {
 //            gameClient.close();
@@ -81,62 +94,35 @@ public class ManualWhotGameAgent implements GameAgent {
     }
 
     public String getActionInput() {
-        return (new InputLoop(display)).runLoop(new InputLoop.InputLoopConstraint() {
+        // Input loop for getting the move to be played.
+        return  (new InputLoop(display)).runLoop(new InputLoop.InputLoopConstraint() {
             @Override
             public boolean isSatisfied(String input) {
-                if (input.length() > 0) {
-                    switch (input.charAt(0)) {
-                        case '#': // Disconnect from the server.
-                        case '?': // Disconnect from the server.
-                        case '1': // Start a new game.
-                        case '2': // Play a move
-                            return true;
-                        default:    // Wrong entry, ask for a correct entry.
-                    }
+                if (input.charAt(0) == '#') {
+                    return true;
                 }
-                return false;
+                else if (input.equalsIgnoreCase("market") || input.equalsIgnoreCase("start") || input.equalsIgnoreCase("status") ) {
+                    return true;
+                }
+                else if (WhotCard.isIllegalCardSpec(input)) {
+                    display.showNotification("Illegal card specified '" + input + "'");
+                    return false;
+                }
+                else {
+                    return true;
+                }
+            }
+
+            @Override
+            public String helpMessage() {
+                return null;
             }
 
             @Override
             public String promptMessage() {
-                return "Type 1 to start, 2 to play, '#' to exit whot or '?' for help ";
+                return null;
             }
         });
-    }
-
-    public void getMoveAndPlay() {
-        // Play allowed only if it is our turn.
-        String cardSpec = "";
-        if (gameClient.getClientStatus() == GameClient.STATUS_WAITING_FOR_USER) {
-            // Input loop for getting the move to be played.
-            cardSpec = (new InputLoop(display)).runLoop(new InputLoop.InputLoopConstraint() {
-                @Override
-                public boolean isSatisfied(String input) {
-                    if (input.charAt(0) == '#') {
-                        return true;
-                    }
-                    else if (!input.equalsIgnoreCase("market") && WhotCard.isIllegalCardSpec(input)) {
-                        display.showNotification("Illegal card specified '" + input + "'");
-                        return false;
-                    }
-                    else {
-                        return true;
-                    }
-                }
-
-                @Override
-                public String promptMessage() {
-                    return "Type the card you wish to play (e.g. Circle 3), type MARKET to go market or # to go back";
-                }
-            });
-            // Validate the card before playing.
-            if (cardSpec.charAt(0) != '#') {
-                gameClient.playMove(cardSpec);
-            }
-        }
-        else {
-            display.showNotification("Not yet your turn to play!");
-        }
     }
 
     private void postMoveActions() {
@@ -153,10 +139,15 @@ public class ManualWhotGameAgent implements GameAgent {
                 }
 
                 @Override
-                public String promptMessage() {
+                public String helpMessage() {
                     return "Whot 20 played, call your shape ("
                             + String.join(", ", WhotCard.SHAPES).replaceFirst(", whot", "")
                             + "): ";
+                }
+
+                @Override
+                public String promptMessage() {
+                    return null;
                 }
             });
             display.showNotification("CALL for '" + shape + "' made");

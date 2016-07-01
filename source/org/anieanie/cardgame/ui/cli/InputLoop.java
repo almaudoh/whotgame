@@ -24,6 +24,7 @@ public final class InputLoop {
     public String runLoop(InputLoopConstraint constraint) {
         synchronized (lock) {
             String line;
+            display.showNotification(constraint.helpMessage());
             while (true) {
                 try {
                     display.showNotification(constraint.promptMessage());
@@ -45,11 +46,14 @@ public final class InputLoop {
     public interface InputLoopConstraint {
         boolean isSatisfied(String input);
         String promptMessage();
+        String helpMessage();
     }
 
     public class TrueConstraint implements InputLoopConstraint {
+        private String help;
         private String prompt;
-        public TrueConstraint(String prompt) {
+        public TrueConstraint(String help, String prompt) {
+            this.help = help;
             this.prompt = prompt;
         }
         public boolean isSatisfied(String input) {
@@ -60,6 +64,13 @@ public final class InputLoop {
         public String promptMessage() {
             return prompt;
         }
+
+        @Override
+        public String helpMessage() {
+            return help;
+        }
+
+
     }
 
 }
