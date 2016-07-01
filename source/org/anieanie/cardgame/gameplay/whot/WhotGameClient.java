@@ -55,11 +55,11 @@ public class WhotGameClient extends AbstractGameClient {
                 // Free CPU cycles.
                 Thread.sleep(100);
             }
-            
+
             clientStatus = 0;
 
             // Start the thread that runs the game agent.
-            new Thread(agent, "GameAgent").start();
+            new Thread(agent, "GameAgent:" + name).start();
             
             // ... while current thread scans server and updates client asynchronously
             while (clientStatus != STATUS_GAME_WON && clientStatus != STATUS_TERMINATE) {

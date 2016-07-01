@@ -34,21 +34,14 @@ public class SimpleWhotGameAgent implements GameAgent {
             // Play allowed only if it is our turn.
             if (gameClient.getClientStatus() == GameClient.STATUS_WAITING_FOR_USER) {
                 // Input loop for getting the move to be played.
-                playMove();
+                GameEnvironment environment = gameClient.getEnvironment();
+                gameClient.playMove(getMoveFromEnvironment(environment));
             }
             threadSleep(100);
-        }
-    }
-
-    protected void playMove() {
-        GameEnvironment environment = gameClient.getEnvironment();
-        // First check if awaiting whot 20 shape to call.
-        WhotGameClient client = (WhotGameClient)gameClient;
-        if (client.isAwaitingWhotCallInfo()) {
-            client.sendWhotCallShape(getBestWhotCallShape());
-        }
-        else {
-            gameClient.playMove(getMoveFromEnvironment(environment));
+            // Confirm whot 20 call and send.
+            if (((WhotGameClient)gameClient).isAwaitingWhotCallInfo()) {
+                ((WhotGameClient)gameClient).sendWhotCallShape(getBestWhotCallShape());
+            }
         }
     }
 
@@ -57,7 +50,7 @@ public class SimpleWhotGameAgent implements GameAgent {
         CardSet cards;
         WhotCard topCard = WhotCard.fromString(environment.get("TopCard"));
         if (topCard != null) {
-            // Different playing compulsions.
+            // Different playing compulsions and scenarios.
             if (environment.get("MarketMode").equals("PickTwo")) {
                 if (gameClient.getCards().containsLabel(WhotGameMonitor.PICK_TWO_LABEL)) {
                     return gameClient.getCards().containingLabel(WhotGameMonitor.PICK_TWO_LABEL).getFirst().toString();
@@ -69,8 +62,8 @@ public class SimpleWhotGameAgent implements GameAgent {
             else if (topCard.getShape() == WhotCard.WHOT) {
                 // If whot 20 is played, then look at the called card.
                 cards = gameClient.getCards().containingShape(WhotCard.getShapeInt(environment.get("CalledCard")));
-                cards.shuffle();
                 if (cards.size() > 0) {
+                    cards.shuffle();
                     return cards.getFirst().toString();
                 }
             }
@@ -78,6 +71,7 @@ public class SimpleWhotGameAgent implements GameAgent {
                 // Otherwise, choose a random card that matches the rule.
                 cards = gameClient.getCards().containingShape(topCard.getShape());
                 cards.addAll(gameClient.getCards().containingLabel(topCard.getLabel()));
+                cards.addAll(gameClient.getCards().containingShape(WhotCard.WHOT));
                 if (cards.size() > 0) {
                     cards.shuffle();
                     return cards.getFirst().toString();

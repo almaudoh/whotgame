@@ -21,21 +21,20 @@ public class CommandLineDisplay implements Display {
         // showNotification the current whot status.
         switch (gameClient.getClientStatus()) {
             case (AbstractGameClient.STATUS_WAITING_FOR_USER):
-                System.out.println("Status: your turn to play.");
+                System.out.print("My turn ... ");
                 break;
 
             case (AbstractGameClient.STATUS_WAITING_FOR_TURN):
-                System.out.println("Status: waiting for your turn to play.");
+                System.out.print("Awaiting turn ... ");
                 break;
 
             case (AbstractGameClient.STATUS_WAITING_TO_START):
-                System.out.println("Status: waiting for server to start whot.");
+                System.out.print("Waiting to start ... ");
                 break;
 
             case (AbstractGameClient.STATUS_GAME_WON):
-                System.out.println("Status: whot has been won");
+                System.out.print("Game won!!");
                 break;
-
         }
         displayCards(gameClient.getCards(), gameClient.getEnvironment());
     }
@@ -54,14 +53,17 @@ public class CommandLineDisplay implements Display {
     }
 
     private void displayCards(CardSet cards, GameEnvironment environment) {
-        StringBuilder displayedCards = new StringBuilder(" | ");
+        StringBuilder displayedCards = new StringBuilder();
         for (Card card : cards.getCardlist()) {
-            displayedCards.append(card).append(" | ");
+            displayedCards.append(card).append("|");
         }
-        System.out.printf("Your cards: %s%n", displayedCards);
-
+        if (displayedCards.length() > 0) {
+            displayedCards.delete(displayedCards.length() - 1, displayedCards.length());
+        }
         // @todo: Need to abstract this top card for non-Whot games.
-        System.out.printf("Top card: %s", environment.get("TopCard"));
+        System.out.printf("Top card: %s; ", environment.get("TopCard"));
+
+        System.out.printf("Your cards: (%s)", displayedCards);
 
         String calledCard = environment.get("CalledCard");
         if (calledCard != null && !calledCard.equals("")) {

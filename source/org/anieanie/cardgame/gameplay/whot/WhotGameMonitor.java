@@ -111,7 +111,6 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             waitingForMove = true;
 
             // Waiting for the players to play a move.
-            System.out.println("Waiting for move from: " + players.get(currentPlayer));
             while (waitingForMove) {
                 try {
                     // The actual processing of the move is done in one of the callback
@@ -265,13 +264,11 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
     /** Reloads the covered set by transferring everything from the exposed set except the topmost card */
     private void reloadCovered() {
-        System.out.printf("Before reload: exposed: %s; covered %s;%n", exposed.toString(), covered.toString());
         Card first = exposed.removeFirst();
         exposed.shuffle(20);
         covered.addAll(exposed);
         exposed.removeAll(exposed);
         exposed.addFirst(first);
-        System.out.printf("After reload: exposed: %s; covered %s;%n", exposed.toString(), covered.toString());
     }
 
     /** Check that the move follows rules */

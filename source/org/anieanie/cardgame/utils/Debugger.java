@@ -33,14 +33,14 @@ public class Debugger {
 
             @Override
             public void onBufferOut(String message) {
-                System.err.println(name + ": ==> " + message + " [Thread " + Thread.currentThread().getName() + "]");
-//                logStream.println(name + ": ==> " + message + " [Thread " + Thread.currentThread().getName() + "]");
+//                System.err.println(name + ": ==> " + message + " [Thread " + Thread.currentThread().getName() + "]");
+                logStream.println(name + ": ==> " + message + " [Thread " + Thread.currentThread().getName() + "]");
             }
 
             @Override
             public void onBufferIn(String message) {
-                System.err.println(name + ": <== " + message + " [Thread " + Thread.currentThread().getName() + "]");
-//                logStream.println(name + ": <== " + message + " [Thread " + Thread.currentThread().getName() + "]");
+//                System.err.println(name + ": <== " + message + " [Thread " + Thread.currentThread().getName() + "]");
+                logStream.println(name + ": <== " + message + " [Thread " + Thread.currentThread().getName() + "]");
             }
         };
     }

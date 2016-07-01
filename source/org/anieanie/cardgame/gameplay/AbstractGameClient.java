@@ -192,7 +192,6 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
     public void environmentReceived(String envSpec) {
         environment = GameEnvironment.fromCGMPString(envSpec);
         updateClientStatus();
-        display.showGameStatus(this);
     }
 
     /** Called when client CGMPRelay receives request for move from worker CGMPRelay */
