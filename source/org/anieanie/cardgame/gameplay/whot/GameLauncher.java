@@ -8,14 +8,10 @@ import org.anieanie.cardgame.cgmp.ClientCGMPRelay;
 import org.anieanie.cardgame.gameplay.GameClient;
 import org.anieanie.cardgame.ui.Display;
 import org.anieanie.cardgame.ui.cli.CommandLineDisplay;
-import org.anieanie.cardgame.utils.Debugger;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.Socket;
 
@@ -53,13 +49,13 @@ public class GameLauncher {
         try {
             Socket socket = new Socket(ipAddress, serverPort);
             ClientCGMPRelay relay = new ClientCGMPRelay(socket);
-            WhotGameClient client = new WhotGameClient(relay, inputUserName(), display);
-            relay.setListener(client);
+            WhotGameClient client = new WhotGameClient(relay, display);
+            GameAgent agent = initializeGameAgent(client, display);
 //            relay.addLowLevelListener(Debugger.getLowLevelListener(client.getUsername()));
 
-            // Connect to the client with the specified agent.
-            client.connect();
-            client.run(initializeGameAgent(client, display));
+            // Connect the client to the server with the specified game agent.
+            client.connect(agent);
+            client.run();
         }
         catch (ConnectException e) {
             display.showNotification("I could not connect to the server.");
@@ -87,22 +83,6 @@ public class GameLauncher {
 //            e.printStackTrace();
 //            System.err.println("java SampleMain [options...] arguments...");
             // print the list of available options
-        }
-    }
-
-    private static String inputUserName() {
-        BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-        String strUserName = "";	// User name of client
-        try {
-            do  {
-                System.out.print("Enter User Name: ");
-                strUserName = input.readLine();
-            } while (strUserName.equals(""));
-            return strUserName;
-        }
-        catch (IOException ioe) {
-            // do something positive here
-            return null;
         }
     }
 

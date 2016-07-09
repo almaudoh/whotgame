@@ -26,17 +26,16 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
 
     protected GameEnvironment environment;
     protected ClientCGMPRelay relay;
-    protected String name;
     protected int clientStatus = STATUS_UNDEFINED;
     protected Display display;
     protected CardSet cards;
+    protected GameAgent agent;
 
     /**
      * Creates a new instance of AbstractGameClient
      */
-    public AbstractGameClient(ClientCGMPRelay relay, String name, Display display) {
+    public AbstractGameClient(ClientCGMPRelay relay, Display display) {
         this.relay = relay;
-        this.name = name;
         this.environment = new GameEnvironment();
         this.display = display;
         cards = new WhotCardSet();
@@ -48,14 +47,14 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
     public AbstractGameClient(ClientCGMPRelay relay) {
         /** @todo Generate random user name if function call returns null */
         this.relay = relay;
-        this.name = null;
         this.environment = new GameEnvironment();
         this.display = new CommandLineDisplay();
     }
     
     @Override
-    public void connect() throws CGMPException, IOException {
-        if (!relay.connect(name)) {
+    public void connect(GameAgent agent) throws CGMPException, IOException {
+        this.agent = agent;
+        if (!relay.connect(agent.getName())) {
             throw new GameClientException(String.format("Server not responding on ip address %s and port %s",
                     relay.getSocket().getInetAddress(), relay.getSocket().getPort()));
         }
@@ -143,11 +142,8 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
         }
     }
 
-    protected abstract void run(GameAgent agent);
+    protected abstract void run();
     
-    // Later I may implement this to generate a random name
-    public abstract String getUsername();
-
     // Events
     @Override
     public void messageSent(CGMPMessage message) {}

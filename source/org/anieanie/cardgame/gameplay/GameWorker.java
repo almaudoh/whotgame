@@ -29,7 +29,7 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         this.relay = relay;
         this.relay.setListener(this);
         try {
-            this.relay.addLowLevelListener(Debugger.getLowLevelListener("Port " + relay.getSocket().getPort()));
+            this.relay.addLowLevelListener(Debugger.getLowLevelListener("Port " + relay.getSocket().getPort(), "monitor_" + monitor.hashCode()));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -39,11 +39,8 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
     public void run() {
         while (true) {
             try {
-                // The thread sleep needs to be done first otherwise each time relay.scan() throws
-                // an exception (which happens a lot), the Thread would never get to sleep.
-                Thread.sleep(500);
                 // @todo If for some reason, the client disconnects, we need to kill this worker.
-                relay.scan();
+                relay.scanWithThreadSleep();
 
             }    // End of try
             catch (CGMPConnectionException e) {

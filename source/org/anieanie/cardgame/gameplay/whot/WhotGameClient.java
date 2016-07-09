@@ -24,25 +24,20 @@ import java.io.InputStreamReader;
 public class WhotGameClient extends AbstractGameClient {
     private boolean awaitingWhotCallInfo = false;
 
-    @Override
-    public String getUsername() {
-        return this.name;
-    }
-
     /**
      * Creates a new instance of GameLauncher
      */
-    public WhotGameClient(ClientCGMPRelay relay, String name, Display display) {
-        super(relay, name, display);
+    public WhotGameClient(ClientCGMPRelay relay, Display display) {
+        super(relay, display);
+        relay.setListener(this);
     }
 
     /**
      * Handles communication with server.
      *
      * Once this method exits, the client will be cleaned up and terminated
-     * @param agent The agent that plays this game.
      */
-    protected void run(GameAgent agent) {
+    protected void run() {
         try {
             // Immediately, the client asks the server for permission to play
             int count = 0;
@@ -59,15 +54,12 @@ public class WhotGameClient extends AbstractGameClient {
             clientStatus = 0;
 
             // Start the thread that runs the game agent.
-            new Thread(agent, "GameAgent:" + name).start();
+            new Thread(agent, "GameAgent:" + agent.getName()).start();
             
             // ... while current thread scans server and updates client asynchronously
             while (clientStatus != STATUS_GAME_WON && clientStatus != STATUS_TERMINATE) {
                 try {
-                    // The thread sleep needs to be done first otherwise each time relay.scan() throws
-                    // an exception (which happens a lot), the Thread would never get to sleep.
-                    Thread.sleep(500);
-                    relay.scan();
+                    relay.scanWithThreadSleep();
                 }
                 catch (InterruptedException i) {
                     i.printStackTrace();
@@ -76,6 +68,9 @@ public class WhotGameClient extends AbstractGameClient {
                     // We may not always have a response from scans.
                 }
             }
+
+            // Interrupt agents input loop so it can recheck the client's status.
+            agent.refresh();
             
         }
         catch(Exception e) {
@@ -187,7 +182,8 @@ public class WhotGameClient extends AbstractGameClient {
     public void infoReceived(String info) {
         // @todo This needs to be refactored to the cli reader.
         // Information received and it's a request to call shape.
-        if (info.equals("CALL") && this.getTopCard().getShape() == WhotCard.WHOT) {
+//        if (info.equals("CALL") && this.getTopCard().getShape() == WhotCard.WHOT) {
+        if (info.equals("CALL")) {
             awaitingWhotCallInfo = true;
             display.showNotification("Call requested");
         }
@@ -195,7 +191,6 @@ public class WhotGameClient extends AbstractGameClient {
             display.showNotification(info);
         }
     }
-
 
     public void sendWhotCallShape(String shape) {
         try {
@@ -208,6 +203,7 @@ public class WhotGameClient extends AbstractGameClient {
             e.printStackTrace();
         }
     }
+
     public void finalize() throws Throwable {
         System.out.println("Finalize called!");
         super.finalize();

@@ -116,6 +116,16 @@ public abstract class CGMPRelay {
     }
 
     /**
+     * A convenience method which performs a thread sleep before scanning the relay.
+     */
+    public CGMPMessage scanWithThreadSleep() throws IOException, CGMPException, InterruptedException {
+        // The thread sleep needs to be done first otherwise each time relay.scan() throws
+        // an exception (which happens a lot), the Thread would never get to sleep.
+        Thread.sleep(500);
+        return scan();
+    }
+
+    /**
      * Scans the socket for any outstanding or impending messages from the other end.
      *
      * This method must be called frequently (every 0.2 - 0.5 seconds recommended) from

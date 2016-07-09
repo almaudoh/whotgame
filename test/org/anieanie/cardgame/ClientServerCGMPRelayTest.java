@@ -87,8 +87,8 @@ public class ClientServerCGMPRelayTest {
         serverRelay = new ServerCGMPRelay(serverSocket, serverListener);
 
         // Add a low-level logger for the two relays.
-        LowLevelCGMPRelayListener clientLLL = Debugger.getLowLevelListener("clientRelay");
-        LowLevelCGMPRelayListener serverLLL = Debugger.getLowLevelListener("serverRelay");
+        LowLevelCGMPRelayListener clientLLL = Debugger.getLowLevelListener("clientRelay", "clientRelay");
+        LowLevelCGMPRelayListener serverLLL = Debugger.getLowLevelListener("serverRelay", "clientRelay");
 
         clientRelay.addLowLevelListener(clientLLL);
         serverRelay.addLowLevelListener(serverLLL);

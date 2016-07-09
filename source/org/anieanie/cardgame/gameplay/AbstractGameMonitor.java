@@ -100,7 +100,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
 
     @Override
     public boolean requestStartGame() {
-        if (users.size() > 1 && !gameStarted) {
+        if (players.size() > 1 && !gameStarted) {
             gameStartRequested = true;
             return true;
         }
@@ -122,7 +122,7 @@ public abstract class AbstractGameMonitor implements GameMonitor {
             gameStarted = true;
             gameStartRequested = false;
             // Send whot gameplay to all users.
-            broadcastEnvironment();
+            broadcastInformation(String.format("Cards dealt to %s players, game started", players.size()));
         }
     }
 

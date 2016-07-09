@@ -33,8 +33,8 @@ public class TestGameClient extends AbstractGameClient {
     /**
      * Creates a new instance of TestGameClient
      */
-    public TestGameClient(ClientCGMPRelay relay, String name, Display display) {
-        super(relay, name, display);
+    public TestGameClient(ClientCGMPRelay relay, Display display) {
+        super(relay, display);
     }
     
     /**
@@ -80,8 +80,8 @@ public class TestGameClient extends AbstractGameClient {
             relay.setListener(client);
             Display display = new CommandLineDisplay();
             GameAgent agent = new SimpleWhotGameAgent(client);
-            client.connect();
-            client.run(agent);
+            client.connect(agent);
+            client.run();
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -95,7 +95,7 @@ public class TestGameClient extends AbstractGameClient {
     }
 
     @Override
-    protected void run(GameAgent agent) {
+    protected void run() {
         try {
             // Declarations to manage connection
             // ---------------------------------
@@ -167,7 +167,6 @@ public class TestGameClient extends AbstractGameClient {
         }	// End of exception
     }
 
-    @Override
     public String getUsername() {
         String strUserName = "";	// User name of client
         try {

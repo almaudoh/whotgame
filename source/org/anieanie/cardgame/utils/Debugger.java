@@ -9,9 +9,9 @@ import java.io.*;
  * Debugger class.
  */
 public class Debugger {
-    public static LowLevelCGMPRelayListener getLowLevelListener(final String name) throws FileNotFoundException {
+    public static LowLevelCGMPRelayListener getLowLevelListener(final String name, final String filename) throws FileNotFoundException {
         return new LowLevelCGMPRelayListener() {
-            PrintStream logStream = new PrintStream(new FileOutputStream(new File("debugger.log")));
+            PrintStream logStream = new PrintStream(new FileOutputStream(new File(filename + ".log")));
 
             @Override
             public void relayTerminated() {}

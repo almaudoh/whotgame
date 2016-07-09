@@ -14,9 +14,21 @@ import org.anieanie.cardgame.gameplay.whot.WhotGameMonitor;
 public class SimpleWhotGameAgent implements GameAgent {
 
     private final GameClient gameClient;
+    private final String name;
 
     public SimpleWhotGameAgent(GameClient gameClient) {
         this.gameClient = gameClient;
+        this.name = "machine-" + Math.round(Math.random() * 10000);
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public void refresh() {
+        // Nothing to do since there are no input loops here.
     }
 
     // Wait for input on a separate thread
@@ -106,4 +118,5 @@ public class SimpleWhotGameAgent implements GameAgent {
             e.printStackTrace();
         }
     }
+
 }

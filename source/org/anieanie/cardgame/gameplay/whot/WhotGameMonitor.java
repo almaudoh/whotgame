@@ -12,6 +12,7 @@ import org.anieanie.cardgame.cgmp.CGMPException;
 
 import java.io.IOException;
 import java.lang.*;
+import java.util.Arrays;
 import java.util.Collections;
 
 public class WhotGameMonitor extends AbstractGameMonitor {
@@ -50,6 +51,9 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
     // The card that is called by a player who played Whot 20.  `
     private String calledCard = "";
+
+    // A statement that is used to inform all of the move that was made
+    private String movePlayed = "";
 
     // constructors
     public WhotGameMonitor() {
@@ -115,11 +119,14 @@ public class WhotGameMonitor extends AbstractGameMonitor {
                 try {
                     // The actual processing of the move is done in one of the callback
                     // methods in a separate thread.
-                    Thread.sleep(1000);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
+
+            // Broadcast move that was played.
+            broadcastInformation(movePlayed);
 
             // Check if the game has been won.
             if (playerCardCount.get(players.get(currentPlayer)) <= 0) {
@@ -132,21 +139,24 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
             // A player who played Whot 20 should make a call which card they want.
             if (exposed.getFirst().getShape() == WhotCard.WHOT && calledCard.equals("")) {
-                broadcastEnvironment();
+//                broadcastEnvironment();
                 users.get(players.get(currentPlayer)).sendInformation("CALL");
                 waitingForCall = true;
+                // Only advance to next player after current player has made a call.
                 while (waitingForCall) {
                     try {
                         // The actual processing of the call response is done in one of the callback
                         // methods in a separate thread.
-                        Thread.sleep(1000);
+                        Thread.sleep(500);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
+                // Broadcast called card.
+                broadcastInformation(movePlayed);
             }
 
-            // Only advance to next player after current player has made a call.
+            // The current player will still play again if he just played a HOLD_ON card.
             if (isHoldOnCard) {
                 broadcastInformation("HOLD ON");
             }
@@ -157,7 +167,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             // If a suspension was played, inform the current player and then move on.
             if (isSuspensionCard) {
                 users.get(players.get(currentPlayer)).sendInformation("SUSPENSION miss a turn");
-                broadcastEnvironment();
+//                broadcastEnvironment();
                 advanceGameTurn();
                 isSuspensionCard = false;
             }
@@ -204,8 +214,12 @@ public class WhotGameMonitor extends AbstractGameMonitor {
         }
         Collections.addAll(dealed, cards);
 
-        // If the current player has gone to market, then it's not hold on.
+        // If the current player has gone to market, then it's not hold on anymore.
         isHoldOnCard = false;
+
+        // Update the message to send.
+        movePlayed = String.format("%s picked %s cards", user, cards.length);
+
         return cards;
     }
 
@@ -240,6 +254,9 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
             // Set hold-on card state.
             isHoldOnCard = move.getLabel() == HOLD_ON_LABEL;
+
+            // Update the message to send.
+            movePlayed = String.format("%s played %s", user, move);
             return true;
         }
         else {
@@ -255,12 +272,13 @@ public class WhotGameMonitor extends AbstractGameMonitor {
         if (infos[0].equals("CALL") && !WhotCard.isIllegalCardSpec(infos[1] + " 1")) {
             waitingForCall = false;
             calledCard = infos[1];
+            // Update the message to send.
+            movePlayed = String.format("%s called %s", user, calledCard);
         }
         else {
             System.out.println(info);
         }
     }
-
 
     /** Reloads the covered set by transferring everything from the exposed set except the topmost card */
     private void reloadCovered() {

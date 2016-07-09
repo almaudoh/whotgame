@@ -2,6 +2,7 @@ package org.anieanie.cardgame.gameplay;
 
 import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
+import org.anieanie.cardgame.agent.GameAgent;
 import org.anieanie.cardgame.cgmp.CGMPException;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ public interface GameClient {
 
     void playMove(Card card);
 
-    void connect() throws CGMPException, IOException;
+    void connect(GameAgent agent) throws CGMPException, IOException;
 
     void close() throws CGMPException, IOException;
 }

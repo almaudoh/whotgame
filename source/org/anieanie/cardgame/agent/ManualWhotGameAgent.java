@@ -6,6 +6,10 @@ import org.anieanie.cardgame.gameplay.whot.WhotGameClient;
 import org.anieanie.cardgame.ui.Display;
 import org.anieanie.cardgame.ui.cli.InputLoop;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 /**
  * Used to get input from the command line for interacting with the game.
  *
@@ -15,6 +19,7 @@ public class ManualWhotGameAgent implements GameAgent {
 
     private final Display display;
     private GameClient gameClient;
+    private String name;
 
     public ManualWhotGameAgent(GameClient gameClient, Display display) {
         this.gameClient = gameClient;
@@ -74,7 +79,7 @@ public class ManualWhotGameAgent implements GameAgent {
             // @todo: Using thread sleep delay to manage the timing between WHOT 20 playing and card CALL seems
             // brittle at this time and would need further review.
             try {
-                Thread.sleep(3000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -152,6 +157,37 @@ public class ManualWhotGameAgent implements GameAgent {
             });
             display.showNotification("CALL for '" + shape + "' made");
             client.sendWhotCallShape(shape);
+        }
+    }
+
+    @Override
+    public String getName() {
+        if (name == null) {
+            name = inputUserName();
+        }
+        return name;
+    }
+
+    @Override
+    public void refresh() {
+        if (gameClient.getClientStatus() == GameClient.STATUS_GAME_WON) {
+            // @todo Print message and then force the readLine() input loop to stop.
+        }
+    }
+
+    private static String inputUserName() {
+        BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
+        String strUserName = "";	// User name of client
+        try {
+            do  {
+                System.out.print("Enter User Name: ");
+                strUserName = input.readLine();
+            } while (strUserName.equals(""));
+            return strUserName;
+        }
+        catch (IOException ioe) {
+            // do something positive here
+            return null;
         }
     }
 
