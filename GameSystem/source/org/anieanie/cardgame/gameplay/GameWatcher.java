@@ -18,7 +18,7 @@ public class GameWatcher implements ClientCGMPRelayListener {
     private final Display display;
     private final ClientCGMPRelay relay;
     private GameEnvironment environment;
-    private GameEnvironment lastEnvironment;
+    private GameLogger logger;
     private ArrayList<String> cardStack;
 
     public GameWatcher(ClientCGMPRelay relay, Display display) {
@@ -27,6 +27,10 @@ public class GameWatcher implements ClientCGMPRelayListener {
         this.environment = new GameEnvironment();
         this.cardStack = new ArrayList<>();
         this.relay.setListener(this);
+    }
+
+    public void setLogger(GameLogger logger) {
+        this.logger = logger;
     }
 
     public static void main(String [] args) {
@@ -86,7 +90,6 @@ public class GameWatcher implements ClientCGMPRelayListener {
 
     @Override
     public void environmentReceived(String envSpec) {
-        lastEnvironment = (GameEnvironment) environment.clone();
         environment = GameEnvironment.fromCGMPString(envSpec);
         updateGameState();
         updateGameCommentary();
@@ -153,7 +156,14 @@ public class GameWatcher implements ClientCGMPRelayListener {
 
     @Override
     public void infoReceived(String info) {
+        logMove(info, environment);
         display.showNotification(info);
+    }
+
+    private void logMove(String info, GameEnvironment environment) {
+        if (logger != null) {
+            logger.logMove(info, environment);
+        }
     }
 
 }

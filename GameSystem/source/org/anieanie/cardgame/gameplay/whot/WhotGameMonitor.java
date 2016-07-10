@@ -218,7 +218,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
         isHoldOnCard = false;
 
         // Update the message to send.
-        movePlayed = String.format("%s picked %s cards", user, cards.length);
+        movePlayed = String.format("%s played MARKET", user);
 
         return cards;
     }

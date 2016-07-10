@@ -45,6 +45,11 @@ public class WhotCardSet extends CardSet {
         return cardlist.contains(card) && (card.getShape() != WhotCard.WHOT || countWhots() >= 5);
     }
 
+    @SuppressWarnings("unchecked")
+    public CardSet clone() {
+        return newInstance((LinkedList<Card>)this.cardlist.clone());
+    }
+
     private int countWhots() {
         int numwhots = 0;
         for (Card card : cardlist) {
