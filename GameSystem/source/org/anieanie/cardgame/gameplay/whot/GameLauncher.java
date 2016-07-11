@@ -57,7 +57,7 @@ public class GameLauncher {
             GameAgent agent = initializeGameAgent(client, display);
 
             if (logmode.equalsIgnoreCase("append") || logmode.equalsIgnoreCase("replace")) {
-                client.setLogger(new WhotGameLogger("moves-" + agent.getName() + ".txt", logmode.equalsIgnoreCase("append")));
+                client.setLogger(new WhotGameLogger("GameAI/logging/moves-" + agent.getName() + ".txt", logmode.equalsIgnoreCase("append")));
             }
 //            relay.addLowLevelListener(Debugger.getLowLevelListener(client.getUsername()));
 

@@ -139,7 +139,7 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
         try {
             relay.sendRequest(CGMPSpecification.START);
             clientStatus = STATUS_WAITING_FOR_TURN;  // Now waiting for server to ask for move
-            display.showNotification("Game start requested");
+            display.showNotification("Game start requested by " + agent.getName());
         }
         catch (CGMPException e) {
             e.printStackTrace();

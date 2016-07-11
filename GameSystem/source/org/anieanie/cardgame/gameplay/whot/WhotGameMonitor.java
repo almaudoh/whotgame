@@ -53,6 +53,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
     // A statement that is used to inform all of the move that was made
     private String movePlayed = "";
+    private boolean resendCallRequest = false;
 
     // constructors
     public WhotGameMonitor() {
@@ -139,11 +140,16 @@ public class WhotGameMonitor extends AbstractGameMonitor {
             // A player who played Whot 20 should make a call which card they want.
             if (exposed.getFirst().getShape() == WhotCard.WHOT && calledCard.equals("")) {
 //                broadcastEnvironment();
-                users.get(players.get(currentPlayer)).sendInformation("CALL");
                 waitingForCall = true;
+                resendCallRequest = true;
                 // Only advance to next player after current player has made a call.
                 while (waitingForCall) {
                     try {
+                        // Check for a request to resend the call request (in case a wrong call was made).
+                        if (resendCallRequest) {
+                            users.get(players.get(currentPlayer)).sendInformation("CALL");
+                            resendCallRequest = false;
+                        }
                         // The actual processing of the call response is done in one of the callback
                         // methods in a separate thread.
                         Thread.sleep(500);
@@ -268,11 +274,17 @@ public class WhotGameMonitor extends AbstractGameMonitor {
     public void handleInfoReceived(String info, String user) {
         // Act upon a call for card by a player who played whot 20.
         String[] infos = info.split(" ", 2);
-        if (infos[0].equals("CALL") && !WhotCard.isIllegalCardSpec(infos[1] + " 1")) {
-            waitingForCall = false;
-            calledCard = infos[1];
-            // Update the message to send.
-            movePlayed = String.format("%s called %s", user, calledCard);
+        if (infos[0].equals("CALL")) {
+            // Ask for another call if a wrong card is called
+            if (WhotCard.isIllegalCardSpec(infos[1] + " 1")) {
+                resendCallRequest = true;
+            }
+            else {
+                waitingForCall = false;
+                calledCard = infos[1];
+                // Update the message to send.
+                movePlayed = String.format("%s called %s", user, calledCard);
+            }
         }
         else {
             System.out.println(info);

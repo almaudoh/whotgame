@@ -100,12 +100,15 @@ public class SimpleWhotGameAgent implements GameAgent {
         int[] weights = new int[WhotCard.N_SHAPES];
         int weight, maxWeight = 0, maxShape = 0;
         for (Card card : gameClient.getCards()) {
-            weight = weights[card.getShape()] + 1;
-            if (weight > maxWeight) {
-                maxWeight = weight;
-                maxShape = card.getShape();
+            // WHOT 20's are excluded from the shapes that can be called.
+            if (card.getShape() != WhotCard.WHOT) {
+                weight = weights[card.getShape()] + 1;
+                if (weight > maxWeight) {
+                    maxWeight = weight;
+                    maxShape = card.getShape();
+                }
+                weights[card.getShape()] = weight;
             }
-            weights[card.getShape()] = weight;
         }
         return WhotCard.SHAPES.get(maxShape);
     }
