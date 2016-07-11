@@ -15,6 +15,7 @@ import org.anieanie.card.CardSet;
 import org.anieanie.card.whot.WhotCardSet;
 import org.anieanie.cardgame.agent.GameAgent;
 import org.anieanie.cardgame.cgmp.*;
+import org.anieanie.cardgame.gameplay.logging.GameLogger;
 import org.anieanie.cardgame.ui.cli.CommandLineDisplay;
 import org.anieanie.cardgame.ui.Display;
 
@@ -30,6 +31,7 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
     protected Display display;
     protected CardSet cards;
     protected GameAgent agent;
+    protected GameLogger logger;
 
     /**
      * Creates a new instance of AbstractGameClient
@@ -50,7 +52,12 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
         this.environment = new GameEnvironment();
         this.display = new CommandLineDisplay();
     }
-    
+
+    @Override
+    public void setLogger(GameLogger logger) {
+        this.logger = logger;
+    }
+
     @Override
     public void connect(GameAgent agent) throws CGMPException, IOException {
         this.agent = agent;
@@ -216,6 +223,9 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
         clientStatus = STATUS_GAME_WON;
         display.showNotification("Game won by " + winner);
         display.showNotification("Ending game");
+        if (logger != null) {
+            logger.flush();
+        }
     }
 
     /** Called when the client or server is terminated */

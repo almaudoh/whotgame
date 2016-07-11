@@ -12,7 +12,6 @@ import org.anieanie.cardgame.cgmp.CGMPException;
 
 import java.io.IOException;
 import java.lang.*;
-import java.util.Arrays;
 import java.util.Collections;
 
 public class WhotGameMonitor extends AbstractGameMonitor {

@@ -6,6 +6,7 @@ import org.anieanie.cardgame.agent.SimpleWhotGameAgent;
 import org.anieanie.cardgame.cgmp.CGMPSpecification;
 import org.anieanie.cardgame.cgmp.ClientCGMPRelay;
 import org.anieanie.cardgame.gameplay.GameClient;
+import org.anieanie.cardgame.gameplay.logging.WhotGameLogger;
 import org.anieanie.cardgame.ui.Display;
 import org.anieanie.cardgame.ui.cli.CommandLineDisplay;
 import org.kohsuke.args4j.CmdLineException;
@@ -20,14 +21,17 @@ import java.net.Socket;
  */
 public class GameLauncher {
 
-    @Option(name = "-agent", usage = "Specify the game playing agent (cli, simple or q-learning)")
-    private String agent;
+    @Option(name = "-agent", usage = "Specify the game playing agent (cli, simple or q-learning).")
+    private String agent = "simple";
 
-    @Option(name = "-port", usage = "Specify the server connection port (default: " + CGMPSpecification.Connection.DEFAULT_PORT + ")")
+    @Option(name = "-port", usage = "Specify the server connection port.")
     private int serverPort = CGMPSpecification.Connection.DEFAULT_PORT;
 
-    @Option(name = "-address", usage = "Specify the server connection ip-address (default: " + CGMPSpecification.Connection.DEFAULT_IP + ")")
+    @Option(name = "-address", usage = "Specify the server connection ip-address.")
     private String ipAddress = CGMPSpecification.Connection.DEFAULT_IP;
+
+    @Option(name = "-logmode", usage = "'None' to not log, 'new' to start a fresh log, 'append' to append to existing log.")
+    private String logmode = "none";
 
     public GameAgent initializeGameAgent(GameClient client, Display display) {
         switch (agent) {
@@ -51,6 +55,10 @@ public class GameLauncher {
             ClientCGMPRelay relay = new ClientCGMPRelay(socket);
             WhotGameClient client = new WhotGameClient(relay, display);
             GameAgent agent = initializeGameAgent(client, display);
+
+            if (logmode.equalsIgnoreCase("append") || logmode.equalsIgnoreCase("replace")) {
+                client.setLogger(new WhotGameLogger("moves-" + agent.getName() + ".txt", logmode.equalsIgnoreCase("append")));
+            }
 //            relay.addLowLevelListener(Debugger.getLowLevelListener(client.getUsername()));
 
             // Connect the client to the server with the specified game agent.

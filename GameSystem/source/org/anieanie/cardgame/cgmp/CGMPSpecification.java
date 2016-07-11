@@ -202,7 +202,7 @@ public final class CGMPSpecification {
      * The number of milliseconds a CGMPRelay will block waiting to read from a socket's
      * input stream before continuing as if no data was read
      */
-    public static int READ_TIMEOUT = 100;
+    public static int READ_TIMEOUT = 500;
 
     /**
      * Compare the supplied argument with the valid keywords in this class

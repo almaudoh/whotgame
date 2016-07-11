@@ -8,14 +8,11 @@ package org.anieanie.cardgame.gameplay.whot;
 
 import org.anieanie.card.Card;
 import org.anieanie.card.whot.WhotCard;
-import org.anieanie.cardgame.agent.GameAgent;
 import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.cardgame.gameplay.AbstractGameClient;
 import org.anieanie.cardgame.ui.Display;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 /**
  *
@@ -125,6 +122,8 @@ public class WhotGameClient extends AbstractGameClient {
         // Send card to server and wait for positive acknowledgement.
         try {
             if (relay.sendCard(card.toString())) {
+                // Log the move before the cardset is updated.
+                logMove(card.toString());
                 // Card was successfully played.
                 clientStatus = STATUS_WAITING_FOR_TURN;
                 cards.remove(card);
@@ -146,6 +145,8 @@ public class WhotGameClient extends AbstractGameClient {
         try {
             CGMPMessage response = relay.sendRequest(CGMPSpecification.CARD);
             if (response.isCard()) {
+                // Log the move before the cardset is updated.
+                logMove("MARKET");
                 // Cards were successfully received, add them to the card pack
                 for (String spec: response.getArguments().split(";")) {
                     cards.add(WhotCard.fromString(spec.trim()));
@@ -201,6 +202,12 @@ public class WhotGameClient extends AbstractGameClient {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void logMove(String move) {
+        if (logger != null) {
+            logger.logMove(move, environment, cards);
         }
     }
 

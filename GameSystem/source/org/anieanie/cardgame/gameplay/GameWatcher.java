@@ -1,6 +1,8 @@
 package org.anieanie.cardgame.gameplay;
 
 import org.anieanie.cardgame.cgmp.*;
+import org.anieanie.cardgame.gameplay.logging.GameLogger;
+import org.anieanie.cardgame.gameplay.logging.WhotGameLogger;
 import org.anieanie.cardgame.ui.Display;
 import org.anieanie.cardgame.ui.cli.CommandLineDisplay;
 import org.anieanie.cardgame.utils.Debugger;
@@ -39,6 +41,7 @@ public class GameWatcher implements ClientCGMPRelayListener {
             Socket socket = new Socket(CGMPSpecification.Connection.DEFAULT_IP, CGMPSpecification.Connection.DEFAULT_PORT);
             ClientCGMPRelay relay = new ClientCGMPRelay(socket);
             GameWatcher watcher = new GameWatcher(relay, display);
+            watcher.setLogger(new WhotGameLogger("gamelogger.txt", true));
             watcher.watch();
         }
         catch (ConnectException e) {
@@ -127,6 +130,7 @@ public class GameWatcher implements ClientCGMPRelayListener {
     @Override
     public void gameWon(String winner) {
         display.showNotification("Game won by " + winner);
+        logger.flush();
     }
 
     @Override
@@ -156,14 +160,7 @@ public class GameWatcher implements ClientCGMPRelayListener {
 
     @Override
     public void infoReceived(String info) {
-        logMove(info, environment);
         display.showNotification(info);
-    }
-
-    private void logMove(String info, GameEnvironment environment) {
-        if (logger != null) {
-            logger.logMove(info, environment);
-        }
     }
 
 }

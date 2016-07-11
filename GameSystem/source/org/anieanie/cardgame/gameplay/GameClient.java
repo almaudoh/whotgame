@@ -4,6 +4,7 @@ import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
 import org.anieanie.cardgame.agent.GameAgent;
 import org.anieanie.cardgame.cgmp.CGMPException;
+import org.anieanie.cardgame.gameplay.logging.GameLogger;
 
 import java.io.IOException;
 
@@ -34,6 +35,8 @@ public interface GameClient {
     void playMove(String cardSpec);
 
     void playMove(Card card);
+
+    void setLogger(GameLogger logger);
 
     void connect(GameAgent agent) throws CGMPException, IOException;
 

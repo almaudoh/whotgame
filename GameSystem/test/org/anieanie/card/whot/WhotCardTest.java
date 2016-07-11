@@ -48,7 +48,7 @@ public class WhotCardTest {
 
     @Test(dataProvider = "shape_names", dataProviderClass = WhotCardTestProvider.class)
     public void GetShapeString(int shape, int label, String shapeString) {
-        assertEquals(new WhotCard(shape, label).getShapeString(), shapeString);
+        assertEquals(new WhotCard(shape, label).getShapeString().toLowerCase(), shapeString.toLowerCase());
     }
 
     @Test
@@ -89,9 +89,9 @@ public class WhotCardTest {
         WhotCard card1 = new WhotCard(WhotCard.CROSS, 13);
         WhotCard card2 = new WhotCard(WhotCard.STAR, 5);
         WhotCard card3 = new WhotCard(WhotCard.BALL, 1);
-        assertEquals(card1.toString(), "Cross 13");
-        assertEquals(card2.toString(), "Star 5");
-        assertEquals(card3.toString(), "Circle 1");
+        assertEquals(card1.toString().toLowerCase(), "Cross 13".toLowerCase());
+        assertEquals(card2.toString().toLowerCase(), "Star 5".toLowerCase());
+        assertEquals(card3.toString().toLowerCase(), "Circle 1".toLowerCase());
     }
 
     @Test(dataProvider = "from_string", dataProviderClass = WhotCardTestProvider.class)

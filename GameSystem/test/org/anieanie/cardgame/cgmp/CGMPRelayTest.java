@@ -246,14 +246,14 @@ public class CGMPRelayTest {
 
         long start = System.currentTimeMillis();
 
-        // Exercise method under test. Attempt buffer in and .
+        // Exercise method under test. Attempt buffer in and check timing.
         CGMPRelay relay = new TestCGMPRelay(socket, null);
-        String response = relay.bufferIn(12000);
+        String response = relay.bufferIn(1200);
 
         long end = System.currentTimeMillis();
 
         // Check equality to the significant hundreds, i.e. 12000 / 100.
-        assertEquals(Math.floor((end - start)/100), 120.0);
+        assertEquals(Math.floor(end - start), 1200.);
         assertEquals(response, null);
     }
 
