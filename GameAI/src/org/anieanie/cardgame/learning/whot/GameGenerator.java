@@ -1,4 +1,4 @@
-package org.anieanie.cardgame.learning;
+package org.anieanie.cardgame.learning.whot;
 
 import org.anieanie.cardgame.agent.GameAgent;
 import org.anieanie.cardgame.agent.SimpleWhotGameAgent;

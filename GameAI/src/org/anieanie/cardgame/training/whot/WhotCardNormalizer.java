@@ -55,13 +55,17 @@ public class WhotCardNormalizer {
         INDArray cardFeatures = Nd4j.create(new float[shapeSpace + 1], new int[]{1, shapeSpace + 1});
         int countWhots = 0;
         for (int i = 0; i < length; i++) {
-            WhotCard card = WhotCard.fromString(fields[i + offset]);
-            if (card.getShape() == WhotCard.WHOT) {
-                cardFeatures.put(0, shapeSpace, countWhots);
-                countWhots++;
+            try {
+                WhotCard card = WhotCard.fromString(fields[i + offset]);
+                if (card.getShape() == WhotCard.WHOT) {
+                    cardFeatures.put(0, shapeSpace, countWhots);
+                    countWhots++;
+                } else {
+                    cardFeatures.put(0, WhotCardNormalizer.cardSpacePosition(card), 1.);
+                }
             }
-            else {
-                cardFeatures.put(0, WhotCardNormalizer.cardSpacePosition(card), 1.);
+            catch (Exception e) {
+                // Do nothing.
             }
         }
         // Assert that the number of cards match the number of features.

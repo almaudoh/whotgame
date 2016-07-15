@@ -1,6 +1,6 @@
 package org.anieanie.cardgame.training.whot;
 
-import org.anieanie.learning.utils.NetworkPersister;
+import org.anieanie.dl.training.utils.NetworkPersister;
 import org.canova.api.records.reader.RecordReader;
 import org.canova.api.split.FileSplit;
 import org.deeplearning4j.datasets.canova.RecordReaderDataSetIterator;

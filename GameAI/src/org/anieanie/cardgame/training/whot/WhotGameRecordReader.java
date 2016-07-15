@@ -55,9 +55,9 @@ public class WhotGameRecordReader extends LineRecordReader {
         }
 
         // Features array for the current market condition (either Normal, PickTwo or General).
-        ret.add(new IntWritable(fields[3].equals("Normal") ? 0 : 1));
-        ret.add(new IntWritable(fields[3].equals("PickTwo") ? 0 : 1));
-        ret.add(new IntWritable(fields[3].equals("General") ? 0 : 1));
+        ret.add(new IntWritable(fields[3].equals("Normal") ? 1 : 0));
+        ret.add(new IntWritable(fields[3].equals("PickTwo") ? 1 : 0));
+        ret.add(new IntWritable(fields[3].equals("General") ? 1 : 0));
 
         // Features for the whot cards in hand.
         fillWhotCardFeatures(WhotCardNormalizer.expandIntoCardSpace(fields, 4), ret);

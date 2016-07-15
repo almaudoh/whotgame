@@ -22,7 +22,7 @@ import java.net.Socket;
 public class GameGenerator {
 
     public static void main(String[] args) throws Exception {
-        int epochs = 5; //000;
+        int epochs = 1000;
         for (int i = 0; i < epochs; i++) {
             playGame();
         }
