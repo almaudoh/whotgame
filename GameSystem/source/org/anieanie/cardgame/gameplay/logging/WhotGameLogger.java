@@ -44,6 +44,7 @@ public class WhotGameLogger implements GameLogger {
 
     @Override
     public void finalize() throws Throwable {
+        pr.flush();
         pr.close();
         super.finalize();
     }

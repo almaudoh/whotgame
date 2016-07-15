@@ -110,6 +110,7 @@ public abstract class CGMPRelay {
         // @todo: What to do before disconnecting?
         if (socket != null) {
             terminateRelay();
+            listener.relayTerminated();
             socket.close();
             socket = null;
         }

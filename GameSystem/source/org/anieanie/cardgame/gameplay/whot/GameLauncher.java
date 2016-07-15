@@ -9,6 +9,7 @@ import org.anieanie.cardgame.gameplay.GameClient;
 import org.anieanie.cardgame.gameplay.logging.WhotGameLogger;
 import org.anieanie.cardgame.ui.Display;
 import org.anieanie.cardgame.ui.cli.CommandLineDisplay;
+import org.anieanie.cardgame.utils.Debugger;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -32,6 +33,9 @@ public class GameLauncher {
 
     @Option(name = "-logmode", usage = "'None' to not log, 'new' to start a fresh log, 'append' to append to existing log.")
     private String logmode = "none";
+
+    @Option(name = "-debug", usage = "true to create low level communication logs.")
+    private boolean debug = false;
 
     public GameAgent initializeGameAgent(GameClient client, Display display) {
         switch (agent) {
@@ -59,8 +63,9 @@ public class GameLauncher {
             if (logmode.equalsIgnoreCase("append") || logmode.equalsIgnoreCase("replace")) {
                 client.setLogger(new WhotGameLogger("GameAI/logging/moves-" + agent.getName() + ".txt", logmode.equalsIgnoreCase("append")));
             }
-//            relay.addLowLevelListener(Debugger.getLowLevelListener(client.getUsername()));
-
+            if (debug) {
+                relay.addLowLevelListener(Debugger.getLowLevelListener("client-relay", "client-relay"));
+            }
             // Connect the client to the server with the specified game agent.
             client.connect(agent);
             client.run();

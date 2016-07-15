@@ -34,7 +34,7 @@ public class WhotGameClient extends AbstractGameClient {
      *
      * Once this method exits, the client will be cleaned up and terminated
      */
-    protected void run() {
+    public void run() {
         try {
             // Immediately, the client asks the server for permission to play
             int count = 0;
@@ -61,8 +61,12 @@ public class WhotGameClient extends AbstractGameClient {
                 catch (InterruptedException i) {
                     i.printStackTrace();
                 }
-                catch(CGMPConnectionException e) {
+                catch (CGMPConnectionException e) {
                     // We may not always have a response from scans.
+                }
+                catch (NullPointerException e) {
+                    // The relay has most likely been nulled. End game.
+                    clientStatus = STATUS_TERMINATE;
                 }
             }
 
@@ -73,7 +77,6 @@ public class WhotGameClient extends AbstractGameClient {
         catch(Exception e) {
             System.out.println("Some kind of error has occurred.");
             e.printStackTrace();
-            System.exit(0);
         }	// End of exception
     }
 

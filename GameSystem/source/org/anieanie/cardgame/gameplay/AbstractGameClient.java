@@ -235,10 +235,6 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
             //        Socket s = (Socket)tOnlineUsers.remove(getUsername());
             //        tOfflineUsers.put(getUsername(), s);
             clientStatus = STATUS_TERMINATE;
-            System.out.println("relay terminated, cleanup needed");
-            //relay = null;
-            System.out.println("finalizing worker");
-            //this.finalize();
         }
         catch (Exception e) {
 

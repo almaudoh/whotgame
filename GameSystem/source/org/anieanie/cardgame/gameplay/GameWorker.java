@@ -21,23 +21,31 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
     private String username;
     private GameMonitor monitor;
     private ServerCGMPRelay relay;
+    private boolean relayTerminated;
+
+    public GameWorker(ServerCGMPRelay relay, GameMonitor monitor) {
+        this(relay, monitor, false);
+    }
 
     /** Creates a new instance of GameWorker */
-    public GameWorker(ServerCGMPRelay relay, GameMonitor monitor) {
+    public GameWorker(ServerCGMPRelay relay, GameMonitor monitor, boolean debug) {
         super();
         this.monitor = monitor;
         this.relay = relay;
         this.relay.setListener(this);
-        try {
-            this.relay.addLowLevelListener(Debugger.getLowLevelListener("Port " + relay.getSocket().getPort(), "monitor_" + monitor.hashCode()));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        this.relayTerminated = false;
+        if (debug) {
+            try {
+                this.relay.addLowLevelListener(Debugger.getLowLevelListener("Port " + relay.getSocket().getPort(), "monitor_" + monitor.hashCode()));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     // -------------------run------------------------------
     public void run() {
-        while (true) {
+        while (!relayTerminated) {
             try {
                 // @todo If for some reason, the client disconnects, we need to kill this worker.
                 relay.scanWithThreadSleep();
@@ -46,12 +54,16 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
             catch (CGMPConnectionException e) {
                 // We may not always have a response from scans.
             }
+            catch (NullPointerException e) {
+                // Most likely, the relay has been nulled, so break the loop.
+                relayTerminated = true;
+            }
             catch (Exception e) {
                 System.out.println("Error has occurred in Worker.");
                 e.printStackTrace();
+                relayTerminated = true;
             }    // End of exception
         }    // End of while
-
     }	// End of run()
 
     /**
@@ -193,13 +205,8 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         // if you terminate the relay, you must terminate the GameWorker since 
         // communication will have been breached
         try {
-            //        Socket s = (Socket)tOnlineUsers.remove(username);
-            //        tOfflineUsers.put(username, s);
             System.out.println("client called for termination");
-//          System.out.println("relay terminated, cleanup needed");
-            relay = null;
-//            System.out.println("finalizing worker");
-//            this.finalize();
+            relayTerminated = true;
         }
         catch (Exception e) { e.printStackTrace(); }
         catch (Throwable t) { t.printStackTrace(); }
@@ -226,4 +233,7 @@ public class GameWorker extends Thread implements ServerCGMPRelayListener {
         super.finalize();
     }
 
+    public boolean relayWasTerminated() {
+        return relayTerminated;
+    }
 }
