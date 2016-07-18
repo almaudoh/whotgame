@@ -19,6 +19,7 @@ import burlap.mdp.singleagent.SADomain;
 import burlap.mdp.singleagent.environment.Environment;
 import burlap.mdp.singleagent.environment.EnvironmentOutcome;
 import burlap.mdp.singleagent.environment.SimulatedEnvironment;
+import burlap.mdp.singleagent.oo.OOSADomain;
 import burlap.visualizer.Visualizer;
 import org.anieanie.cardgame.training.GameRunner;
 
@@ -91,12 +92,12 @@ public class DeepQLearningSolver extends MDPSolver implements LearningAgent {
 
     public static void main(String[] args) {
 
-        GridWorldDomain gwd = new GridWorldDomain(11, 11);
-        gwd.setMapToFourRooms();
-        gwd.setProbSucceedTransitionDynamics(0.8);
-        gwd.setTf(new GridWorldTerminalFunction(10, 10));
+        WhotGameWorld world = new WhotGameWorld(11, 11);
+//        gwd.setMapToFourRooms();
+//        gwd.setProbSucceedTransitionDynamics(0.8);
+//        world.setTf(new GridWorldTerminalFunction(10, 10));
 
-        SADomain domain = gwd.generateDomain();
+        OOSADomain domain = world.generateDomain();
 
         //get initial state with agent in 0,0
         State s = new GridWorldState(new GridAgent(0, 0));
