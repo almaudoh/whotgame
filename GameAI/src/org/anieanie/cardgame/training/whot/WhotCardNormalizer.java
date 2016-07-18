@@ -2,13 +2,24 @@ package org.anieanie.cardgame.training.whot;
 
 import org.anieanie.card.Card;
 import org.anieanie.card.whot.WhotCard;
+import org.anieanie.card.whot.WhotCardSet;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+
+import java.util.Arrays;
 
 /**
  * Carries out various normalization schemes for WhotCards.
  */
 public class WhotCardNormalizer {
+
+    private static final WhotCardSet fullCardSet;
+
+    static {
+        fullCardSet = new WhotCardSet();
+        fullCardSet.initialize();
+    }
+
     public static INDArray expandIntoShapeSpace(Card card) {
         INDArray features = Nd4j.create(new float[WhotCard.N_SHAPES], new int[]{1, WhotCard.N_SHAPES});
         features.put(0, card.getShape(), 1);
@@ -74,6 +85,21 @@ public class WhotCardNormalizer {
     }
 
     /**
+     * A version that uses a cardspace of 54 slots (total number of whot cards) instead of 71.
+     */
+    public static INDArray expandIntoCompressedCardSpace(Card... cards) {
+        INDArray cardFeatures = Nd4j.create(new float[fullCardSet.size()], new int[]{1, fullCardSet.size()});
+        for (Card card : cards) {
+            cardFeatures.put(0, fullCardSet.indexOf(card), 1 + cardFeatures.getDouble(0, fullCardSet.indexOf(card)));
+        }
+        return cardFeatures;
+    }
+
+    public static INDArray blankWhotCardFeatures(int numberOfLabels) {
+        return Nd4j.create(new float[numberOfLabels], new int[]{1, numberOfLabels});
+    }
+
+    /**
      * Returns a 1-indexed number representing the position of the card in a field.
      *
      * where: Star 1 - 14     => 1 - 14
@@ -123,10 +149,6 @@ public class WhotCardNormalizer {
         // Shapes in the right positions.
         features.put(0, card.getShape(), 1.);
         return features;
-    }
-
-    public static INDArray blankWhotCardFeatures(int numberOfLabels) {
-        return Nd4j.create(new float[numberOfLabels], new int[]{1, numberOfLabels});
     }
 
 }

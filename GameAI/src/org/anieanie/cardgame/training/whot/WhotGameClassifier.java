@@ -42,76 +42,90 @@ public class WhotGameClassifier {
         Nd4j.MAX_ELEMENTS_PER_SLICE = -1;
         Nd4j.ENFORCE_NUMERICAL_STABILITY = true;
 
-        int maxEpochs = 1000;
-        double minError = 0.0001;
+        int maxEpochs = 500;
+        double minError = 0.1;
         int listenerFreq = 1;
         int labelField = 0;
         int labelCount = 22;
-        int labelIndexFrom  = 0;
+        int labelIndexFrom = 0;
         int labelIndexTo = 21;
         int batchSize = 1000;
-        int splitTrainNum = (int) (batchSize * .8);
         int seed = 123;
-
-        log.info("Load data....");
-        RecordReader reader = new WhotGameRecordReader();
-        reader.initialize(new FileSplit(new File(RESOURCE_DIR + "/saved_moves.txt")));
-        DataSetIterator iter = new RecordReaderDataSetIterator(reader, batchSize, labelIndexFrom, labelIndexTo, true);
-        DataSet next = iter.next();
-        next.shuffle();
-
-        log.info("Split data....");
-        SplitTestAndTrain testAndTrain = next.splitTestAndTrain(splitTrainNum, new Random(seed));
-        DataSet train = testAndTrain.getTrain();
-        DataSet test = testAndTrain.getTest();
+        int numFeatures = 101;
+        int iterations = 1;
+        double trainFraction = 0.8;
+        double learningRate = 0.01;
 
         log.info("Build model....");
-        MultiLayerNetwork model = loadOrGetNeuralNetwork(labelCount, seed);
+        MultiLayerNetwork model = loadOrGetNeuralNetwork(labelCount, numFeatures, iterations, learningRate, seed);
         model.init();
         model.setListeners(new ScoreIterationListener(listenerFreq));
 
         log.info("Backup old config....");
-        Files.move(Paths.get(SAVED_NETS_DIR + "/conf.json"), Paths.get(SAVED_NETS_DIR + "/conf.bak.json"), StandardCopyOption.REPLACE_EXISTING);
-        Files.move(Paths.get(SAVED_NETS_DIR + "/coefficients.bin"), Paths.get(SAVED_NETS_DIR + "/coefficients.bak.bin"), StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Files.move(Paths.get(SAVED_NETS_DIR + "/conf.json"), Paths.get(SAVED_NETS_DIR + "/conf.bak.json"), StandardCopyOption.REPLACE_EXISTING);
+            Files.move(Paths.get(SAVED_NETS_DIR + "/coefficients.bin"), Paths.get(SAVED_NETS_DIR + "/coefficients.bak.bin"), StandardCopyOption.REPLACE_EXISTING);
+        }
+        catch (IOException e) {
+            // Just continue if we couldn't backup.
+        }
+
+        log.info("Load data....");
+        RecordReader reader = new WhotGameRecordReader();
+        reader.initialize(new FileSplit(new File(RESOURCE_DIR + "/saved_moves.txt")));
 
         log.info("Train model....");
-        int ep = 0;
-        do {
-            model.fit(train);
-            if (ep % 100 == 0) {
-                // Save network every 100 epochs in case I abort halfway.
-                NetworkPersister.saveNet(model, SAVED_NETS_DIR + "/conf.json", SAVED_NETS_DIR + "/coefficients.bin");
-            }
+        DataSetIterator iter = new RecordReaderDataSetIterator(reader, batchSize, labelIndexFrom, labelIndexTo, true);
+        DataSet next;
+        while (iter.hasNext()) {
+            log.info("Load batch....");
+            next = iter.next();
+            next.shuffle();
 
-        } while (ep++ < maxEpochs && model.score() > minError);
+            log.info("Split data....");
+            SplitTestAndTrain testAndTrain = next.splitTestAndTrain(trainFraction);
+            DataSet train = testAndTrain.getTrain();
+            DataSet test = testAndTrain.getTest();
 
-        log.info("Evaluate model....");
-        Evaluation eval = new Evaluation(labelCount);
-        eval.eval(test.getLabels(), model.output(test.getFeatureMatrix(), Layer.TrainingMode.TEST));
-        log.info(eval.stats());
+            int j = 0;
+            do {
+                model.fit(train);
+                j++;
+            } while (model.score() > minError && j < maxEpochs);
 
-        System.out.println(WhotCardResultDisplay.formatOutput(test, model.output(test.getFeatureMatrix())));
-        System.out.println("");
-        System.out.println(WhotCardResultDisplay.formatOutput(train, model.output(train.getFeatureMatrix())));
+            log.info("Save model...");
+            saveMultiLayerNetwork(model);
+
+            log.info("Evaluate model....");
+            Evaluation eval = new Evaluation(labelCount);
+            eval.eval(test.getLabels(), model.output(test.getFeatureMatrix(), Layer.TrainingMode.TEST));
+            log.info(eval.stats());
+        }
+
+        DataSet evalset = iter.next();
+        System.out.println(WhotCardResultDisplay.formatOutput(evalset, model.output(evalset.getFeatureMatrix())));
+//        System.out.println("");
+//        System.out.println(WhotCardResultDisplay.formatOutput(train, model.output(train.getFeatureMatrix())));
     }
 
-    private static MultiLayerNetwork loadOrGetNeuralNetwork(int labelCount, int seed) {
+    private static MultiLayerNetwork loadOrGetNeuralNetwork(int labelCount, int numFeatures, int iterations, double learningRate, int seed) {
         try {
-            return loadMultilayerNetwork();
+            return loadMultiLayerNetwork();
         } catch (IOException e) {
-            e.printStackTrace();
-            return new MultiLayerNetwork(getNNConfiguration(labelCount, seed));
+//            e.printStackTrace();
+            return new MultiLayerNetwork(getNNConfiguration(labelCount, numFeatures, iterations, learningRate, seed));
         }
     }
 
-    private static MultiLayerNetwork loadMultilayerNetwork() throws IOException {
+    private static void saveMultiLayerNetwork(MultiLayerNetwork model) throws IOException {
+        NetworkPersister.saveNet(model, SAVED_NETS_DIR + "/conf.json", SAVED_NETS_DIR + "/coefficients.bin");
+    }
+
+    private static MultiLayerNetwork loadMultiLayerNetwork() throws IOException {
         return NetworkPersister.loadNet(SAVED_NETS_DIR + "/conf.json", SAVED_NETS_DIR + "/coefficients.bin");
     }
 
-    private static MultiLayerConfiguration getNNConfiguration(int labelCount, int seed) {
-        final int numFeatures = 101;
-        int iterations = 1;
-        double learningRate = 0.01;
+    private static MultiLayerConfiguration getNNConfiguration(int labelCount, int numFeatures, int iterations, double learningRate, int seed) {
         int hiddenSize = 500;
 
         return new NeuralNetConfiguration.Builder()
