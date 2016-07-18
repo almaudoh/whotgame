@@ -14,19 +14,9 @@ import java.io.IOException;
 import java.lang.*;
 import java.util.Collections;
 
+import static org.anieanie.cardgame.gameplay.whot.WhotGameRule.*;
+
 public class WhotGameMonitor extends AbstractGameMonitor {
-    // The number that is used as the pick two number.
-    public static final int PICK_TWO_LABEL = 7;
-
-    // The number that is used as the general market number.
-    public static final int GENERAL_MARKET_LABEL = 4;
-
-    // The number that is used for suspension.
-    public static final int SUSPENSION_LABEL = 8;
-
-    // The number that is used as hold on.
-    public static final int HOLD_ON_LABEL = 1;
-
     // Indicates that the monitor is waiting for a move from the client. Loop control variable.
     private volatile boolean waitingForMove = false;
 
@@ -77,15 +67,21 @@ public class WhotGameMonitor extends AbstractGameMonitor {
     @Override
     public void updateEnvironment() {
         super.updateEnvironment();
-        environment.put("CalledCard", calledCard);
+        environment.put(VAR_CALLED_CARD, calledCard);
+        if (generalMarketPlayer > -1 && generalMarketPlayer < players.size()) {
+            environment.put(VAR_GENERAL_MARKET_PLAYER, players.get(generalMarketPlayer));
+        }
+        if (exposed.size() > 0) {
+            environment.put(VAR_TOP_CARD, exposed.getFirst().toString());
+        }
         if (pickTwoCount > 0) {
-            environment.put("MarketMode", "PickTwo");
+            environment.put(VAR_MARKET_MODE, MARKET_MODE_PICK_TWO);
         }
         else if (isGeneralMarket) {
-            environment.put("MarketMode", "General");
+            environment.put(VAR_MARKET_MODE, MARKET_MODE_GENERAL);
         }
         else {
-            environment.put("MarketMode", "Normal");
+            environment.put(VAR_MARKET_MODE, MARKET_MODE_NORMAL);
         }
     }
 
@@ -302,19 +298,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
 
     /** Check that the move follows rules */
     private boolean isValidMove(Card move) {
-        return matchesTopCard(move) && isPickTwoCounter(move)
-                && (!isGeneralMarket || currentPlayer == generalMarketPlayer)
-                && !exposed.isDuplicate(move);
-    }
-
-    private boolean matchesTopCard(Card move) {
-        Card top = exposed.getFirst();
-        return move.getLabel() == top.getLabel() || move.getShape() == top.getShape() ||
-                move.getShape() == WhotCard.WHOT || WhotCard.SHAPES.get(move.getShape()).equals(calledCard);
-    }
-
-    private boolean isPickTwoCounter(Card move) {
-        return pickTwoCount < 1 || move.getLabel() == PICK_TWO_LABEL;
+        return new WhotGameRule().isValidMove(move, environment) && !exposed.isDuplicate(move);
     }
 
 }

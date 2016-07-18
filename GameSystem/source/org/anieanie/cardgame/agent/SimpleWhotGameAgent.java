@@ -7,6 +7,9 @@ import org.anieanie.cardgame.gameplay.GameClient;
 import org.anieanie.cardgame.gameplay.GameEnvironment;
 import org.anieanie.cardgame.gameplay.whot.WhotGameClient;
 import org.anieanie.cardgame.gameplay.whot.WhotGameMonitor;
+import org.anieanie.cardgame.gameplay.whot.WhotGameRule;
+
+import static org.anieanie.cardgame.gameplay.whot.WhotGameRule.*;
 
 /**
  * This Game agent follows simple WhotGame playing rules without using any strategy.
@@ -18,7 +21,12 @@ public class SimpleWhotGameAgent implements GameAgent {
 
     public SimpleWhotGameAgent(GameClient gameClient) {
         this.gameClient = gameClient;
-        this.name = "machine-" + Math.round(Math.random() * 10000);
+        this.name = "simple-" + Math.round(Math.random() * 10000);
+    }
+
+    public SimpleWhotGameAgent(GameClient gameClient, String name) {
+        this.gameClient = gameClient;
+        this.name = name;
     }
 
     @Override
@@ -47,7 +55,7 @@ public class SimpleWhotGameAgent implements GameAgent {
             if (gameClient.getClientStatus() == GameClient.STATUS_WAITING_FOR_USER) {
                 // Input loop for getting the move to be played.
                 GameEnvironment environment = gameClient.getEnvironment();
-                gameClient.playMove(getMoveFromEnvironment(environment));
+                gameClient.playMove(getMoveFromEnvironment(gameClient.getCards(), environment));
             }
             threadSleep(100);
             // Confirm whot 20 call and send.
@@ -58,37 +66,11 @@ public class SimpleWhotGameAgent implements GameAgent {
     }
 
     /** Using simple rules, choose which card to play. */
-    protected String getMoveFromEnvironment(GameEnvironment environment) {
-        CardSet cards;
-        WhotCard topCard = WhotCard.fromString(environment.get("TopCard"));
-        if (topCard != null) {
-            // Different playing compulsions and scenarios.
-            if (environment.get("MarketMode").equals("PickTwo")) {
-                if (gameClient.getCards().containsLabel(WhotGameMonitor.PICK_TWO_LABEL)) {
-                    return gameClient.getCards().containingLabel(WhotGameMonitor.PICK_TWO_LABEL).getFirst().toString();
-                }
-            }
-            else if (environment.get("MarketMode").equals("General")) {
-                return "MARKET";
-            }
-            else if (topCard.getShape() == WhotCard.WHOT) {
-                // If whot 20 is played, then look at the called card.
-                cards = gameClient.getCards().containingShape(WhotCard.getShapeInt(environment.get("CalledCard")));
-                if (cards.size() > 0) {
-                    cards.shuffle();
-                    return cards.getFirst().toString();
-                }
-            }
-            else {
-                // Otherwise, choose a random card that matches the rule.
-                cards = gameClient.getCards().containingShape(topCard.getShape());
-                cards.addAll(gameClient.getCards().containingLabel(topCard.getLabel()));
-                cards.addAll(gameClient.getCards().containingShape(WhotCard.WHOT));
-                if (cards.size() > 0) {
-                    cards.shuffle();
-                    return cards.getFirst().toString();
-                }
-            }
+    protected String getMoveFromEnvironment(CardSet cards, GameEnvironment environment) {
+        cards = WhotGameRule.filterValidMoves(cards, environment);
+        if (cards.size() > 0) {
+            cards.shuffle();
+            return cards.getFirst().toString();
         }
         // If we reach here, then we don't have a card to play.
         return "MARKET";
@@ -114,7 +96,7 @@ public class SimpleWhotGameAgent implements GameAgent {
     }
 
     // Convenience function for thread sleep delays.
-    private void threadSleep(long milliseconds) {
+    protected void threadSleep(long milliseconds) {
         try {
             Thread.sleep(milliseconds);
         } catch (InterruptedException e) {

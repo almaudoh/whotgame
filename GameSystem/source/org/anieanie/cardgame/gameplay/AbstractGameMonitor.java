@@ -4,6 +4,7 @@ import org.anieanie.card.Card;
 import org.anieanie.card.CardSet;
 import org.anieanie.cardgame.cgmp.CGMPException;
 import org.anieanie.cardgame.cgmp.ServerCGMPRelay;
+import org.anieanie.cardgame.gameplay.whot.WhotGameRule;
 
 import java.io.IOException;
 import java.util.*;
@@ -187,13 +188,11 @@ public abstract class AbstractGameMonitor implements GameMonitor {
 
     protected void updateEnvironment() {
         if (players.size() > 0 && currentPlayer > -1) {
-            environment.put("CurrentPlayer", players.get(currentPlayer));
+            environment.put(GameEnvironment.VAR_CURRENT_PLAYER, players.get(currentPlayer));
         }
-        if (exposed.size() > 0) {
-            environment.put("TopCard", exposed.getFirst().toString());
-        }
-        environment.put("Players", players.toString());
-        environment.put("Viewers", viewers.toString());
+        environment.put(GameEnvironment.VAR_PLAYERS, players.toString());
+        environment.put(GameEnvironment.VAR_VIEWERS, viewers.toString());
+        environment.put(GameEnvironment.VAR_PLAYER_COUNT, String.valueOf(players.size()));
     }
 
     @Override

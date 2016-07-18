@@ -4,6 +4,11 @@ import java.util.HashMap;
 
 public class GameEnvironment extends HashMap<String, String> {
 
+    public static final String VAR_CURRENT_PLAYER = "CurrentPlayer";
+    public static final String VAR_PLAYERS = "Players";
+    public static final String VAR_VIEWERS = "Viewers";
+    public static final String VAR_PLAYER_COUNT = "PlayerCount";
+
     public static GameEnvironment fromCGMPString(String envSpec) {
         GameEnvironment environment = new GameEnvironment();
         String[] envr = envSpec.split(";");

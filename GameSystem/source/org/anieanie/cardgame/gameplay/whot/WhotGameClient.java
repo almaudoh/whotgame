@@ -10,6 +10,7 @@ import org.anieanie.card.Card;
 import org.anieanie.card.whot.WhotCard;
 import org.anieanie.cardgame.cgmp.*;
 import org.anieanie.cardgame.gameplay.AbstractGameClient;
+import org.anieanie.cardgame.gameplay.GameEnvironment;
 import org.anieanie.cardgame.ui.Display;
 
 import java.io.IOException;
@@ -140,7 +141,22 @@ public class WhotGameClient extends AbstractGameClient {
             e.printStackTrace();
         }
         catch (CGMPException e) {
-            e.printStackTrace();
+            // Do a double check to confirm that the server got the card and acted on it.
+            try {
+                GameEnvironment env = relay.requestEnvironment();
+                if (env.get("TopCard").equals(card.toString())) {
+                    // Log the move before the cardset is updated.
+                    logMove(card.toString());
+                    // Card was successfully played.
+                    clientStatus = STATUS_WAITING_FOR_TURN;
+                    cards.remove(card);
+                    display.showNotification("Played " + card);
+                }
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            } catch (CGMPException e1) {
+                e1.printStackTrace();
+            }
         }
     }
 
