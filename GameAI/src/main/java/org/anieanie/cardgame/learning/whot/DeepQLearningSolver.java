@@ -92,7 +92,7 @@ public class DeepQLearningSolver extends MDPSolver implements LearningAgent {
 
     public static void main(String[] args) {
 
-        WhotGameWorld world = new WhotGameWorld(11, 11);
+        WhotGameWorld world = new WhotGameWorld();
 //        gwd.setMapToFourRooms();
 //        gwd.setProbSucceedTransitionDynamics(0.8);
 //        world.setTf(new GridWorldTerminalFunction(10, 10));
@@ -115,8 +115,8 @@ public class DeepQLearningSolver extends MDPSolver implements LearningAgent {
             env.resetEnvironment();
         }
 
-        Visualizer v = GridWorldVisualizer.getVisualizer(gwd.getMap());
-        new EpisodeSequenceVisualizer(v, domain, episodes);
+//        Visualizer v = GridWorldVisualizer.getVisualizer(world.getMap());
+//        new EpisodeSequenceVisualizer(v, domain, episodes);
 
     }
 

@@ -33,8 +33,7 @@ public class WhotGameClassifier {
 
     private static Logger log = LoggerFactory.getLogger(WhotGameClassifier.class);
 
-    private static final String RESOURCE_DIR = "GameAI/resources";
-    private static final String SAVED_NETS_DIR = RESOURCE_DIR + "/saved_nets";
+    private static final String SAVED_NETS_DIR = "resources/saved_nets";
 
     public static void main(String[] args) throws Exception {
         // Customizing params
@@ -72,7 +71,7 @@ public class WhotGameClassifier {
 
         log.info("Load data....");
         RecordReader reader = new WhotGameRecordReader();
-        reader.initialize(new FileSplit(new File(RESOURCE_DIR + "/saved_moves.txt")));
+        reader.initialize(new FileSplit(new File("resources/saved_moves.txt")));
 
         log.info("Train model....");
         DataSetIterator iter = new RecordReaderDataSetIterator(reader, batchSize, labelIndexFrom, labelIndexTo, true);
