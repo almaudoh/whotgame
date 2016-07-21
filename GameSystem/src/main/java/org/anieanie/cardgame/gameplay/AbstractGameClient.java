@@ -10,6 +10,7 @@
 package org.anieanie.cardgame.gameplay;
 
 import java.io.*;
+import java.util.Objects;
 
 import org.anieanie.card.CardSet;
 import org.anieanie.card.whot.WhotCardSet;
@@ -60,7 +61,7 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
 
     @Override
     public void connect(GameAgent agent) throws CGMPException, IOException {
-        this.agent = agent;
+        this.agent = Objects.requireNonNull(agent);
         if (!relay.connect(agent.getName())) {
             throw new GameClientException(String.format("Server not responding on ip address %s and port %s",
                     relay.getSocket().getInetAddress(), relay.getSocket().getPort()));

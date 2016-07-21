@@ -9,7 +9,7 @@ import org.anieanie.card.whot.WhotCardSet;
 
 import java.util.Arrays;
 
-import static org.anieanie.cardgame.learning.whot.WhotGameEnvironment.VAR_CARDS;
+import static org.anieanie.cardgame.learning.whot.GameState.VAR_CARDS;
 import static org.anieanie.cardgame.learning.whot.WhotGameWorld.*;
 
 public class WhotGameAgent extends WhotGameObject {

@@ -2,12 +2,11 @@ package org.anieanie.cardgame.training.whot;
 
 import org.anieanie.card.Card;
 import org.anieanie.card.whot.WhotCard;
-import org.canova.api.io.data.FloatWritable;
+import org.canova.api.io.data.DoubleWritable;
 import org.canova.api.io.data.IntWritable;
 import org.canova.api.io.data.Text;
 import org.canova.api.records.reader.impl.LineRecordReader;
 import org.canova.api.writable.Writable;
-import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -65,10 +64,10 @@ public class WhotGameRecordReader extends LineRecordReader {
     }
 
     // Fills the specified buffer with the features that have been generated.
-    private void fillWhotCardFeatures(INDArray features, List<Writable> buffer) {
+    private void fillWhotCardFeatures(double[] features, List<Writable> buffer) {
         // Add the card features array.
-        for (float feature : features.data().asFloat()) {
-            buffer.add(new FloatWritable(feature));
+        for (double feature : features) {
+            buffer.add(new DoubleWritable(feature));
         }
     }
 

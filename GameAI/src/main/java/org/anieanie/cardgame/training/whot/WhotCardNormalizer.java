@@ -3,8 +3,6 @@ package org.anieanie.cardgame.training.whot;
 import org.anieanie.card.Card;
 import org.anieanie.card.whot.WhotCard;
 import org.anieanie.card.whot.WhotCardSet;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
 
 import java.util.Arrays;
 
@@ -20,59 +18,81 @@ public class WhotCardNormalizer {
         fullCardSet.initialize();
     }
 
-    public static INDArray expandIntoShapeSpace(Card card) {
-        INDArray features = Nd4j.create(new float[WhotCard.N_SHAPES], new int[]{1, WhotCard.N_SHAPES});
-        features.put(0, card.getShape(), 1);
+    public static double[] expandIntoShapeSpace(Card card) {
+        double[] features = new double[WhotCard.N_SHAPES];
+        features[card.getShape()] = 1;
         return features;
     }
 
-    public static INDArray expandIntoLabelSpace(Card card) {
-        INDArray features = Nd4j.create(new float[15], new int[]{1, 15});
+    public static double[] expandIntoLabelSpace(Card card) {
+        double[] features = new double[15];
         if (card.getLabel() == 20) {
-            features.put(0, 14, 1);
+            features[14] = 1;
         }
         else {
-            features.put(0, card.getLabel() - 1, 1);
+            features[card.getLabel() - 1] = 1;
         }
         return features;
     }
 
-    public static INDArray expandIntoCardSpace(Card... cards) {
+    /**
+     * Generates a set of features based on card shape and label.
+     *
+     * There will be N classes for each type of shape and M classes for each separate card label making a total
+     * of N+M features.
+     *
+     * @return An array of dimension [1 x (N+M)]
+     */
+    public static double[] expandIntoShapeLabelSpace(Card card) {
+        double[] features = new double[WhotCard.N_SHAPES + 15];
+        // Shapes in the right positions.
+        features[card.getShape()] = 1.;
+        // Whot 20 label should be in the 15th feature class since 1 - 14 is for the other cards.
+        if (card.getShape() == WhotCard.WHOT) {
+            features[WhotCard.N_SHAPES + 14] = 1.;
+        }
+        else {
+            features[WhotCard.N_SHAPES + card.getLabel() - 1] = 1.;
+        }
+        return features;
+    }
+
+    public static double[] expandIntoCardSpace(Card... cards) {
         // Features array for the cards the player is holding.
         int shapeSpace = 14 * (WhotCard.N_SHAPES - 1);
-        INDArray cardFeatures = Nd4j.create(new float[shapeSpace + 1], new int[]{1, shapeSpace + 1});
+        double[] cardFeatures = new double[shapeSpace + 1];
         int countWhots = 0;
         for (Card card : cards) {
             if (card.getShape() == WhotCard.WHOT) {
-                cardFeatures.put(0, shapeSpace, countWhots);
+                cardFeatures[shapeSpace] = countWhots;
                 countWhots++;
             }
             else {
-                cardFeatures.put(0, WhotCardNormalizer.cardSpacePosition(card), 1.);
+                cardFeatures[cardSpacePosition(card)] = 1.;
             }
         }
         // Assert that the number of cards match the number of features.
-        assert cardFeatures.sumNumber().intValue() == cards.length;
+        assertNonZeroCount(cardFeatures, cards.length);
         return cardFeatures;
     }
 
-    public static INDArray expandIntoCardSpace(String[] fields, int offset) {
-        return expandIntoCardSpace(fields, offset, fields.length - offset);
+    public static double[] expandIntoCardSpace(String[] cards, int offset) {
+        return expandIntoCardSpace(cards, offset, cards.length - offset);
     }
 
-    public static INDArray expandIntoCardSpace(String[] fields, int offset, int length) {
+    public static double[] expandIntoCardSpace(String[] cards, int offset, int length) {
         // Features array for the cards the player is holding.
         int shapeSpace = 14 * (WhotCard.N_SHAPES - 1);
-        INDArray cardFeatures = Nd4j.create(new float[shapeSpace + 1], new int[]{1, shapeSpace + 1});
+        double[] cardFeatures = new double[shapeSpace + 1];
         int countWhots = 0;
         for (int i = 0; i < length; i++) {
             try {
-                WhotCard card = WhotCard.fromString(fields[i + offset]);
+                WhotCard card = WhotCard.fromString(cards[i + offset]);
                 if (card.getShape() == WhotCard.WHOT) {
-                    cardFeatures.put(0, shapeSpace, countWhots);
+                    cardFeatures[shapeSpace] = countWhots;
                     countWhots++;
                 } else {
-                    cardFeatures.put(0, WhotCardNormalizer.cardSpacePosition(card), 1.);
+                    cardFeatures[cardSpacePosition(card)] = 1.;
                 }
             }
             catch (Exception e) {
@@ -80,23 +100,23 @@ public class WhotCardNormalizer {
             }
         }
         // Assert that the number of cards match the number of features.
-        assert cardFeatures.sumNumber().intValue() == fields.length - 4;
+        assertNonZeroCount(cardFeatures, cards.length - 4);
         return cardFeatures;
     }
 
     /**
      * A version that uses a cardspace of 54 slots (total number of whot cards) instead of 71.
      */
-    public static INDArray expandIntoCompressedCardSpace(Card... cards) {
-        INDArray cardFeatures = Nd4j.create(new float[fullCardSet.size()], new int[]{1, fullCardSet.size()});
+    public static double[] expandIntoCompressedCardSpace(Card... cards) {
+        double[] cardFeatures = new double[fullCardSet.size()];
         for (Card card : cards) {
-            cardFeatures.put(0, fullCardSet.indexOf(card), 1 + cardFeatures.getDouble(0, fullCardSet.indexOf(card)));
+            cardFeatures[fullCardSet.indexOf(card)] += 1;
         }
         return cardFeatures;
     }
 
-    public static INDArray blankWhotCardFeatures(int numberOfLabels) {
-        return Nd4j.create(new float[numberOfLabels], new int[]{1, numberOfLabels});
+    public static double[] blankWhotCardFeatures(int numberOfLabels) {
+        return new double[numberOfLabels];
     }
 
     /**
@@ -129,26 +149,14 @@ public class WhotCardNormalizer {
         }
     }
 
-    /**
-     * Generates a set of features based on card shape and label.
-     *
-     * There will be N classes for each type of shape and M classes for each separate card label making a total
-     * of N+M features.
-     *
-     * @return An array of dimension [1 x (N+M)]
-     */
-    private static INDArray getWhotCardFeatures(WhotCard card) {
-        INDArray features = blankWhotCardFeatures(WhotCard.N_SHAPES + 15);
-        // Whot 20 label should be in the 15th feature class since 1 - 14 is for the other cards.
-        if (card.getShape() == WhotCard.WHOT) {
-            features.put(0, WhotCard.N_SHAPES + 14, 1.);
+    private static void assertNonZeroCount(double[] cardFeatures, int length) {
+        int nonZeroCount = 0;
+        for (double item : cardFeatures) {
+            if (item != 0) nonZeroCount++;
         }
-        else {
-            features.put(0, WhotCard.N_SHAPES + card.getLabel() - 1, 1.);
+        if (nonZeroCount != length) {
+            throw new AssertionError("Non-zero elements in " + Arrays.toString(cardFeatures) + " is different from " + length);
         }
-        // Shapes in the right positions.
-        features.put(0, card.getShape(), 1.);
-        return features;
     }
 
 }
