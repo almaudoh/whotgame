@@ -33,6 +33,7 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
     protected CardSet cards;
     protected GameAgent agent;
     protected GameLogger logger;
+    private String gameWinner;
 
     /**
      * Creates a new instance of AbstractGameClient
@@ -194,9 +195,14 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
 
     /** Called when client CGMPRelay receives whot gameplay state from worker CGMPRelay */
     public void environmentReceived(String envSpec) {
-        environment = GameEnvironment.fromCGMPString(envSpec);
-        updateClientStatus();
-        display.showGameStatus(this);
+        GameEnvironment newEnvironment = GameEnvironment.fromCGMPString(envSpec);
+        // Update the game environment if something has changed.
+        if (!newEnvironment.equals(environment)) {
+            environment = newEnvironment;
+            updateClientStatus();
+            display.showGameStatus(this);
+            agent.updateEnvironment(newEnvironment);
+        }
     }
 
     /** Called when client CGMPRelay receives request for move from worker CGMPRelay */
@@ -222,6 +228,7 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
 
     public void gameWon(String winner) {
         clientStatus = STATUS_GAME_WON;
+        gameWinner = winner;
         display.showNotification("Game won by " + winner);
         display.showNotification("Ending game");
         if (logger != null) {
@@ -247,5 +254,10 @@ public abstract class AbstractGameClient implements GameClient, ClientCGMPRelayL
 
     public GameEnvironment getEnvironment() {
         return environment;
+    }
+
+    @Override
+    public String getGameWinner() {
+        return gameWinner;
     }
 }

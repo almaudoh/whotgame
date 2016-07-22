@@ -16,7 +16,7 @@ import static org.anieanie.cardgame.gameplay.whot.WhotGameRule.*;
  */
 public class SimpleWhotGameAgent implements GameAgent {
 
-    private final GameClient gameClient;
+    protected final GameClient gameClient;
     private final String name;
 
     public SimpleWhotGameAgent(GameClient gameClient) {
@@ -37,6 +37,11 @@ public class SimpleWhotGameAgent implements GameAgent {
     @Override
     public void refresh() {
         // Nothing to do since there are no input loops here.
+    }
+
+    @Override
+    public void updateEnvironment(GameEnvironment environment) {
+        // Not tracking the environment here separately.
     }
 
     // Wait for input on a separate thread

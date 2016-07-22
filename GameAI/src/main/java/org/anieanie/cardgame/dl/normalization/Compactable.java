@@ -1,4 +1,4 @@
-package org.anieanie.cardgame.learning;
+package org.anieanie.cardgame.dl.normalization;
 
 /**
  * Interface that describes an object that can be compacted into an array of ints, floats or doubles suitable for

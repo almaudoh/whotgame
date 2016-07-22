@@ -8,10 +8,11 @@ import org.anieanie.cardgame.gameplay.GameEnvironment;
 public interface GameAgent extends Runnable {
 
     // Returns the name of this agent.
-    public String getName();
+    String getName();
 
     // Requests the game agent to refresh the client status so it can take necessary action.
-    public void refresh();
+    void refresh();
 
-//    public String getMove(GameEnvironment environment);
+    // Updates the game environment when it changes.
+    void updateEnvironment(GameEnvironment environment);
 }

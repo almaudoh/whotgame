@@ -41,4 +41,6 @@ public interface GameClient {
     void connect(GameAgent agent) throws CGMPException, IOException;
 
     void close() throws CGMPException, IOException;
+
+    String getGameWinner();
 }

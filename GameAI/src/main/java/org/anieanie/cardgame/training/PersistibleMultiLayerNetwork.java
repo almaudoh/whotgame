@@ -1,6 +1,6 @@
 package org.anieanie.cardgame.training;
 
-import org.anieanie.dl.training.utils.NetworkPersister;
+import org.anieanie.cardgame.dl.training.utils.NetworkPersister;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -12,7 +12,7 @@ import java.io.IOException;
  */
 public class PersistibleMultiLayerNetwork extends MultiLayerNetwork {
 
-    private final String name;
+    private String name;
 
     public PersistibleMultiLayerNetwork(MultiLayerConfiguration conf, String name) {
         super(conf);
@@ -34,7 +34,9 @@ public class PersistibleMultiLayerNetwork extends MultiLayerNetwork {
     }
 
     public static PersistibleMultiLayerNetwork load(String path, String name) throws IOException {
-        return (PersistibleMultiLayerNetwork) NetworkPersister.loadNet(String.format("%s/%s.conf.json", path, name), String.format("%s/%s.coeff.bin", path, name));
+        PersistibleMultiLayerNetwork model = (PersistibleMultiLayerNetwork) NetworkPersister.loadNet(String.format("%s/%s.conf.json", path, name), String.format("%s/%s.coeff.bin", path, name));
+        model.name = name;
+        return model;
     }
 
 }

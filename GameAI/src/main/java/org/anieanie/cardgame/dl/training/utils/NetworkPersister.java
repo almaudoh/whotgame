@@ -1,4 +1,4 @@
-package org.anieanie.dl.training.utils;
+package org.anieanie.cardgame.dl.training.utils;
 
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;

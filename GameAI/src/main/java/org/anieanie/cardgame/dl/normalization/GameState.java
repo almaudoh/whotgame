@@ -1,6 +1,4 @@
-package org.anieanie.cardgame.learning.whot;
-
-import org.anieanie.cardgame.learning.Compactable;
+package org.anieanie.cardgame.dl.normalization;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +15,7 @@ public class GameState extends HashMap<String, Compactable> implements Compactab
 //        return new GameState(topCard, calledCard, marketMode, playerCount, objectName);
     }
 
-    public void setSequence(List<String> sequence) {
+    public void setCompactSequence(List<String> sequence) {
         this.sequence = sequence;
     }
 
@@ -52,16 +50,20 @@ public class GameState extends HashMap<String, Compactable> implements Compactab
         }
 
         // Get the total length of all the features.
-        int length = 0;
-        for (String key : sequence)
-            length += sequence.size();
+        int length = 0, i = 0;
+        double[][] parts = new double[sequence.size()][];
+        for (String key : sequence) {
+            parts[i] = get(key).getVector();
+            length += parts[i].length;
+            i++;
+        }
 
         double[] buffer = new double[length];
-        int i = 0;
-        for (String key : sequence) {
-            for (double value : get(key).getVector()) {
-                buffer[i] = value;
-                i++;
+        int j = 0;
+        for (double[] part : parts) {
+            for (double value : part) {
+                buffer[j] = value;
+                j++;
             }
         }
         return buffer;

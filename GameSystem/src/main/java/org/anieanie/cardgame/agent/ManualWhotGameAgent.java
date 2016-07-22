@@ -2,6 +2,7 @@ package org.anieanie.cardgame.agent;
 
 import org.anieanie.card.whot.WhotCard;
 import org.anieanie.cardgame.gameplay.GameClient;
+import org.anieanie.cardgame.gameplay.GameEnvironment;
 import org.anieanie.cardgame.gameplay.whot.WhotGameClient;
 import org.anieanie.cardgame.ui.Display;
 import org.anieanie.cardgame.ui.cli.InputLoop;
@@ -173,6 +174,11 @@ public class ManualWhotGameAgent implements GameAgent {
         if (gameClient.getClientStatus() == GameClient.STATUS_GAME_WON) {
             // @todo Print message and then force the readLine() input loop to stop.
         }
+    }
+
+    @Override
+    public void updateEnvironment(GameEnvironment environment) {
+        // Not tracking changes in environment separately.
     }
 
     private static String inputUserName() {

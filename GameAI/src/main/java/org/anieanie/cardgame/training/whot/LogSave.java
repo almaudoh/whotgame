@@ -37,13 +37,13 @@ public class LogSave {
 
             // Features array for the cards the player is holding.
             boolean first = true;
-            for (float pos : WhotCardNormalizer.expandIntoCardSpace(card).data().asFloat()) {
+            for (double pos : WhotCardNormalizer.expandIntoCardSpace(card)) {
                 // Prepend the commas.
                 if (first)
                     first = false;
                 else
                     pr.write(',');
-                pr.write(Float.toString(pos));
+                pr.write(Double.toString(pos));
             }
             pr.write('\n');
         }

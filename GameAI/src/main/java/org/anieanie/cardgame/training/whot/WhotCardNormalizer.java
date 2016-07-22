@@ -57,6 +57,40 @@ public class WhotCardNormalizer {
         return features;
     }
 
+    /**
+     * Generates a set of features for each card supplied and combines them into one
+     */
+    public static double[] expandIntoShapeLabelSpace(Card... cards) {
+        double[] buffer = new double[cards.length * (WhotCard.N_SHAPES + 15)];
+        int i = 0;
+        for (Card card : cards) {
+            for (double value : expandIntoShapeLabelSpace(card)) {
+                buffer[i] = value;
+                i++;
+            }
+        }
+        return buffer;
+    }
+
+    /**
+     * Generates a set of features of a fixed size corresponding to the space that would be taken by the specified
+     * number of cards.
+     * if cards.length > fixedSize, then excess cards are truncated but if cards.length < fixedSize, zeroes are filled
+     * at the end.
+     */
+    public static double[] expandIntoShapeLabelSpace(int fixedSize, Card... cards) {
+        double[] buffer = new double[fixedSize * (WhotCard.N_SHAPES + 15)];
+        int i = 0, cardCount = 0;
+        for (Card card : cards) {
+            for (double value : expandIntoShapeLabelSpace(card)) {
+                buffer[i] = value;
+                i++;
+            }
+            if (++cardCount > fixedSize) break;
+        }
+        return buffer;
+    }
+
     public static double[] expandIntoCardSpace(Card... cards) {
         // Features array for the cards the player is holding.
         int shapeSpace = 14 * (WhotCard.N_SHAPES - 1);

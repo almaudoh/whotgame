@@ -6,7 +6,7 @@ package org.anieanie.cardgame.training;
 public class GameGenerator {
 
     public static void main(String[] args) throws Exception {
-        GameRunner runner = new GameRunner("simple", "simple");
+        GameRunner runner = new GameRunner("simple", "smart");
         int epochs = 1000;
         for (int i = 0; i < epochs; i++) {
             runner.playGame();
