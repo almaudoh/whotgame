@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="whotgame" default="all">
+  
+  
+  <property file="whotgame.properties"/>
+  <!-- Uncomment the following property if no tests compilation is needed -->
+  <!-- 
+  <property name="skip.tests" value="true"/>
+   -->
+  
+  <!-- Compiler options -->
+  
+  <property name="compiler.debug" value="on"/>
+  <property name="compiler.generate.no.warnings" value="off"/>
+  <property name="compiler.args" value=""/>
+  <property name="compiler.max.memory" value="700m"/>
+  <patternset id="ignored.files">
+    <exclude name="**/*.hprof/**"/>
+    <exclude name="**/*.pyc/**"/>
+    <exclude name="**/*.pyo/**"/>
+    <exclude name="**/*.rbc/**"/>
+    <exclude name="**/*.yarb/**"/>
+    <exclude name="**/*~/**"/>
+    <exclude name="**/.DS_Store/**"/>
+    <exclude name="**/.git/**"/>
+    <exclude name="**/.hg/**"/>
+    <exclude name="**/.svn/**"/>
+    <exclude name="**/CVS/**"/>
+    <exclude name="**/RCS/**"/>
+    <exclude name="**/SCCS/**"/>
+    <exclude name="**/__pycache__/**"/>
+    <exclude name="**/_svn/**"/>
+    <exclude name="**/rcs/**"/>
+    <exclude name="**/vssver.scc/**"/>
+    <exclude name="**/vssver2.scc/**"/>
+  </patternset>
+  <patternset id="library.patterns">
+    <include name="*.war"/>
+    <include name="*.swc"/>
+    <include name="*.apk"/>
+    <include name="*.zip"/>
+    <include name="*.egg"/>
+    <include name="*.ane"/>
+    <include name="*.jar"/>
+    <include name="*.ear"/>
+  </patternset>
+  <patternset id="compiler.resources">
+    <exclude name="**/?*.java"/>
+    <exclude name="**/?*.form"/>
+    <exclude name="**/?*.class"/>
+    <exclude name="**/?*.groovy"/>
+    <exclude name="**/?*.scala"/>
+    <exclude name="**/?*.flex"/>
+    <exclude name="**/?*.kt"/>
+    <exclude name="**/?*.clj"/>
+  </patternset>
+  
+  <!-- JDK definitions -->
+  
+  <property name="jdk.bin.1.8" value="${jdk.home.1.8}/bin"/>
+  <path id="jdk.classpath.1.8">
+    <fileset dir="${jdk.home.1.8}">
+      <include name="jre/lib/charsets.jar"/>
+      <include name="jre/lib/deploy.jar"/>
+      <include name="jre/lib/ext/cldrdata.jar"/>
+      <include name="jre/lib/ext/dnsns.jar"/>
+      <include name="jre/lib/ext/jaccess.jar"/>
+      <include name="jre/lib/ext/jfxrt.jar"/>
+      <include name="jre/lib/ext/localedata.jar"/>
+      <include name="jre/lib/ext/nashorn.jar"/>
+      <include name="jre/lib/ext/sunec.jar"/>
+      <include name="jre/lib/ext/sunjce_provider.jar"/>
+      <include name="jre/lib/ext/sunpkcs11.jar"/>
+      <include name="jre/lib/ext/zipfs.jar"/>
+      <include name="jre/lib/javaws.jar"/>
+      <include name="jre/lib/jce.jar"/>
+      <include name="jre/lib/jfr.jar"/>
+      <include name="jre/lib/jfxswt.jar"/>
+      <include name="jre/lib/jsse.jar"/>
+      <include name="jre/lib/management-agent.jar"/>
+      <include name="jre/lib/plugin.jar"/>
+      <include name="jre/lib/resources.jar"/>
+      <include name="jre/lib/rt.jar"/>
+      <include name="lib/ant-javafx.jar"/>
+      <include name="lib/dt.jar"/>
+      <include name="lib/javafx-mx.jar"/>
+      <include name="lib/jconsole.jar"/>
+      <include name="lib/packager.jar"/>
+      <include name="lib/sa-jdi.jar"/>
+      <include name="lib/tools.jar"/>
+    </fileset>
+  </path>
+  
+  <property name="project.jdk.home" value="${jdk.home.1.8}"/>
+  <property name="project.jdk.bin" value="${jdk.bin.1.8}"/>
+  <property name="project.jdk.classpath" value="jdk.classpath.1.8"/>
+  
+  
+  <!-- Project Libraries -->
+  
+  <path id="library.args4j-2.33.classpath">
+    <pathelement location="${path.variable.maven_repository}/args4j/args4j/2.33/args4j-2.33.jar"/>
+  </path>
+  
+  
+  <!-- Global Libraries -->
+  
+  <path id="library.args4j:args4j:2.33.classpath">
+    <pathelement location="${path.variable.maven_repository}/args4j/args4j/2.33/args4j-2.33.jar"/>
+  </path>
+  
+  <path id="library.edu.brown.cs.burlap:burlap:3.0.0.classpath">
+    <pathelement location="${path.variable.maven_repository}/colt/colt/1.2.0/colt-1.2.0.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/github/vincentk/joptimizer/3.3.0/joptimizer-3.3.0.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/googlecode/efficient-java-matrix-library/ejml/0.25/ejml-0.25.jar"/>
+    <pathelement location="${path.variable.maven_repository}/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/concurrent/concurrent/1.3.4/concurrent-1.3.4.jar"/>
+    <pathelement location="${path.variable.maven_repository}/edu/brown/cs/burlap/burlap/3.0.0/burlap-3.0.0.jar"/>
+    <pathelement location="${path.variable.maven_repository}/junit/junit/4.11/junit-4.11.jar"/>
+    <pathelement location="${path.variable.maven_repository}/log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
+    <pathelement location="${path.variable.maven_repository}/net/sf/jopt-simple/jopt-simple/4.9/jopt-simple-4.9.jar"/>
+    <pathelement location="${path.variable.maven_repository}/net/sourceforge/csparsej/csparsej/1.1.1/csparsej-1.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/apache/commons/commons-lang3/3.1/commons-lang3-3.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/apache/commons/commons-math3/3.2/commons-math3-3.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/jfree/jcommon/1.0.21/jcommon-1.0.21.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/jfree/jfreechart/1.0.17/jfreechart-1.0.17.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/yaml/snakeyaml/1.13/snakeyaml-1.13.jar"/>
+    <pathelement location="${path.variable.maven_repository}/xml-apis/xml-apis/1.3.04/xml-apis-1.3.04.jar"/>
+  </path>
+  
+  <path id="library.jmockit.classpath">
+    <pathelement location="${path.variable.maven_repository}/org/jmockit/jmockit/1.23/jmockit-1.23.jar"/>
+  </path>
+  
+  <path id="library.junit_4.classpath">
+    <pathelement location="${path.variable.maven_repository}/junit/junit/4.12/junit-4.12.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"/>
+  </path>
+  
+  <path id="library.org.deeplearning4j:deeplearning4j-core:0.4-rc3.10.classpath">
+    <pathelement location="${path.variable.maven_repository}/ch/qos/logback/logback-classic/1.1.2/logback-classic-1.1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/ch/qos/logback/logback-core/1.1.2/logback-core-1.1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/fasterxml/jackson/core/jackson-annotations/2.5.1/jackson-annotations-2.5.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/fasterxml/jackson/core/jackson-core/2.5.1/jackson-core-2.5.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/fasterxml/jackson/core/jackson-databind/2.5.1/jackson-databind-2.5.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.5.1/jackson-dataformat-yaml-2.5.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/github/jai-imageio/jai-imageio-core/1.3.0/jai-imageio-core-1.3.0.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/google/code/findbugs/annotations/2.0.1/annotations-2.0.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/google/guava/guava/11.0/guava-11.0.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/twelvemonkeys/common/common-image/3.1.1/common-image-3.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/twelvemonkeys/common/common-io/3.1.1/common-io-3.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/twelvemonkeys/common/common-lang/3.1.1/common-lang-3.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/twelvemonkeys/imageio/imageio-bmp/3.1.1/imageio-bmp-3.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/twelvemonkeys/imageio/imageio-core/3.1.1/imageio-core-3.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/twelvemonkeys/imageio/imageio-jpeg/3.1.1/imageio-jpeg-3.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/twelvemonkeys/imageio/imageio-metadata/3.1.1/imageio-metadata-3.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/twelvemonkeys/imageio/imageio-psd/3.1.1/imageio-psd-3.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/twelvemonkeys/imageio/imageio-tiff/3.1.1/imageio-tiff-3.1.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/commons-io/commons-io/2.4/commons-io-2.4.jar"/>
+    <pathelement location="${path.variable.maven_repository}/io/netty/netty-buffer/4.0.28.Final/netty-buffer-4.0.28.Final.jar"/>
+    <pathelement location="${path.variable.maven_repository}/io/netty/netty-common/4.0.28.Final/netty-common-4.0.28.Final.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/apache/commons/commons-compress/1.8/commons-compress-1.8.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/apache/commons/commons-lang3/3.3.1/commons-lang3-3.3.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/apache/commons/commons-math3/3.4.1/commons-math3-3.4.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/artoolkitplus/2.3.1-1.2/artoolkitplus-2.3.1-1.2-macosx-x86_64.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/artoolkitplus/2.3.1-1.2/artoolkitplus-2.3.1-1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/ffmpeg/3.0.2-1.2/ffmpeg-3.0.2-1.2-macosx-x86_64.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/ffmpeg/3.0.2-1.2/ffmpeg-3.0.2-1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/flandmark/1.07-1.2/flandmark-1.07-1.2-macosx-x86_64.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/flandmark/1.07-1.2/flandmark-1.07-1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/flycapture/2.9.3.43-1.2/flycapture-2.9.3.43-1.2-macosx-x86_64.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/flycapture/2.9.3.43-1.2/flycapture-2.9.3.43-1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/leptonica/1.73-1.2/leptonica-1.73-1.2-macosx-x86_64.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/leptonica/1.73-1.2/leptonica-1.73-1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/libdc1394/2.2.4-1.2/libdc1394-2.2.4-1.2-macosx-x86_64.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/libdc1394/2.2.4-1.2/libdc1394-2.2.4-1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/libfreenect/0.5.3-1.2/libfreenect-0.5.3-1.2-macosx-x86_64.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/libfreenect/0.5.3-1.2/libfreenect-0.5.3-1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/opencv/3.1.0-1.2/opencv-3.1.0-1.2-macosx-x86_64.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/opencv/3.1.0-1.2/opencv-3.1.0-1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/videoinput/0.200-1.2/videoinput-0.200-1.2-macosx-x86_64.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp-presets/videoinput/0.200-1.2/videoinput-0.200-1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp/1.2.1/javacpp-1.2.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacv/1.2/javacv-1.2.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/deeplearning4j/deeplearning4j-core/0.4-rc3.10/deeplearning4j-core-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/javassist/javassist/3.19.0-GA/javassist-3.19.0-GA.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/json/json/20131018/json-20131018.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/canova-api/0.0.0.16/canova-api-0.0.0.16.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/canova-data-image/0.0.0.16/canova-data-image-0.0.0.16.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/canova-nd4j-common/0.0.0.16/canova-nd4j-common-0.0.0.16.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/canova-nd4j-image/0.0.0.16/canova-nd4j-image-0.0.0.16.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-api/0.4-rc3.10/nd4j-api-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-buffer/0.4-rc3.10/nd4j-buffer-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-common/0.4-rc3.10/nd4j-common-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-context/0.4-rc3.10/nd4j-context-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/projectlombok/lombok/1.16.4/lombok-1.16.4.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/reflections/reflections/0.9.10/reflections-0.9.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/slf4j/slf4j-api/1.7.12/slf4j-api-1.7.12.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/tukaani/xz/1.5/xz-1.5.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/yaml/snakeyaml/1.12/snakeyaml-1.12.jar"/>
+  </path>
+  
+  <path id="library.org.nd4j:canova-api:0.0.0.16.classpath">
+    <pathelement location="${path.variable.maven_repository}/com/fasterxml/jackson/core/jackson-annotations/2.5.0/jackson-annotations-2.5.0.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/fasterxml/jackson/core/jackson-core/2.5.1/jackson-core-2.5.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/fasterxml/jackson/core/jackson-databind/2.5.1/jackson-databind-2.5.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/commons-io/commons-io/2.4/commons-io-2.4.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/apache/commons/commons-compress/1.8.1/commons-compress-1.8.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/apache/commons/commons-lang3/3.3.1/commons-lang3-3.3.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/canova-api/0.0.0.16/canova-api-0.0.0.16.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar"/>
+  </path>
+  
+  <path id="library.org.nd4j:nd4j-native:0.4-rc3.10.classpath">
+    <pathelement location="${path.variable.maven_repository}/com/google/code/findbugs/annotations/2.0.1/annotations-2.0.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/com/google/guava/guava/18.0/guava-18.0.jar"/>
+    <pathelement location="${path.variable.maven_repository}/commons-io/commons-io/2.4/commons-io-2.4.jar"/>
+    <pathelement location="${path.variable.maven_repository}/io/netty/netty-buffer/4.0.28.Final/netty-buffer-4.0.28.Final.jar"/>
+    <pathelement location="${path.variable.maven_repository}/io/netty/netty-common/4.0.28.Final/netty-common-4.0.28.Final.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/apache/commons/commons-lang3/3.3.1/commons-lang3-3.3.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/apache/commons/commons-math3/3.4.1/commons-math3-3.4.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/bytedeco/javacpp/1.2.1/javacpp-1.2.1.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/javassist/javassist/3.19.0-GA/javassist-3.19.0-GA.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-api/0.4-rc3.10/nd4j-api-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-buffer/0.4-rc3.10/nd4j-buffer-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-common/0.4-rc3.10/nd4j-common-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-context/0.4-rc3.10/nd4j-context-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-native-api/0.4-rc3.10/nd4j-native-api-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-native/0.4-rc3.10/nd4j-native-0.4-rc3.10-macosx-x86_64.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/nd4j/nd4j-native/0.4-rc3.10/nd4j-native-0.4-rc3.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/projectlombok/lombok/1.16.4/lombok-1.16.4.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/reflections/reflections/0.9.10/reflections-0.9.10.jar"/>
+    <pathelement location="${path.variable.maven_repository}/org/slf4j/slf4j-api/1.7.10/slf4j-api-1.7.10.jar"/>
+  </path>
+  <!-- Register Custom Compiler Taskdefs -->
+  <property name="javac2.home" value="${idea.home}/lib"/>
+  <path id="javac2.classpath">
+    <pathelement location="${javac2.home}/javac2.jar"/>
+    <pathelement location="${javac2.home}/jdom.jar"/>
+    <pathelement location="${javac2.home}/asm-all.jar"/>
+    <pathelement location="${javac2.home}/jgoodies-forms.jar"/>
+  </path>
+  <target name="register.custom.compilers">
+    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="javac2.classpath"/>
+    <taskdef name="instrumentIdeaExtensions" classname="com.intellij.ant.InstrumentIdeaExtensions" classpathref="javac2.classpath"/>
+  </target>
+  
+  <!-- Modules -->
+  
+  
+  <!-- Module GameSystem -->
+  
+  <dirname property="module.gamesystem.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.gamesystem" value="${jdk.home.1.8}"/>
+  <property name="module.jdk.bin.gamesystem" value="${jdk.bin.1.8}"/>
+  <property name="module.jdk.classpath.gamesystem" value="jdk.classpath.1.8"/>
+  
+  <property name="compiler.args.gamesystem" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="gamesystem.output.dir" value="${module.gamesystem.basedir}/out/production/GameSystem"/>
+  <property name="gamesystem.testoutput.dir" value="${module.gamesystem.basedir}/out/test/GameSystem"/>
+  
+  <path id="gamesystem.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="gamesystem.module.production.classpath">
+    <path refid="${module.jdk.classpath.gamesystem}"/>
+    <path refid="library.args4j:args4j:2.33.classpath"/>
+    <path refid="library.args4j-2.33.classpath"/>
+  </path>
+  
+  <path id="gamesystem.runtime.production.module.classpath">
+    <pathelement location="${gamesystem.output.dir}"/>
+    <path refid="library.args4j:args4j:2.33.classpath"/>
+    <path refid="library.args4j-2.33.classpath"/>
+  </path>
+  
+  <path id="gamesystem.module.classpath">
+    <path refid="${module.jdk.classpath.gamesystem}"/>
+    <pathelement location="${gamesystem.output.dir}"/>
+    <path refid="library.args4j:args4j:2.33.classpath"/>
+    <path refid="library.junit_4.classpath"/>
+    <pathelement location="${idea.home}/plugins/testng/lib/jcommander.jar"/>
+    <pathelement location="${idea.home}/plugins/testng/lib/testng.jar"/>
+    <path refid="library.jmockit.classpath"/>
+    <path refid="library.args4j-2.33.classpath"/>
+  </path>
+  
+  <path id="gamesystem.runtime.module.classpath">
+    <pathelement location="${gamesystem.testoutput.dir}"/>
+    <pathelement location="${gamesystem.output.dir}"/>
+    <path refid="library.args4j:args4j:2.33.classpath"/>
+    <path refid="library.junit_4.classpath"/>
+    <pathelement location="${idea.home}/plugins/testng/lib/jcommander.jar"/>
+    <pathelement location="${idea.home}/plugins/testng/lib/testng.jar"/>
+    <path refid="library.jmockit.classpath"/>
+    <path refid="library.args4j-2.33.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.gamesystem">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.gamesystem">
+    <patternset refid="excluded.from.module.gamesystem"/>
+  </patternset>
+  
+  <path id="gamesystem.module.sourcepath">
+    <dirset dir="${module.gamesystem.basedir}/GameSystem">
+      <include name="source"/>
+    </dirset>
+  </path>
+  
+  <path id="gamesystem.module.test.sourcepath">
+    <dirset dir="${module.gamesystem.basedir}/GameSystem">
+      <include name="test"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.gamesystem" depends="compile.module.gamesystem.production,compile.module.gamesystem.tests" description="Compile module GameSystem"/>
+  
+  <target name="compile.module.gamesystem.production" depends="register.custom.compilers" description="Compile module GameSystem; production classes">
+    <mkdir dir="${gamesystem.output.dir}"/>
+    <javac2 destdir="${gamesystem.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.gamesystem}/javac">
+      <compilerarg line="${compiler.args.gamesystem}"/>
+      <bootclasspath refid="gamesystem.module.bootclasspath"/>
+      <classpath refid="gamesystem.module.production.classpath"/>
+      <src refid="gamesystem.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.gamesystem"/>
+    </javac2>
+    
+    <copy todir="${gamesystem.output.dir}">
+      <fileset dir="${module.gamesystem.basedir}/GameSystem/source">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.gamesystem.tests" depends="register.custom.compilers,compile.module.gamesystem.production" description="compile module GameSystem; test classes" unless="skip.tests">
+    <mkdir dir="${gamesystem.testoutput.dir}"/>
+    <javac2 destdir="${gamesystem.testoutput.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.gamesystem}/javac">
+      <compilerarg line="${compiler.args.gamesystem}"/>
+      <bootclasspath refid="gamesystem.module.bootclasspath"/>
+      <classpath refid="gamesystem.module.classpath"/>
+      <src refid="gamesystem.module.test.sourcepath"/>
+      <patternset refid="excluded.from.compilation.gamesystem"/>
+    </javac2>
+    
+    <copy todir="${gamesystem.testoutput.dir}">
+      <fileset dir="${module.gamesystem.basedir}/GameSystem/test">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="clean.module.gamesystem" description="cleanup module">
+    <delete dir="${gamesystem.output.dir}"/>
+    <delete dir="${gamesystem.testoutput.dir}"/>
+  </target>
+  
+  
+  <!-- Module misc -->
+  
+  <dirname property="module.misc.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.misc" value="${jdk.home.1.8}"/>
+  <property name="module.jdk.bin.misc" value="${jdk.bin.1.8}"/>
+  <property name="module.jdk.classpath.misc" value="jdk.classpath.1.8"/>
+  
+  <property name="compiler.args.misc" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="misc.output.dir" value="${module.misc.basedir}/out/production/misc"/>
+  <property name="misc.testoutput.dir" value="${module.misc.basedir}/out/test/misc"/>
+  
+  <path id="misc.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="misc.module.production.classpath">
+    <path refid="${module.jdk.classpath.misc}"/>
+    <path refid="library.edu.brown.cs.burlap:burlap:3.0.0.classpath"/>
+    <path refid="library.org.nd4j:nd4j-native:0.4-rc3.10.classpath"/>
+    <path refid="library.org.deeplearning4j:deeplearning4j-core:0.4-rc3.10.classpath"/>
+  </path>
+  
+  <path id="misc.runtime.production.module.classpath">
+    <pathelement location="${misc.output.dir}"/>
+    <path refid="library.edu.brown.cs.burlap:burlap:3.0.0.classpath"/>
+    <path refid="library.org.nd4j:nd4j-native:0.4-rc3.10.classpath"/>
+    <path refid="library.org.deeplearning4j:deeplearning4j-core:0.4-rc3.10.classpath"/>
+  </path>
+  
+  <path id="misc.module.classpath">
+    <path refid="${module.jdk.classpath.misc}"/>
+    <pathelement location="${misc.output.dir}"/>
+    <path refid="library.edu.brown.cs.burlap:burlap:3.0.0.classpath"/>
+    <path refid="library.org.nd4j:nd4j-native:0.4-rc3.10.classpath"/>
+    <path refid="library.org.deeplearning4j:deeplearning4j-core:0.4-rc3.10.classpath"/>
+  </path>
+  
+  <path id="misc.runtime.module.classpath">
+    <pathelement location="${misc.testoutput.dir}"/>
+    <pathelement location="${misc.output.dir}"/>
+    <path refid="library.edu.brown.cs.burlap:burlap:3.0.0.classpath"/>
+    <path refid="library.org.nd4j:nd4j-native:0.4-rc3.10.classpath"/>
+    <path refid="library.org.deeplearning4j:deeplearning4j-core:0.4-rc3.10.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.misc">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.misc">
+    <patternset refid="excluded.from.module.misc"/>
+  </patternset>
+  
+  <path id="misc.module.sourcepath">
+    <dirset dir="${module.misc.basedir}">
+      <include name="misc"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.misc" depends="compile.module.misc.production,compile.module.misc.tests" description="Compile module misc"/>
+  
+  <target name="compile.module.misc.production" depends="register.custom.compilers" description="Compile module misc; production classes">
+    <mkdir dir="${misc.output.dir}"/>
+    <javac2 destdir="${misc.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.misc}/javac">
+      <compilerarg line="${compiler.args.misc}"/>
+      <bootclasspath refid="misc.module.bootclasspath"/>
+      <classpath refid="misc.module.production.classpath"/>
+      <src refid="misc.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.misc"/>
+    </javac2>
+    
+    <copy todir="${misc.output.dir}">
+      <fileset dir="${module.misc.basedir}/misc">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.misc.tests" depends="register.custom.compilers,compile.module.misc.production" description="compile module misc; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.misc" description="cleanup module">
+    <delete dir="${misc.output.dir}"/>
+    <delete dir="${misc.testoutput.dir}"/>
+  </target>
+  
+  
+  <!-- Module GameAI -->
+  
+  <dirname property="module.gameai.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.gameai" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.gameai" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.gameai" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.gameai" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="gameai.output.dir" value="${module.gameai.basedir}/out/production/GameAI"/>
+  <property name="gameai.testoutput.dir" value="${module.gameai.basedir}/out/test/GameAI"/>
+  
+  <path id="gameai.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="gameai.module.production.classpath">
+    <path refid="${module.jdk.classpath.gameai}"/>
+    <pathelement location="${gamesystem.output.dir}"/>
+    <path refid="library.org.nd4j:canova-api:0.0.0.16.classpath"/>
+    <path refid="library.org.deeplearning4j:deeplearning4j-core:0.4-rc3.10.classpath"/>
+    <path refid="library.org.nd4j:nd4j-native:0.4-rc3.10.classpath"/>
+    <path refid="library.edu.brown.cs.burlap:burlap:3.0.0.classpath"/>
+  </path>
+  
+  <path id="gameai.runtime.production.module.classpath">
+    <pathelement location="${gameai.output.dir}"/>
+    <pathelement location="${gamesystem.output.dir}"/>
+    <path refid="library.args4j:args4j:2.33.classpath"/>
+    <path refid="library.args4j-2.33.classpath"/>
+    <path refid="library.org.nd4j:canova-api:0.0.0.16.classpath"/>
+    <path refid="library.org.deeplearning4j:deeplearning4j-core:0.4-rc3.10.classpath"/>
+    <path refid="library.org.nd4j:nd4j-native:0.4-rc3.10.classpath"/>
+    <path refid="library.edu.brown.cs.burlap:burlap:3.0.0.classpath"/>
+  </path>
+  
+  <path id="gameai.module.classpath">
+    <path refid="${module.jdk.classpath.gameai}"/>
+    <pathelement location="${gameai.output.dir}"/>
+    <pathelement location="${gamesystem.testoutput.dir}"/>
+    <pathelement location="${gamesystem.output.dir}"/>
+    <path refid="library.org.nd4j:canova-api:0.0.0.16.classpath"/>
+    <path refid="library.org.deeplearning4j:deeplearning4j-core:0.4-rc3.10.classpath"/>
+    <path refid="library.org.nd4j:nd4j-native:0.4-rc3.10.classpath"/>
+    <path refid="library.edu.brown.cs.burlap:burlap:3.0.0.classpath"/>
+  </path>
+  
+  <path id="gameai.runtime.module.classpath">
+    <pathelement location="${gameai.testoutput.dir}"/>
+    <pathelement location="${gameai.output.dir}"/>
+    <pathelement location="${gamesystem.testoutput.dir}"/>
+    <pathelement location="${gamesystem.output.dir}"/>
+    <path refid="library.args4j:args4j:2.33.classpath"/>
+    <path refid="library.junit_4.classpath"/>
+    <pathelement location="${idea.home}/plugins/testng/lib/jcommander.jar"/>
+    <pathelement location="${idea.home}/plugins/testng/lib/testng.jar"/>
+    <path refid="library.jmockit.classpath"/>
+    <path refid="library.args4j-2.33.classpath"/>
+    <path refid="library.org.nd4j:canova-api:0.0.0.16.classpath"/>
+    <path refid="library.org.deeplearning4j:deeplearning4j-core:0.4-rc3.10.classpath"/>
+    <path refid="library.org.nd4j:nd4j-native:0.4-rc3.10.classpath"/>
+    <path refid="library.edu.brown.cs.burlap:burlap:3.0.0.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.gameai">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.gameai">
+    <patternset refid="excluded.from.module.gameai"/>
+  </patternset>
+  
+  <path id="gameai.module.sourcepath">
+    <dirset dir="${module.gameai.basedir}/GameAI">
+      <include name="src"/>
+      <include name="resources"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.gameai" depends="compile.module.gameai.production,compile.module.gameai.tests" description="Compile module GameAI"/>
+  
+  <target name="compile.module.gameai.production" depends="register.custom.compilers,compile.module.gamesystem" description="Compile module GameAI; production classes">
+    <mkdir dir="${gameai.output.dir}"/>
+    <javac2 destdir="${gameai.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.gameai}/javac">
+      <compilerarg line="${compiler.args.gameai}"/>
+      <bootclasspath refid="gameai.module.bootclasspath"/>
+      <classpath refid="gameai.module.production.classpath"/>
+      <src refid="gameai.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.gameai"/>
+    </javac2>
+    
+    <copy todir="${gameai.output.dir}">
+      <fileset dir="${module.gameai.basedir}/GameAI/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+      <fileset dir="${module.gameai.basedir}/GameAI/resources">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.gameai.tests" depends="register.custom.compilers,compile.module.gameai.production" description="compile module GameAI; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.gameai" description="cleanup module">
+    <delete dir="${gameai.output.dir}"/>
+    <delete dir="${gameai.testoutput.dir}"/>
+  </target>
+  
+  <target name="init" description="Build initialization">
+    <!-- Perform any build initialization in this target -->
+  </target>
+  
+  <target name="clean" depends="clean.module.gamesystem, clean.module.misc, clean.module.gameai" description="cleanup all"/>
+  
+  <target name="build.modules" depends="init, clean, compile.module.gamesystem, compile.module.misc, compile.module.gameai" description="build all modules"/>
+  
+  <target name="all" depends="build.modules" description="build all"/>
+</project>
