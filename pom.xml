@@ -32,7 +32,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.4.0</version>
                 <configuration>
-                    <mainClass>org.anieanie.cardgame.training.whot.WhotGameClassifier</mainClass>
+                    <mainClass>org.anieanie.cardgame.training.GameGenerator</mainClass>
                 </configuration>
             </plugin>
         </plugins>
