@@ -129,6 +129,7 @@ public class WhotGameMonitor extends AbstractGameMonitor {
                 // @todo Consistency checks are needed here.
                 gameWon = true;
                 gameWinner = currentPlayer;
+                broadcastEnvironment();
                 broadcastGameWon();
                 return;
             }

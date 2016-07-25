@@ -31,6 +31,8 @@ public class WhotGameRule implements GameRule {
     // The number that is used as hold on.
     public static final int HOLD_ON_LABEL = 1;
 
+    public static final String GO_MARKET = "MARKET";
+
     public static CardSet filterValidMoves(CardSet hand, GameEnvironment env) {
         WhotCard topCard = WhotCard.fromString(env.get(VAR_TOP_CARD));
         if (topCard != null) {
@@ -53,7 +55,7 @@ public class WhotGameRule implements GameRule {
                 return hand.containingShape(WhotCard.getShapeInt(env.get(VAR_CALLED_CARD)));
             }
             else {
-                // Otherwise, choose a random card that matches the rule.
+                // Otherwise, choose all cards that match the top card either shape or label.
                 CardSet cards = hand.containingShape(topCard.getShape());
                 cards.addAll(hand.containingLabel(topCard.getLabel()));
                 cards.addAll(hand.containingShape(WhotCard.WHOT));

@@ -82,7 +82,7 @@ public class WhotGameClient extends AbstractGameClient {
     }
 
     public Card getTopCard() {
-        String topCard = environment.get("TopCard");
+        String topCard = environment.get(WhotGameRule.VAR_TOP_CARD);
         if (topCard != null) {
             return WhotCard.fromString(topCard);
         }
@@ -92,12 +92,12 @@ public class WhotGameClient extends AbstractGameClient {
     }
 
     public String getCalledCard() {
-        return environment.get("CalledCard");
+        return environment.get(WhotGameRule.VAR_CALLED_CARD);
     }
 
     @Override
     public void playMove(String moveSpec) {
-        if (moveSpec.equalsIgnoreCase("MARKET")) {
+        if (moveSpec.equalsIgnoreCase(WhotGameRule.GO_MARKET)) {
             requestCard();
         }
         else {
@@ -119,6 +119,7 @@ public class WhotGameClient extends AbstractGameClient {
     private void playCard(Card card) {
         // User cannot play a card he doesn't have.
         if (!cards.contains(card)) {
+            agent.moveRejected(card);
             display.showNotification("You don't have '" + card + "'.");
             return;
         }
@@ -131,9 +132,11 @@ public class WhotGameClient extends AbstractGameClient {
                 // Card was successfully played.
                 clientStatus = STATUS_WAITING_FOR_TURN;
                 cards.remove(card);
+                agent.moveAccepted(card);
                 display.showNotification("Played " + card);
             }
             else {
+                agent.moveRejected(card);
                 display.showNotification("Card '" + card + "' was rejected. Please play another card.");
             }
         }
@@ -165,7 +168,7 @@ public class WhotGameClient extends AbstractGameClient {
             CGMPMessage response = relay.sendRequest(CGMPSpecification.CARD);
             if (response.isCard()) {
                 // Log the move before the cardset is updated.
-                logMove("MARKET");
+                logMove(WhotGameRule.GO_MARKET);
                 // Cards were successfully received, add them to the card pack
                 for (String spec: response.getArguments().split(";")) {
                     cards.add(WhotCard.fromString(spec.trim()));

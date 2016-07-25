@@ -47,6 +47,7 @@ public class GameServer {
                 GameLoop gameloop = new GameLoop(gameMonitor);
                 gameloop.start();
 
+                // Launch a server socket to listen to requests on a separate thread.
                 launchServerSocket();
 
                 running = true;
@@ -78,21 +79,21 @@ public class GameServer {
 
     // Launches a server socket on a separate thread.
     private void launchServerSocket() {
-        // ---------------------------------------------------------------
-        // Now start accepting connections from clients in a while loop
+        // Accept connections from clients in a while loop
         // The server should run in an infinite loop in a separate thread.
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (true) {
-                    Socket socket;    // accept connection from client
+                    Socket socket;
                     try {
+                        // accept connection from client
                         socket = ss.accept();
                         System.out.printf("A new client is connected - ipaddr %s, port %s.%n", socket.getInetAddress(), socket.getPort());
 
                         // Create a thread to allow simultaneous connections
-                        // There is need to check workers on a continual basis to ensure that their clients are still there
-                        // disconnected workers should be discarded
+                        // There is need to check workers on a continual basis to ensure that their clients are still
+                        // there. Disconnected workers should be discarded.
                         GameWorker worker = new GameWorker(new ServerCGMPRelay(socket), gameMonitor);
                         workers.add(worker);
                         worker.start();

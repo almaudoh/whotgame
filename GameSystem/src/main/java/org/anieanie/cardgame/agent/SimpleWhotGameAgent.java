@@ -39,11 +39,6 @@ public class SimpleWhotGameAgent implements GameAgent {
         // Nothing to do since there are no input loops here.
     }
 
-    @Override
-    public void updateEnvironment(GameEnvironment environment) {
-        // Not tracking the environment here separately.
-    }
-
     // Wait for input on a separate thread
     public void run() {
         // [optional] Keep trying to start a game.
@@ -78,7 +73,7 @@ public class SimpleWhotGameAgent implements GameAgent {
             return cards.getFirst().toString();
         }
         // If we reach here, then we don't have a card to play.
-        return "MARKET";
+        return WhotGameRule.GO_MARKET;
     }
 
     protected String getBestWhotCallShape() {

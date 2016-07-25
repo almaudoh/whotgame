@@ -176,11 +176,6 @@ public class ManualWhotGameAgent implements GameAgent {
         }
     }
 
-    @Override
-    public void updateEnvironment(GameEnvironment environment) {
-        // Not tracking changes in environment separately.
-    }
-
     private static String inputUserName() {
         BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
         String strUserName = "";	// User name of client

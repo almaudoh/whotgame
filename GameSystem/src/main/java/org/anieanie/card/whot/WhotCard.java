@@ -29,6 +29,7 @@ public class WhotCard extends AbstractCard {
     public static final int WHOT  = 5;
     public static final ArrayList<String> SHAPES;
     public static final ArrayList<int[]> EXCLUDED_NUMBERS;
+    public static final WhotCard MARKET;
     static {
         // Initialize shapes.
         SHAPES = new ArrayList<>();
@@ -38,7 +39,7 @@ public class WhotCard extends AbstractCard {
         SHAPES.add(CARPET, "square");
         SHAPES.add(ANGLE, "triangle");
         SHAPES.add(WHOT, "whot");
-        
+
         // Initialize excluded numbers for the shapes.
         EXCLUDED_NUMBERS = new ArrayList<>();
         EXCLUDED_NUMBERS.add(STAR, new int[]{6, 9, 10, 11, 12, 13, 14});
@@ -48,6 +49,7 @@ public class WhotCard extends AbstractCard {
         EXCLUDED_NUMBERS.add(ANGLE, new int[]{6, 9});
         EXCLUDED_NUMBERS.add(WHOT, new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14});
 
+        MARKET = new MarketWhotCard();
     }
 
     // Static methods
@@ -187,11 +189,11 @@ public class WhotCard extends AbstractCard {
     }
     
     public boolean equals(WhotCard another) {
-        return ((another.getShape() == this.shape) && (another.getLabel() == this.label));
+        return ((another.getShape() == this.getShape()) && (another.getLabel() == this.getLabel()));
     }
     
     //public methods overriding object
-    public Card clone() {
+    public Card clone () throws CloneNotSupportedException {
         return new WhotCard(this.shape, this.label);
     }
     
@@ -207,5 +209,31 @@ public class WhotCard extends AbstractCard {
             throw new ClassCastException("Object type mismatch");
         }
     }
-    
+
+    private static class MarketWhotCard extends WhotCard {
+        MarketWhotCard() {
+            shape = -100;
+            label = -100;
+        }
+
+        @Override
+        public String getShapeString() {
+            return "MARKET";
+        }
+
+        @Override
+        public int compareTo(WhotCard anotherCard) {
+            return this.equals(anotherCard) ? 0 : -1;
+        }
+
+        @Override
+        public Card clone() throws CloneNotSupportedException {
+            throw new CloneNotSupportedException();
+        }
+
+        @Override
+        public String toString() {
+            return "MARKET";
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package org.anieanie.cardgame.agent;
 
+import org.anieanie.card.Card;
 import org.anieanie.cardgame.gameplay.GameEnvironment;
 
 /**
@@ -14,5 +15,15 @@ public interface GameAgent extends Runnable {
     void refresh();
 
     // Updates the game environment when it changes.
-    void updateEnvironment(GameEnvironment environment);
+    default void updateEnvironment(GameEnvironment environment) {
+        // Default implementation does nothing.
+    }
+
+    default void moveRejected(Card card) {
+        // Default implementation does nothing.
+    }
+
+    default void moveAccepted(Card card) {
+        // Default implementation does nothing.
+    }
 }

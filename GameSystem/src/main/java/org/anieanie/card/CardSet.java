@@ -23,7 +23,7 @@ public class CardSet extends AbstractSet<Card> implements Cloneable, Serializabl
     //  }
 
     // copy constructor
-    public CardSet(CardSet original) {
+    public CardSet(CardSet original) throws CloneNotSupportedException {
         this();
         for (Card card : original.getCardlist()) {
             if (isDuplicate(card)) {

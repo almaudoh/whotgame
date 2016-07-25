@@ -2,6 +2,7 @@ package org.anieanie.cardgame.training.whot;
 
 import org.anieanie.card.Card;
 import org.anieanie.card.whot.WhotCard;
+import org.anieanie.cardgame.gameplay.whot.WhotGameRule;
 import org.canova.api.io.data.DoubleWritable;
 import org.canova.api.io.data.IntWritable;
 import org.canova.api.io.data.Text;
@@ -27,7 +28,7 @@ public class WhotGameRecordReader extends LineRecordReader {
         String[] fields = val.split(",", -1);
         List<Writable> ret = new ArrayList<>();
         // The first state condition is the feature for whether market was picked or not.
-        if (fields[0].equalsIgnoreCase("MARKET")) {
+        if (fields[0].equalsIgnoreCase(WhotGameRule.GO_MARKET)) {
             ret.add(new IntWritable(1));
             fillWhotCardFeatures(WhotCardNormalizer.blankWhotCardFeatures(21), ret);
         }

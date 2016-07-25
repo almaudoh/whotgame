@@ -10,7 +10,7 @@ public interface Card extends Comparable, Cloneable {
      * This method must be overridden by its concrete subclass
      * @return A card object created from a string
      */
-    Card clone();
+    Card clone() throws CloneNotSupportedException;
 
     /**
      * This method must be overridden by its concrete subclass

@@ -34,7 +34,7 @@ public class PersistibleMultiLayerNetwork extends MultiLayerNetwork {
     }
 
     public static PersistibleMultiLayerNetwork load(String path, String name) throws IOException {
-        PersistibleMultiLayerNetwork model = (PersistibleMultiLayerNetwork) NetworkPersister.loadNet(String.format("%s/%s.conf.json", path, name), String.format("%s/%s.coeff.bin", path, name));
+        PersistibleMultiLayerNetwork model = NetworkPersister.loadNet(String.format("%s/%s.conf.json", path, name), String.format("%s/%s.coeff.bin", path, name), name);
         model.name = name;
         return model;
     }

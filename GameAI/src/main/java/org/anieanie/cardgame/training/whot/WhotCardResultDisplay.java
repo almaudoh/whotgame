@@ -1,5 +1,6 @@
 package org.anieanie.cardgame.training.whot;
 
+import org.anieanie.cardgame.gameplay.whot.WhotGameRule;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
@@ -62,7 +63,7 @@ public class WhotCardResultDisplay {
     private static String getTopCardShape(INDArray row) {
         INDArray[] top3 = Nd4j.sortWithIndices(row.getColumns(0,1,2,3,4,5,6), 1, false);
         if (top3[0].getInt(0) == 0) { // MARKET
-            return "market";
+            return WhotGameRule.GO_MARKET;
         }
         else {
             return String.format("%2d", top3[0].getInt(0));

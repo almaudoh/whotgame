@@ -56,11 +56,21 @@ public class CompactableUtility {
         };
     }
 
-    public static Compactable fromWhotCards(Card... card) {
+    public static Compactable fromWhotMove(Card move) {
         return new Compactable() {
             @Override
             public double[] getVector() {
-                return WhotCardNormalizer.expandIntoShapeLabelSpace(card);
+                if (move.equals(WhotCard.MARKET)) {
+                    double[] ret = new double[WhotCard.N_SHAPES + 15 + 1]; /* Add one for the market */
+                    ret[0] = 1.;
+                    return ret;
+                }
+                else {
+                    double[] ret = new double[WhotCard.N_SHAPES + 15 + 1];
+                    // @todo benchmark and use System.arraycopy in other places in WhotCardNormalizer.
+                    System.arraycopy(WhotCardNormalizer.expandIntoShapeLabelSpace(move), 0, ret, 1, ret.length - 1);
+                    return ret;
+                }
             }
         };
     }

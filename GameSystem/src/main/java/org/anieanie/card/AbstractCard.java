@@ -49,6 +49,6 @@ public abstract class AbstractCard implements Comparable, java.io.Serializable, 
      * This method must be overridden by its concrete subclass
      * @return A card object created from a string
      */
-    public abstract Card clone();
+    public abstract Card clone ()throws CloneNotSupportedException;
 
 }
