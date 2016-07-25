@@ -53,7 +53,7 @@ public class LogSave {
 
     private static void turnMovesToLog() throws IOException, InterruptedException {
         RecordReader reader = new WhotGameRecordReader();
-        reader.initialize(new FileSplit(new File("resources/machine_moves.txt")));
+        reader.initialize(new FileSplit(new File("transient/machine_moves.txt")));
         PrintWriter pr = new PrintWriter(new File("gamelog.csv"));
         while (reader.hasNext()) {
             Object[] row = reader.next().toArray();

@@ -84,7 +84,7 @@ public class GameRunner {
         Socket socket = new Socket("127.0.0.1", 5550);
         ClientCGMPRelay relay = new ClientCGMPRelay(socket);
         WhotGameClient client = new WhotGameClient(relay, display);
-        client.setLogger(new WhotGameLogger("resources/saved_moves.txt", true));
+        client.setLogger(new WhotGameLogger("transient/saved_moves.txt", true));
         return client;
     }
 

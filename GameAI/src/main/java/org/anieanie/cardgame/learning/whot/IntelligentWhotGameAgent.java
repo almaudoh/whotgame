@@ -106,7 +106,9 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
 
     private void printMetrics() {
         // Print the metrics of the current dqn target.
-        System.out.printf("Moves rejected: %s, moves accepted: %s, reject %%: %s%n", movesAccepted, movesRejected, movesRejected * 100 / (movesRejected + movesAccepted));
+        if (movesAccepted + movesRejected > 0) {
+            System.out.printf("Moves rejected: %s, moves accepted: %s, reject %%: %s%n", movesAccepted, movesRejected, movesRejected * 100 / (movesRejected + movesAccepted));
+        }
         System.out.printf("Games won: %s, games lost: %s, win %%: %s%n", "n/a", "n/a", "n/a");
         dqn.scores();
     }
@@ -208,12 +210,12 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         }
         else {
 //            System.out.println("Q-value");
-            return argMaxQ(getQValues(state, selectActions));
+            return argMaxQ(qValues(state, selectActions));
         }
     }
 
     private Card improvedEpsilonQValue(GameState state, WhotCardSet selectActions) {
-        Map<Card, Double> tempQ = getQValues(state, selectActions);
+        Map<Card, Double> tempQ = qValues(state, selectActions);
         if (random.nextDouble() < epsilon) {
             double mag = Math.max(Math.abs(minQ(tempQ)), Math.abs(maxQ(tempQ)));
             for (Card card : selectActions) {
@@ -225,15 +227,6 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         // @todo What if there are more than one max q value?
 //        System.out.println("improved epsilon Q-value");
         return argMaxQ(tempQ);
-    }
-
-    private Map<Card, Double> getQValues(GameState state, CardSet selectActions) {
-        Map<Card, Double> values = new HashMap<Card, Double>();
-        for (Card card : selectActions) {
-            state.set("move", CompactableUtility.fromWhotMove(card));
-            values.put(card, dqn.output(state.getVector()));
-        }
-        return values;
     }
 
     // All cards available in the WhotCard including the market, but removing the top card.
@@ -256,11 +249,20 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
             else {
                 // tt = rr + maxQ(s', a'| a')
 //                totalReward = prevReward + gamma * maxQ(state, WhotGameRule.filterValidMoves(fullCardSet, env));
-                totalReward = prevReward + gamma * maxQ(getQValues(state, nextActions));
+                totalReward = prevReward + gamma * maxQ(qValues(state, nextActions));
             }
             prevState.set("move", CompactableUtility.fromWhotMove(prevAction));
             dqn.addToReplayMemory(prevState.getVector(), new double[]{totalReward});
         }
+    }
+
+    private Map<Card, Double> qValues(GameState state, CardSet selectActions) {
+        Map<Card, Double> values = new HashMap<Card, Double>();
+        for (Card card : selectActions) {
+            state.set("move", CompactableUtility.fromWhotMove(card));
+            values.put(card, dqn.output(state.getVector()));
+        }
+        return values;
     }
 
     private double minQ(Map<Card, Double> qVals) {
@@ -285,7 +287,9 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
 
     private Card argMaxQ(Map<Card, Double> qVals) {
         double maxQ = NEGATIVE_INFINITY;
-        Card argMaxQ = null;
+        // Use the first action as default. This is to avoid the null pointer error that happens
+        // when all the values are NaNs.
+        Card argMaxQ = qVals.keySet().iterator().next();
         for (Card card : qVals.keySet()) {
             if (qVals.get(card) > maxQ) {
                 maxQ = qVals.get(card);

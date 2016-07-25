@@ -23,7 +23,7 @@ import java.util.*;
  */
 public class DeepQNetwork {
 
-    private static final String SAVED_NETS_DIR = "resources/saved_nets";
+    private static final String SAVED_NETS_DIR = "transient/saved_nets";
     private final MultiLayerNetwork learner;
     private final int numInputs;
     private final int numOutputs;
