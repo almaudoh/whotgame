@@ -7,7 +7,7 @@ public class GameGenerator {
 
     public static void main(String[] args) throws Exception {
         GameRunner runner = new GameRunner("simple", "smart");
-        int epochs = 1000;
+        int epochs = 100;
         for (int i = 0; i < epochs; i++) {
             runner.playGame();
         }

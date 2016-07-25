@@ -49,6 +49,9 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
     // A flag to keep whether move was accepted or not. For calculating rewards.
     private volatile boolean moveAccepted = true;
 
+    private volatile long movesRejected = 0;
+    private volatile long movesAccepted = 0;
+
     public IntelligentWhotGameAgent(GameClient gameClient) {
         this(gameClient, 0.5, 0.9);
     }
@@ -71,12 +74,14 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
                 int iterations = 0;
                 while (keepTraining) {
                     // Sleep for 1 seconds, then wake up and learn.
-                    threadSleep(1000);
+                    threadSleep(500);
                     try {
                         dqn.learnFromMemory();
                         if (iterations > 100) {
                             // Update learnings every 100 iterations.
                             updateDQNTarget();
+                            printMetrics();
+                            resetMetrics();
                             iterations = 0;
                         }
                         iterations++;
@@ -94,6 +99,18 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         }).start();
     }
 
+    private void resetMetrics() {
+        movesAccepted = 0;
+        movesRejected = 0;
+    }
+
+    private void printMetrics() {
+        // Print the metrics of the current dqn target.
+        System.out.printf("Moves rejected: %s, moves accepted: %s, reject %%: %s%n", movesAccepted, movesRejected, movesRejected * 100 / (movesRejected + movesAccepted));
+        System.out.printf("Games won: %s, games lost: %s, win %%: %s%n", "n/a", "n/a", "n/a");
+        dqn.scores();
+    }
+
     @Override
     public void run() {
         super.run();
@@ -105,6 +122,8 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
             GameState state = buildGameState(gameClient.getCards(), top5, gameClient.getEnvironment());
             saveMiniBatch(allCardsWithMarket(gameClient.getEnvironment()), state, gameClient.getEnvironment());
             updateDQNTarget();
+            printMetrics();
+            resetMetrics();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -130,11 +149,13 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
     @Override
     public void moveRejected(Card card) {
         moveAccepted = false;
+        movesRejected++;
     }
 
     @Override
     public void moveAccepted(Card card) {
         moveAccepted = true;
+        movesAccepted++;
     }
 
     /** Need to track the last five moves */
@@ -173,7 +194,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         saveMiniBatch(selectActions, state, environment);
 
         prevState = state;
-        prevAction = improvedEpsilonQValue(state, selectActions);
+        prevAction = simpleEpsilonGreedy(state, selectActions);
         return prevAction.toString();
     }
 
@@ -182,11 +203,11 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         if (random.nextDouble() > epsilon) {
             // Use epsilon-greedy explore-learn split.
             selectActions.shuffle(random, 19);
-            System.out.println("epsilon");
+//            System.out.println("epsilon");
             return selectActions.getFirst();
         }
         else {
-            System.out.println("Q-value");
+//            System.out.println("Q-value");
             return argMaxQ(getQValues(state, selectActions));
         }
     }
@@ -201,13 +222,8 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
 //                q =[q[i] + random.random() * mag - .5 * mag for i in range(len(self.actions))]
             }
         }
-//        count = q.count(maxQ)
-//        if count > 1:
-//        best = [i for i in range(len(self.actions)) if q[i] == maxQ]
-//        i = random.choice(best)
-//        else:
-//        i = q.index(maxQ)
-        System.out.println("improved epsilon Q-value");
+        // @todo What if there are more than one max q value?
+//        System.out.println("improved epsilon Q-value");
         return argMaxQ(tempQ);
     }
 

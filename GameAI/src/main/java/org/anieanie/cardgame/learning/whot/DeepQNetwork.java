@@ -101,6 +101,10 @@ public class DeepQNetwork {
         }
     }
 
+    public void scores() {
+        System.out.printf("target score: %s, learner score: %s%n", target.score(), learner.score());
+    }
+
     // Converts an array list of doubles to an INDArray object.
     private INDArray fromINDArray(List<double[]> data) {
         int numElements = data.size();
