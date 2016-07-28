@@ -1,5 +1,6 @@
 package org.anieanie.cardgame.agent;
 
+import org.anieanie.card.Card;
 import org.anieanie.card.whot.WhotCard;
 import org.anieanie.cardgame.gameplay.GameClient;
 import org.anieanie.cardgame.gameplay.GameEnvironment;
@@ -174,6 +175,21 @@ public class ManualWhotGameAgent implements GameAgent {
         if (gameClient.getClientStatus() == GameClient.STATUS_GAME_WON) {
             // @todo Print message and then force the readLine() input loop to stop.
         }
+    }
+
+    @Override
+    public void moveRejected(Card card) {
+        if (gameClient.getCards().contains(card)) {
+            display.showNotification("Card '" + card + "' was rejected. Please play another card.");
+        }
+        else {
+            display.showNotification("You don't have '" + card + "'.");
+        }
+    }
+
+    @Override
+    public void moveAccepted(Card card) {
+        display.showNotification("Played " + card);
     }
 
     private static String inputUserName() {

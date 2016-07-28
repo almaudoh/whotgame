@@ -120,7 +120,6 @@ public class WhotGameClient extends AbstractGameClient {
         // User cannot play a card he doesn't have.
         if (!cards.contains(card)) {
             agent.moveRejected(card);
-            display.showNotification("You don't have '" + card + "'.");
             return;
         }
 
@@ -133,11 +132,9 @@ public class WhotGameClient extends AbstractGameClient {
                 clientStatus = STATUS_WAITING_FOR_TURN;
                 cards.remove(card);
                 agent.moveAccepted(card);
-                display.showNotification("Played " + card);
             }
             else {
                 agent.moveRejected(card);
-                display.showNotification("Card '" + card + "' was rejected. Please play another card.");
             }
         }
         catch (IOException e) {
@@ -153,7 +150,7 @@ public class WhotGameClient extends AbstractGameClient {
                     // Card was successfully played.
                     clientStatus = STATUS_WAITING_FOR_TURN;
                     cards.remove(card);
-                    display.showNotification("Played " + card);
+                    agent.moveAccepted(card);
                 }
             } catch (IOException e1) {
                 e1.printStackTrace();

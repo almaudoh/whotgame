@@ -53,7 +53,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
     private volatile long movesAccepted = 0;
 
     public IntelligentWhotGameAgent(GameClient gameClient) {
-        this(gameClient, 0.5, 0.9);
+        this(gameClient, 0.4, 0.9);
     }
 
     public IntelligentWhotGameAgent(GameClient gameClient, double epsilon, double gamma) {
@@ -65,6 +65,9 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         prevState = buildGameState(gameClient.getCards(), top5, dummyEnvironment());
         prevState.set("move", CompactableUtility.fromWhotMove(WhotCard.MARKET));
         dqn = new DeepQNetwork(prevState.getVector().length, 1);
+        dqn.setHyperParameter("minCycleError", 0.1)
+           .setHyperParameter("maxCycles", 50);
+        dqn.init();
 
         // Start a new thread for training the DQN learner
         new Thread(new Runnable() {
@@ -74,17 +77,20 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
                 int iterations = 0;
                 while (keepTraining) {
                     // Sleep for 1 seconds, then wake up and learn.
-                    threadSleep(500);
+                    threadSleep(100);
                     try {
-                        dqn.learnFromMemory();
-                        if (iterations > 100) {
+                        if (dqn.learnFromMemory()) {
+                            iterations++;
+                            System.out.println("learnt from memory - training iteration " + iterations);
+                        }
+                        if (iterations % 50 == 1) {
                             // Update learnings every 100 iterations.
                             updateDQNTarget();
+                            System.out.println("Updated target");
                             printMetrics();
                             resetMetrics();
                             iterations = 0;
                         }
-                        iterations++;
                     }
                     catch (Exception e) {
                         e.printStackTrace();
@@ -97,20 +103,6 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
                 }
             }
         }).start();
-    }
-
-    private void resetMetrics() {
-        movesAccepted = 0;
-        movesRejected = 0;
-    }
-
-    private void printMetrics() {
-        // Print the metrics of the current dqn target.
-        if (movesAccepted + movesRejected > 0) {
-            System.out.printf("Moves rejected: %s, moves accepted: %s, reject %%: %s%n", movesAccepted, movesRejected, movesRejected * 100 / (movesRejected + movesAccepted));
-        }
-        System.out.printf("Games won: %s, games lost: %s, win %%: %s%n", "n/a", "n/a", "n/a");
-        dqn.scores();
     }
 
     @Override
@@ -150,14 +142,30 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
 
     @Override
     public void moveRejected(Card card) {
+        System.out.printf("move %s rejected%n", card);
         moveAccepted = false;
         movesRejected++;
     }
 
     @Override
     public void moveAccepted(Card card) {
+        System.out.printf("move %s accepted%n", card);
         moveAccepted = true;
         movesAccepted++;
+    }
+
+    private void resetMetrics() {
+        movesAccepted = 0;
+        movesRejected = 0;
+    }
+
+    private void printMetrics() {
+        // Print the metrics of the current dqn target.
+        if (movesAccepted + movesRejected > 0) {
+            System.out.printf("Moves rejected: %s; moves accepted: %s; reject rate: %s%%%n", movesRejected, movesAccepted, movesRejected * 100 / (movesRejected + movesAccepted));
+        }
+        System.out.printf("Games won: %s; games lost: %s; win rate: %s%%%n", "n/a", "n/a", "0");
+        dqn.scores();
     }
 
     /** Need to track the last five moves */
@@ -177,6 +185,8 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
     /** Using the DQN, select the best move to play. */
     @Override
     protected String getMoveFromEnvironment(CardSet cards, GameEnvironment environment) {
+        // Wait a little and learn from past mistakes.
+        threadSleep(100);
 //        cards = WhotGameRule.filterValidMoves(cards, environment);
         // Add market to the full card set.
 //        if (cards.size() > 0) {
@@ -197,6 +207,11 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
 
         prevState = state;
         prevAction = simpleEpsilonGreedy(state, selectActions);
+        Map<Card, Double> tempQ = qValues(state, selectActions);
+        Map<Card, Double> learnQ = qValuesLearner(state, selectActions);
+        System.out.printf("Cards: %s%n", gameClient.getCards());
+        System.out.printf("[Target] Action: %s; qValue: %s; ArgMax: %s%n", prevAction, tempQ.get(prevAction), argMaxQ(tempQ));
+        System.out.printf("[Learner] Action: %s; qValue: %s; ArgMax: %s%n", prevAction, learnQ.get(prevAction), argMaxQ(learnQ));
         return prevAction.toString();
     }
 
@@ -265,6 +280,14 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         return values;
     }
 
+    private Map<Card, Double> qValuesLearner(GameState state, CardSet selectActions) {
+        Map<Card, Double> values = new HashMap<Card, Double>();
+        for (Card card : selectActions) {
+            state.set("move", CompactableUtility.fromWhotMove(card));
+            values.put(card, dqn.learnerOutput(state.getVector()));
+        }
+        return values;
+    }
     private double minQ(Map<Card, Double> qVals) {
         double minQ = POSITIVE_INFINITY;
         for (Card card : qVals.keySet()) {

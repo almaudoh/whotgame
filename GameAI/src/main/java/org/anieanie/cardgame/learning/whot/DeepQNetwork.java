@@ -24,15 +24,14 @@ import java.util.*;
 public class DeepQNetwork {
 
     private static final String SAVED_NETS_DIR = "transient/saved_nets";
-    private final MultiLayerNetwork learner;
-    private final int numInputs;
-    private final int numOutputs;
 
+    private int numInputs;
+    private int numOutputs;
     private List<double[]> replayMemoryFeatures;
     private List<double[]> replayMemoryLabels;
 
+    private MultiLayerNetwork learner;
     private PersistibleMultiLayerNetwork target;
-
     private Map<String, Object> hyperParams;
 
     // Thread lock for synchronization.
@@ -44,8 +43,11 @@ public class DeepQNetwork {
         numOutputs = outputSize;
         replayMemoryFeatures = new ArrayList<double[]>();
         replayMemoryLabels = new ArrayList<double[]>();
-        loadReplayFromFile();
         hyperParams = initializeHyperParameters();
+    }
+
+    public void init() {
+        loadReplayFromFile();
         try {
             // Try to load existing network.
             target = PersistibleMultiLayerNetwork.load(SAVED_NETS_DIR, "dqn");
@@ -71,6 +73,11 @@ public class DeepQNetwork {
         return output.getDouble(0);
     }
 
+    double learnerOutput(double[] featureVector) {
+        INDArray output = learner.output(Nd4j.create(featureVector, new int[]{1, featureVector.length}), false);
+        return output.getDouble(0);
+    }
+
     public void addToReplayMemory(double[] features, double[] labels) {
         synchronized (lock) {
             replayMemoryFeatures.add(features);
@@ -79,26 +86,29 @@ public class DeepQNetwork {
     }
 
     // The learning network learns continually from the stored replay memory.
-    public void learnFromMemory() {
+    public boolean learnFromMemory() {
         // No need to try to learn if enough samples have not been taken.
         if (replayMemoryFeatures.size() > 10) {
-            double minError = (Double) hyperParams.get("minIterationError");
-            int maxIterations = (Integer) hyperParams.get("maxIterations");
+            double minCycleError = (Double) hyperParams.get("minCycleError");
+            int maxCycles = (Integer) hyperParams.get("maxCycles");
 
             // Pull stored data from replay memory and use it to carry out network training.
             DataSet replay;
             synchronized (lock) {
                 replay = new DataSet(fromINDArray(replayMemoryFeatures), fromINDArray(replayMemoryLabels));
-            }
-            replay.shuffle();
-            SplitTestAndTrain split = replay.splitTestAndTrain(10);
 
-            int j = 0;
-            do {
-                learner.fit(split.getTrain());
-                j++;
-            } while (learner.score() > minError && j < maxIterations);
+                replay.shuffle();
+                SplitTestAndTrain split = replay.splitTestAndTrain(10);
+
+                int j = 0;
+                do {
+                    learner.fit(split.getTrain());
+                    j++;
+                } while (learner.score() > minCycleError && j < maxCycles);
+            }
+            return true;
         }
+        return false;
     }
 
     public void scores() {
@@ -114,11 +124,11 @@ public class DeepQNetwork {
     private Map<String, Object> initializeHyperParameters() {
         Map<String, Object> returnVal = new HashMap<String, Object>();
         returnVal.put("seed", 123);
-        returnVal.put("iterations", 123);
-        returnVal.put("learningRate", 0.01);
+        returnVal.put("iterations", 1);
+        returnVal.put("learningRate", 0.001);
         returnVal.put("hiddenSize", 500);
-        returnVal.put("minIterationError", 0.05);
-        returnVal.put("maxIterations", 500);
+        returnVal.put("minCycleError", 0.05);
+        returnVal.put("maxCycles", 500);
         return returnVal;
     }
 
@@ -157,13 +167,13 @@ public class DeepQNetwork {
                 .layer(1, new DenseLayer.Builder()
                         .nIn(hiddenSize) // # input nodes
                         .nOut(hiddenSize) // # fully connected hidden layer nodes. Add list if multiple layers.
-                        .activation("elu") // Activation function type
+                        .activation("tanh") // Activation function type
                         .build()
                 )
                 .layer(2, new DenseLayer.Builder()
                         .nIn(hiddenSize) // # input nodes
                         .nOut(hiddenSize) // # fully connected hidden layer nodes. Add list if multiple layers.
-                        .activation("elu") // Activation function type
+                        .activation("tanh") // Activation function type
                         .build()
                 )
                 .layer(3, new DenseLayer.Builder()
