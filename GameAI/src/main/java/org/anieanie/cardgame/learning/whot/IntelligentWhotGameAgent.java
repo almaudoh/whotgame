@@ -75,7 +75,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         prevValidationState = buildValidationGameState(gameClient.getCards(), dummyEnvironment());
         prevValidationState.set("move", CompactableUtility.fromWhotMove(WhotCard.MARKET));
         validator = new DeepQNetwork("validator");
-        validator.setHyperParameter("minCycleError", 0.001)
+        validator.setHyperParameter("minCycleError", 0.01)
                 .setHyperParameter("maxCycles", 50)
                 .setHyperParameter("learningRate", 0.1)
                 .setHyperParameter("replaySizeToLearn", -1); // Learn from all replay memory.
@@ -169,7 +169,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         moveAccepted = false;
         movesRejected++;
         saveValidatorMiniBatch(false, gameClient.getEnvironment());
-        testMoveValidator(prevHand, prevEnvironment, 0.9);
+        testMoveValidator(prevAction, prevHand, prevEnvironment, 0.9);
     }
 
     @Override
@@ -178,7 +178,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         moveAccepted = true;
         movesAccepted++;
         saveValidatorMiniBatch(true, gameClient.getEnvironment());
-        testMoveValidator(prevHand, prevEnvironment, 0.9);
+        testMoveValidator(prevAction, prevHand, prevEnvironment, 0.9);
     }
 
     private void resetMetrics() {
@@ -265,7 +265,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         }
     }
 
-    private void testMoveValidator(CardSet hand, GameEnvironment environment, double threshold) {
+    private void testMoveValidator(Card last, CardSet hand, GameEnvironment environment, double threshold) {
         CardSet valid = new WhotCardSet();
         GameState state = buildValidationGameState(hand, environment);
         Map<String, Double> sorted = new HashMap<String, Double>();
@@ -282,12 +282,14 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         sorted = sortByValue(sorted);
         System.out.printf("[Move validation] topCard: %s; calledCard:%s; hand: %s%n", environment.get(VAR_TOP_CARD), environment.get(VAR_CALLED_CARD), hand);
         String order = "";
-        int i = 0;
         for (Map.Entry<String, Double> entry : sorted.entrySet()) {
             order = String.format("%s (%.3f); %s", entry.getKey(), entry.getValue(), order);
-            i++;
         }
-        System.out.printf("[Move selection] %s\n", order.substring(0, 180));
+        state.put("move", CompactableUtility.fromWhotMove(WhotCard.MARKET));
+        double marketVal = validator.output(state.getVector());
+        state.put("move", CompactableUtility.fromWhotMove(prevAction));
+        double prevVal = validator.output(state.getVector());
+        System.out.printf("[Move selection] played %s (%.3f); market (%.3f)%n   others: %s\n", prevAction, prevVal, marketVal, order.substring(0, 150));
         System.out.printf("Valid values found (%s treshold): %d %s%n", threshold, valid.size(), valid.toString());
     }
 
