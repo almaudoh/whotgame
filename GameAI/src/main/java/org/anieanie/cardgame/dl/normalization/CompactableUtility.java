@@ -56,6 +56,15 @@ public class CompactableUtility {
         };
     }
 
+    public static Compactable fromWhotCards(Card... cards) {
+        return new Compactable() {
+            @Override
+            public double[] getVector() {
+                return WhotCardNormalizer.expandIntoShapeLabelSpace(cards);
+            }
+        };
+    }
+
     public static Compactable fromWhotMove(Card move) {
         return new Compactable() {
             @Override

@@ -1,6 +1,7 @@
 package org.anieanie.cardgame.dl.normalization;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -13,6 +14,10 @@ public class GameState extends HashMap<String, Compactable> implements Compactab
     public GameState copyWithName(String objectName) {
         return (GameState) super.clone();
 //        return new GameState(topCard, calledCard, marketMode, playerCount, objectName);
+    }
+
+    public void setCompactSequence(String... sequence) {
+        this.sequence = Arrays.asList(sequence);
     }
 
     public void setCompactSequence(List<String> sequence) {

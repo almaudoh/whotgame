@@ -11,10 +11,8 @@ import org.anieanie.cardgame.gameplay.GameClient;
 import org.anieanie.cardgame.gameplay.GameEnvironment;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
@@ -29,16 +27,21 @@ import static org.anieanie.cardgame.gameplay.whot.WhotGameRule.VAR_TOP_CARD;
  */
 public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
 
-    private DeepQNetwork dqn;
+    // DQN for validating moves.
+    private DeepQNetwork validator;
+
+    // DQN for strategic thinking.
+    private DeepQNetwork strategizer;
 
     // The queue of the last five moves made.
     private CardSet top5;
 
-    private GameState prevState;
+    private GameState prevGameState;
+    private GameState prevValidationState;
 
     private Card prevAction;
 
-    private double epsilon = 0.8;
+    private double epsilon = 0.0;
 
     private Random random;
 
@@ -52,6 +55,11 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
     private volatile long movesRejected = 0;
     private volatile long movesAccepted = 0;
 
+
+    // For testing purposes.
+    private CardSet prevHand;
+    private GameEnvironment prevEnvironment;
+
     public IntelligentWhotGameAgent(GameClient gameClient) {
         this(gameClient, 0.4, 0.9);
     }
@@ -62,12 +70,24 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         this.gamma = gamma;
         top5 = new CardSet();
         random = new Random(1234);
-        prevState = buildGameState(gameClient.getCards(), top5, dummyEnvironment());
-        prevState.set("move", CompactableUtility.fromWhotMove(WhotCard.MARKET));
-        dqn = new DeepQNetwork(prevState.getVector().length, 1);
-        dqn.setHyperParameter("minCycleError", 0.1)
-           .setHyperParameter("maxCycles", 50);
-        dqn.init();
+
+        // DQN for learning valid moves.
+        prevValidationState = buildValidationGameState(gameClient.getCards(), dummyEnvironment());
+        prevValidationState.set("move", CompactableUtility.fromWhotMove(WhotCard.MARKET));
+        validator = new DeepQNetwork("validator");
+        validator.setHyperParameter("minCycleError", 0.001)
+                .setHyperParameter("maxCycles", 50)
+                .setHyperParameter("learningRate", 0.1)
+                .setHyperParameter("replaySizeToLearn", -1); // Learn from all replay memory.
+        validator.init(prevValidationState.getVector().length, 1);
+
+        // DQN for learning improved strategy.
+        prevGameState = buildGameState(gameClient.getCards(), top5, dummyEnvironment());
+        prevGameState.set("move", CompactableUtility.fromWhotMove(WhotCard.MARKET));
+        strategizer = new DeepQNetwork("strategizer");
+        strategizer.setHyperParameter("minCycleError", 0.1)
+                .setHyperParameter("maxCycles", 50);
+        strategizer.init(prevGameState.getVector().length, 1);
 
         // Start a new thread for training the DQN learner
         new Thread(new Runnable() {
@@ -79,16 +99,18 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
                     // Sleep for 1 seconds, then wake up and learn.
                     threadSleep(100);
                     try {
-                        if (dqn.learnFromMemory()) {
+                        if (validator.learnFromMemory()) {
                             iterations++;
-                            System.out.println("learnt from memory - training iteration " + iterations);
+                            System.out.println("Learnt from memory - training iteration " + iterations);
+//                            strategizer.learnFromMemory();
                         }
                         if (iterations % 50 == 1) {
                             // Update learnings every 100 iterations.
-                            updateDQNTarget();
+                            updateDQNTarget(validator, false);
+//                            updateDQNTarget(strategizer, true);
                             System.out.println("Updated target");
                             printMetrics();
-                            resetMetrics();
+//                            resetMetrics();
                             iterations = 0;
                         }
                     }
@@ -97,7 +119,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
                     }
                 }
                 try {
-                    dqn.updateTarget();
+                    updateDQNTarget(validator, false);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -114,8 +136,9 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
             }
             // After completion of the playing loop, learning needs to be done for the terminal condition.
             GameState state = buildGameState(gameClient.getCards(), top5, gameClient.getEnvironment());
-            saveMiniBatch(allCardsWithMarket(gameClient.getEnvironment()), state, gameClient.getEnvironment());
-            updateDQNTarget();
+            saveGameMiniBatch(allCardsWithMarket(gameClient.getEnvironment()), state, gameClient.getEnvironment());
+            updateDQNTarget(validator, false);
+//            updateDQNTarget(strategizer, true);
             printMetrics();
             resetMetrics();
         } catch (IOException e) {
@@ -126,11 +149,11 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
     }
 
     // Updates the target network from what the learning network has learnt.
-    private void updateDQNTarget() throws IOException {
-        dqn.learnFromMemory();
-        dqn.updateTarget();
-        dqn.resetReplayMemory();
-        dqn.saveReplayToFile();
+    private void updateDQNTarget(DeepQNetwork net, boolean resetReplay) throws IOException {
+        net.learnFromMemory();
+        net.updateTarget();
+        if (resetReplay) net.resetReplayMemory();
+        net.saveReplayToFile();
     }
 
     @Override
@@ -145,6 +168,8 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         System.out.printf("move %s rejected%n", card);
         moveAccepted = false;
         movesRejected++;
+        saveValidatorMiniBatch(false, gameClient.getEnvironment());
+        testMoveValidator(prevHand, prevEnvironment, 0.9);
     }
 
     @Override
@@ -152,6 +177,8 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         System.out.printf("move %s accepted%n", card);
         moveAccepted = true;
         movesAccepted++;
+        saveValidatorMiniBatch(true, gameClient.getEnvironment());
+        testMoveValidator(prevHand, prevEnvironment, 0.9);
     }
 
     private void resetMetrics() {
@@ -164,8 +191,8 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         if (movesAccepted + movesRejected > 0) {
             System.out.printf("Moves rejected: %s; moves accepted: %s; reject rate: %s%%%n", movesRejected, movesAccepted, movesRejected * 100 / (movesRejected + movesAccepted));
         }
-        System.out.printf("Games won: %s; games lost: %s; win rate: %s%%%n", "n/a", "n/a", "0");
-        dqn.scores();
+//        System.out.printf("Games won: %s; games lost: %s; win rate: %s%%%n", "n/a", "n/a", "0");
+//        strategizer.scores();
     }
 
     /** Need to track the last five moves */
@@ -187,6 +214,8 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
     protected String getMoveFromEnvironment(CardSet cards, GameEnvironment environment) {
         // Wait a little and learn from past mistakes.
         threadSleep(100);
+        prevHand = gameClient.getCards();
+        prevEnvironment = environment;
 //        cards = WhotGameRule.filterValidMoves(cards, environment);
         // Add market to the full card set.
 //        if (cards.size() > 0) {
@@ -199,23 +228,81 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
 
     private String getBestMove(GameEnvironment environment) {
         GameState state = buildGameState(gameClient.getCards(), top5, environment);
-        WhotCardSet selectActions = allCardsWithMarket(environment);
+        CardSet selectActions = filterValidMoves(allCardsWithMarket(environment), environment);
 
         // @todo A little issue here around what to use for a' in Q(s',a'). Currently using all possible
         // moves, not just what is available to the player currently.
-        saveMiniBatch(selectActions, state, environment);
+        saveGameMiniBatch(selectActions, state, environment);
 
-        prevState = state;
         prevAction = simpleEpsilonGreedy(state, selectActions);
         Map<Card, Double> tempQ = qValues(state, selectActions);
         Map<Card, Double> learnQ = qValuesLearner(state, selectActions);
-        System.out.printf("Cards: %s%n", gameClient.getCards());
-        System.out.printf("[Target] Action: %s; qValue: %s; ArgMax: %s%n", prevAction, tempQ.get(prevAction), argMaxQ(tempQ));
-        System.out.printf("[Learner] Action: %s; qValue: %s; ArgMax: %s%n", prevAction, learnQ.get(prevAction), argMaxQ(learnQ));
+//        System.out.printf("Cards: %s%n", gameClient.getCards());
+//        System.out.printf("[Target] Action: %s; qValue: %s; ArgMax: %s%n", prevAction, tempQ.get(prevAction), argMaxQ(tempQ));
+//        System.out.printf("[Learner] Action: %s; qValue: %s; ArgMax: %s%n", prevAction, learnQ.get(prevAction), argMaxQ(learnQ));
+        prevGameState = state;
+        prevValidationState = buildValidationGameState(gameClient.getCards(), environment);
         return prevAction.toString();
     }
 
-    private Card simpleEpsilonGreedy(GameState state, WhotCardSet selectActions) {
+    private CardSet filterValidMoves(CardSet cards, GameEnvironment environment) {
+        CardSet valid = new WhotCardSet();
+        GameState state = buildValidationGameState(gameClient.getCards(), environment);
+        double value;
+        for (Card card : cards) {
+            state.put("move", CompactableUtility.fromWhotMove(card));
+            value = validator.output(state.getVector());
+            if (value > 0.9) {
+                valid.add(card);
+            }
+        }
+        // If not valid values found, then return full selection.
+        if (valid.size() > 0) {
+            return valid;
+        }
+        else {
+            return cards;
+        }
+    }
+
+    private void testMoveValidator(CardSet hand, GameEnvironment environment, double threshold) {
+        CardSet valid = new WhotCardSet();
+        GameState state = buildValidationGameState(hand, environment);
+        Map<String, Double> sorted = new HashMap<String, Double>();
+
+        double value;
+        for (Card card : allCardsWithMarket(environment)) {
+            state.put("move", CompactableUtility.fromWhotMove(card));
+            value = validator.output(state.getVector());
+            if (value > threshold) {
+                valid.add(card);
+            }
+            sorted.put(card.toString(), value);
+        }
+        sorted = sortByValue(sorted);
+        System.out.printf("[Move validation] topCard: %s; calledCard:%s; hand: %s%n", environment.get(VAR_TOP_CARD), environment.get(VAR_CALLED_CARD), hand);
+        String order = "";
+        int i = 0;
+        for (Map.Entry<String, Double> entry : sorted.entrySet()) {
+            order = String.format("%s (%.3f); %s", entry.getKey(), entry.getValue(), order);
+            i++;
+        }
+        System.out.printf("[Move selection] %s\n", order.substring(0, 180));
+        System.out.printf("Valid values found (%s treshold): %d %s%n", threshold, valid.size(), valid.toString());
+    }
+
+    private <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map )
+    {
+        Map<K, V> result = new LinkedHashMap<>();
+        Stream<Map.Entry<K, V>> st = map.entrySet().stream();
+
+        st.sorted( Map.Entry.comparingByValue() )
+                .forEachOrdered( e -> result.put(e.getKey(), e.getValue()) );
+
+        return result;
+    }
+
+    private Card simpleEpsilonGreedy(GameState state, CardSet selectActions) {
         // Now choose the action (which is also saved as the previousAction for the next iteration.
         if (random.nextDouble() > epsilon) {
             // Use epsilon-greedy explore-learn split.
@@ -229,7 +316,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         }
     }
 
-    private Card improvedEpsilonQValue(GameState state, WhotCardSet selectActions) {
+    private Card improvedEpsilonQValue(GameState state, CardSet selectActions) {
         Map<Card, Double> tempQ = qValues(state, selectActions);
         if (random.nextDouble() < epsilon) {
             double mag = Math.max(Math.abs(minQ(tempQ)), Math.abs(maxQ(tempQ)));
@@ -249,15 +336,22 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         WhotCardSet selectActions = new WhotCardSet();
 //        WhotGameRule.filterValidMoves(selectActions, environment);
         selectActions.initialize();
-        selectActions.remove(WhotCard.fromString(env.get(VAR_TOP_CARD)));
+//        selectActions.remove(WhotCard.fromString(env.get(VAR_TOP_CARD)));
         selectActions.add(WhotCard.MARKET);
         return selectActions;
     }
 
-    private void saveMiniBatch(CardSet nextActions, GameState state, GameEnvironment env) {
+    private void saveValidatorMiniBatch(boolean accepted, GameEnvironment environment) {
+        if (prevAction != null && prevValidationState != null) {
+            prevValidationState.set("move", CompactableUtility.fromWhotMove(prevAction));
+            validator.addToReplayMemory(prevValidationState.getVector(), new double[]{accepted ? 1. : 0.});
+        }
+    }
+
+    private void saveGameMiniBatch(CardSet nextActions, GameState state, GameEnvironment env) {
         double totalReward;
         double prevReward = calculateMoveReward(env);
-        if (prevAction != null && prevState != null) {
+        if (prevAction != null && prevGameState != null) {
             if (gameClient.getClientStatus() == STATUS_GAME_WON || gameClient.getClientStatus() == STATUS_TERMINATE) {
                 totalReward = prevReward;
             }
@@ -266,8 +360,8 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
 //                totalReward = prevReward + gamma * maxQ(state, WhotGameRule.filterValidMoves(fullCardSet, env));
                 totalReward = prevReward + gamma * maxQ(qValues(state, nextActions));
             }
-            prevState.set("move", CompactableUtility.fromWhotMove(prevAction));
-            dqn.addToReplayMemory(prevState.getVector(), new double[]{totalReward});
+            prevGameState.set("move", CompactableUtility.fromWhotMove(prevAction));
+            strategizer.addToReplayMemory(prevGameState.getVector(), new double[]{totalReward});
         }
     }
 
@@ -275,7 +369,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         Map<Card, Double> values = new HashMap<Card, Double>();
         for (Card card : selectActions) {
             state.set("move", CompactableUtility.fromWhotMove(card));
-            values.put(card, dqn.output(state.getVector()));
+            values.put(card, strategizer.output(state.getVector()));
         }
         return values;
     }
@@ -284,7 +378,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         Map<Card, Double> values = new HashMap<Card, Double>();
         for (Card card : selectActions) {
             state.set("move", CompactableUtility.fromWhotMove(card));
-            values.put(card, dqn.learnerOutput(state.getVector()));
+            values.put(card, strategizer.learnerOutput(state.getVector()));
         }
         return values;
     }
@@ -327,7 +421,16 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         state.set("top5", CompactableUtility.fromFixedSizeCardSet(top5, 5));
         state.set("env", CompactableUtility.fromGameEnvironment(environment));
         state.set("cards", CompactableUtility.fromWhotCardSet(cards));
-        state.setCompactSequence(Arrays.asList("move", "top5", "env", "cards"));
+        state.setCompactSequence("move", "top5", "env", "cards");
+        return state;
+    }
+
+    private GameState buildValidationGameState(CardSet cards, GameEnvironment environment) {
+        GameState state = new GameState();
+        state.set("top", CompactableUtility.fromWhotCards(WhotCard.fromString(environment.get(VAR_TOP_CARD))));
+        state.set("env", CompactableUtility.fromGameEnvironment(environment));
+        state.set("cards", CompactableUtility.fromWhotCardSet(cards));
+        state.setCompactSequence("move", "top", "env", "cards");
         return state;
     }
 
@@ -353,7 +456,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
     private GameEnvironment dummyEnvironment() {
         GameEnvironment env = new GameEnvironment();
         env.put(VAR_CALLED_CARD, "");
-        env.put(VAR_TOP_CARD, WhotCard.MARKET.toString());
+        env.put(VAR_TOP_CARD, new WhotCard(0, 1).toString());
         env.put(VAR_MARKET_MODE, "Normal");
         env.put(VAR_PLAYER_COUNT, "0");
         return env;

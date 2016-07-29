@@ -34,43 +34,51 @@ public class WhotGameClassifier {
 
     private static final String SAVED_NETS_DIR = "transient/saved_nets";
 
+    private String name;
+    private MultiLayerNetwork model;
+
     public static void main(String[] args) throws Exception {
+        WhotGameClassifier classifier = new WhotGameClassifier("classifier");
+        classifier.init();
+        classifier.train();
+    }
+
+    public WhotGameClassifier(String name) {
+        this.name = name;
+    }
+
+    public void init() throws IOException, InterruptedException {
         // Customizing params
         Nd4j.MAX_SLICES_TO_PRINT = -1;
         Nd4j.MAX_ELEMENTS_PER_SLICE = -1;
         Nd4j.ENFORCE_NUMERICAL_STABILITY = true;
 
-        int maxEpochs = 500;
-        double minError = 0.1;
-        int listenerFreq = 1;
-        int labelField = 0;
         int labelCount = 22;
-        int labelIndexFrom = 0;
-        int labelIndexTo = 21;
-        int batchSize = 1000;
+        int listenerFreq = 1;
         int seed = 123;
         int numFeatures = 101;
         int iterations = 1;
-        double trainFraction = 0.8;
         double learningRate = 0.01;
 
         log.info("Build model....");
-        MultiLayerNetwork model = loadOrGetNeuralNetwork(labelCount, numFeatures, iterations, learningRate, seed);
+        model = loadOrGetNeuralNetwork(labelCount, numFeatures, iterations, learningRate, seed);
         model.init();
         model.setListeners(new ScoreIterationListener(listenerFreq));
+    }
 
-        log.info("Backup old config....");
-        try {
-            Files.move(Paths.get(SAVED_NETS_DIR + "/conf.json"), Paths.get(SAVED_NETS_DIR + "/conf.bak.json"), StandardCopyOption.REPLACE_EXISTING);
-            Files.move(Paths.get(SAVED_NETS_DIR + "/coefficients.bin"), Paths.get(SAVED_NETS_DIR + "/coefficients.bak.bin"), StandardCopyOption.REPLACE_EXISTING);
-        }
-        catch (IOException e) {
-            // Just continue if we couldn't backup.
-        }
+    public void train() throws IOException, InterruptedException {
+        int labelField = 0;
+        int labelCount = 22;
+        int maxEpochs = 500;
+        double minError = 0.1;
+        int labelIndexTo = 21;
+        int batchSize = 1000;
+        int labelIndexFrom = 0;
+        double trainFraction = 0.8;
 
         log.info("Load data....");
         RecordReader reader = new WhotGameRecordReader();
-        reader.initialize(new FileSplit(new File("transient/saved_moves.txt")));
+        reader.initialize(new FileSplit(new File(String.format("%s/%s.saved_moves.txt", SAVED_NETS_DIR, name))));
 
         log.info("Train model....");
         DataSetIterator iter = new RecordReaderDataSetIterator(reader, batchSize, labelIndexFrom, labelIndexTo, true);
@@ -92,7 +100,7 @@ public class WhotGameClassifier {
             } while (model.score() > minError && j < maxEpochs);
 
             log.info("Save model...");
-            saveMultiLayerNetwork(model);
+            saveMultiLayerNetwork();
 
             log.info("Evaluate model....");
             Evaluation eval = new Evaluation(labelCount);
@@ -106,7 +114,7 @@ public class WhotGameClassifier {
 //        System.out.println(WhotCardResultDisplay.formatOutput(train, model.output(train.getFeatureMatrix())));
     }
 
-    private static MultiLayerNetwork loadOrGetNeuralNetwork(int labelCount, int numFeatures, int iterations, double learningRate, int seed) {
+    private MultiLayerNetwork loadOrGetNeuralNetwork(int labelCount, int numFeatures, int iterations, double learningRate, int seed) {
         try {
             return loadMultiLayerNetwork();
         } catch (IOException e) {
@@ -115,15 +123,24 @@ public class WhotGameClassifier {
         }
     }
 
-    private static void saveMultiLayerNetwork(MultiLayerNetwork model) throws IOException {
-        NetworkPersister.saveNet(model, SAVED_NETS_DIR + "/conf.json", SAVED_NETS_DIR + "/coefficients.bin");
+    private void saveMultiLayerNetwork() throws IOException {
+        log.info("Backup old config....");
+        try {
+            String filePrefix = String.format("%s/%s", SAVED_NETS_DIR, name);
+            Files.move(Paths.get(filePrefix + ".conf.json"), Paths.get(filePrefix + ".conf.bak.json"), StandardCopyOption.REPLACE_EXISTING);
+            Files.move(Paths.get(filePrefix + ".coeff.bin"), Paths.get(filePrefix + ".coeff.bak.bin"), StandardCopyOption.REPLACE_EXISTING);
+            NetworkPersister.saveNet(model, filePrefix + ".conf.json", filePrefix + ".coeff.bin");
+        } catch (IOException e) {
+            // Just continue if we couldn't backup.
+        }
     }
 
-    private static MultiLayerNetwork loadMultiLayerNetwork() throws IOException {
-        return NetworkPersister.loadNet(SAVED_NETS_DIR + "/conf.json", SAVED_NETS_DIR + "/coefficients.bin");
+    private MultiLayerNetwork loadMultiLayerNetwork() throws IOException {
+        String filePrefix = String.format("%s/%s", SAVED_NETS_DIR, name);
+        return NetworkPersister.loadNet(filePrefix + ".conf.json", filePrefix + ".coeff.bin");
     }
 
-    private static MultiLayerConfiguration getNNConfiguration(int labelCount, int numFeatures, int iterations, double learningRate, int seed) {
+    private MultiLayerConfiguration getNNConfiguration(int labelCount, int numFeatures, int iterations, double learningRate, int seed) {
         int hiddenSize = 500;
 
         return new NeuralNetConfiguration.Builder()
