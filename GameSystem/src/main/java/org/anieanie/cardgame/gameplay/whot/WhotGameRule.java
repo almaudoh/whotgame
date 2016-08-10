@@ -68,7 +68,7 @@ public class WhotGameRule implements GameRule {
 
     @Override
     public boolean isValidMove(Card move, GameEnvironment env) {
-        return matchesTopCard(move, env) && isPickTwoCounter(move, env)
+        return move.equals(WhotCard.MARKET) || matchesTopCard(move, env) && isPickTwoCounter(move, env)
                 && (!env.get(VAR_MARKET_MODE).equals(MARKET_MODE_GENERAL)
                 || env.get(GameEnvironment.VAR_CURRENT_PLAYER).equals(env.get(WhotGameRule.VAR_GENERAL_MARKET_PLAYER)));
     }

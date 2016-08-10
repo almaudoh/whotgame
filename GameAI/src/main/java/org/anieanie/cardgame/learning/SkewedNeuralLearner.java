@@ -1,6 +1,5 @@
-package org.anieanie.cardgame.learning.whot;
+package org.anieanie.cardgame.learning;
 
-import org.anieanie.cardgame.training.PersistibleMultiLayerNetwork;
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -8,109 +7,73 @@ import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
-import org.nd4j.linalg.dataset.SplitTestAndTrain;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.nd4j.linalg.util.ArrayUtil;
 
 import java.io.*;
 import java.util.*;
 
 /**
- * A DQN
+ * A neural network classifier that improves learning where one of the labels is very sparse.
+ *
+ * The sparse label is aggregated so its number and effect is increased in the training set.
  */
-public class DeepQNetwork {
+public class SkewedNeuralLearner extends DeepQNetwork {
 
-    private static final String SAVED_NETS_DIR = "transient/saved_nets";
-    private final String name;
-
-    private int numInputs;
-    private int numOutputs;
-    private List<double[]> replayMemoryFeatures;
-    private List<double[]> replayMemoryLabels;
-
-    private MultiLayerNetwork learner;
-    private PersistibleMultiLayerNetwork target;
-    private Map<String, Object> hyperParams;
+    private List<double[]> replayMemoryPositive;
+    private List<double[]> replayMemoryNegative;
 
     // Thread lock for synchronization.
     private final Object lock = new Object();
 
-    public DeepQNetwork(String name) {
-        Nd4j.ENFORCE_NUMERICAL_STABILITY = true;
-        this.name = name;
-        replayMemoryFeatures = new ArrayList<double[]>();
-        replayMemoryLabels = new ArrayList<double[]>();
-        hyperParams = initializeHyperParameters();
+    public SkewedNeuralLearner(String name) {
+        super(name);
+        replayMemoryPositive = new ArrayList<double[]>();
+        replayMemoryNegative = new ArrayList<double[]>();
     }
 
-    public void init(int inputSize, int outputSize) {
-        numInputs = inputSize;
-        numOutputs = outputSize;
-        loadReplayFromFile();
-        try {
-            // Try to load existing network.
-            target = PersistibleMultiLayerNetwork.load(SAVED_NETS_DIR, name);
-        } catch (FileNotFoundException e) {
-            // If it fails, then create a new network.
-            target = new PersistibleMultiLayerNetwork(getNetworkConfiguration(), name);
-            target.init();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        learner = new MultiLayerNetwork(target.getLayerWiseConfigurations());
-        learner.init();
-        learner.setParams(target.params());
-    }
-
-    public void updateTarget() throws IOException {
-        target.setParams(learner.params().dup());
-        target.save(SAVED_NETS_DIR);
-        System.out.printf("[%s] updated target%n", name);
-    }
-
-    public double output(double[] featureVector) {
-        INDArray output = target.output(Nd4j.create(featureVector, new int[]{1, featureVector.length}), false);
-        return output.getDouble(0);
-    }
-
-    double learnerOutput(double[] featureVector) {
-        INDArray output = learner.output(Nd4j.create(featureVector, new int[]{1, featureVector.length}), false);
-        return output.getDouble(0);
-    }
-
+    @Override
     public void addToReplayMemory(double[] features, double[] labels) {
+        addToReplayMemory(features, labels[0] == 1.);
+    }
+
+    public void addToReplayMemory(double[] features, boolean positive) {
         synchronized (lock) {
-            replayMemoryFeatures.add(features);
-            replayMemoryLabels.add(labels);
-//            System.out.printf("added %s, %s to replay memory%n", Arrays.toString(labels), Arrays.toString(features));
+            if (positive) {
+                replayMemoryPositive.add(features);
+            }
+            else {
+                replayMemoryNegative.add(features);
+            }
+            System.out.printf("replayMemory: Positive (%s), Negative (%s)%n", replayMemoryPositive.size(), replayMemoryNegative.size());
         }
     }
 
     // The learning network learns continually from the stored replay memory.
+    @Override
     public boolean learnFromMemory() {
         // No need to try to learn if enough samples have not been taken.
         int replaySizeToLearn = (Integer) hyperParams.get("replaySizeToLearn");
-        if (replayMemoryFeatures.size() > replaySizeToLearn || replaySizeToLearn == -1) {
+        if (replayMemoryPositive.size() > 0 && (replayMemoryPositive.size() > replaySizeToLearn || replaySizeToLearn == -1)) {
             double minCycleError = (Double) hyperParams.get("minCycleError");
             int maxCycles = (Integer) hyperParams.get("maxCycles");
 
             // Pull stored data from replay memory and use it to carry out network training.
             DataSet replay;
             synchronized (lock) {
-                replay = new DataSet(fromINDArray(replayMemoryFeatures), fromINDArray(replayMemoryLabels));
-
+                if (replaySizeToLearn == -1) replaySizeToLearn = replayMemoryPositive.size();
+                replay = combineDataSet(replaySizeToLearn, 0.5f);
                 replay.shuffle();
-                if (replaySizeToLearn == -1) replaySizeToLearn = replay.numExamples() - 1;
-                SplitTestAndTrain split = replay.splitTestAndTrain(replaySizeToLearn);
 
                 int j = 0;
                 do {
                     System.err.println("fit");
-                    learner.fit(split.getTrain());
+                    learner.fit(replay);
                     j++;
                 } while (learner.score() > minCycleError && j < maxCycles);
                 System.out.printf("[%s] learned from memory, learner score %s%n", name, learner.score());
@@ -120,28 +83,25 @@ public class DeepQNetwork {
         return false;
     }
 
-    // Converts an array list of doubles to an INDArray object.
-    private INDArray fromINDArray(List<double[]> data) {
-        int numElements = data.size();
-        return Nd4j.create(data.toArray(new double[numElements][]));
-    }
+    private DataSet combineDataSet(int numPositive, float negativeToPositiveRatio) {
+        long seed = System.currentTimeMillis();
+        INDArray positive = fromINDArray(replayMemoryPositive);
+        INDArray negative = fromINDArray(replayMemoryNegative);
+        Nd4j.shuffle(positive, new Random(seed), ArrayUtil.range(1, positive.rank()));
+        Nd4j.shuffle(negative, new Random(seed), ArrayUtil.range(1, negative.rank()));
 
-    private Map<String, Object> initializeHyperParameters() {
-        Map<String, Object> returnVal = new HashMap<String, Object>();
-        returnVal.put("seed", 123);
-        returnVal.put("iterations", 1);
-        returnVal.put("learningRate", 0.001);
-        returnVal.put("hiddenSize", 500);
-        returnVal.put("minCycleError", 0.05);
-        returnVal.put("maxCycles", 500);
-        returnVal.put("replaySizeToLearn", 10);
-        return returnVal;
+        // Combine as per specified ratio.
+        int numNegative = Math.round(numPositive * negativeToPositiveRatio);
+        INDArray combinedFeatures = Nd4j.vstack(positive.get(NDArrayIndex.interval(0,numPositive)), negative.get(NDArrayIndex.interval(0,numNegative)));
+        INDArray combinedLabels = Nd4j.vstack(Nd4j.ones(numPositive, 1), Nd4j.zeros(numNegative, 1));
+        return new DataSet(combinedFeatures, combinedLabels);
     }
 
     /**
      * Sets the hyper parameters for this DQN.
      */
-    public DeepQNetwork setHyperParameter(String name, Object value) {
+    @Override
+    public SkewedNeuralLearner setHyperParameter(String name, Object value) {
         hyperParams.put(name, value);
         return this;
     }
@@ -198,35 +158,29 @@ public class DeepQNetwork {
     }
 
     @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        saveReplayToFile();
-    }
-
     public void resetReplayMemory() {
         synchronized (lock) {
-            replayMemoryFeatures.clear();
-            replayMemoryLabels.clear();
+            replayMemoryPositive.clear();
+            replayMemoryNegative.clear();
         }
     }
 
+    @Override
     public void saveReplayToFile() {
         synchronized (lock) {
             // Save the replay memory.
             try {
-//                PrintWriter pr = new PrintWriter(new FileOutputStream(new File(SAVED_NETS_DIR + "/" + name + ".replaymem.txt")));
-//                for (int i = 0; i < replayMemoryFeatures.size(); i++) {
-//                    for (double val : replayMemoryFeatures.get(i)) {
-//                        pr.printf("%s,", val);
-//                    }
-//                    pr.printf("%s%n", replayMemoryLabels.get(i)[0]);
-//                }
-//                pr.flush();
-//                pr.close();
                 StringBuilder data = new StringBuilder();
-                for (int i = 0; i < replayMemoryFeatures.size(); i++) {
-                    data.append(replayMemoryLabels.get(i)[0]);
-                    for (double val : replayMemoryFeatures.get(i)) {
+                for (double[] row : replayMemoryPositive) {
+                    data.append(1.);
+                    for (double val : row) {
+                        data.append(',').append(val);
+                    }
+                    data.append('\n');
+                }
+                for (double[] row : replayMemoryNegative) {
+                    data.append(0.);
+                    for (double val : row) {
                         data.append(',').append(val);
                     }
                     data.append('\n');
@@ -240,20 +194,25 @@ public class DeepQNetwork {
         }
     }
 
-    private void loadReplayFromFile() {
+    @Override
+    protected void loadReplayFromFile() {
         synchronized (lock) {
             try {
                 BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(SAVED_NETS_DIR + "/" + name + ".replaymem.txt"))));
-                replayMemoryFeatures = new ArrayList<double[]>();
-                replayMemoryLabels = new ArrayList<double[]>();
+                replayMemoryPositive = new ArrayList<double[]>();
+                replayMemoryNegative = new ArrayList<double[]>();
                 while (br.ready()) {
                     String[] line = br.readLine().split(",");
                     double[] row = new double[line.length - 1];
                     for (int i = 1; i < line.length; i++) {
                         row[i - 1] = Double.parseDouble(line[i]);
                     }
-                    replayMemoryFeatures.add(row);
-                    replayMemoryLabels.add(new double[]{Double.parseDouble(line[0])});
+                    if (Double.parseDouble(line[0]) == 1) {
+                        replayMemoryPositive.add(row);
+                    }
+                    else {
+                        replayMemoryNegative.add(row);
+                    }
                 }
             } catch (FileNotFoundException e) {
                 System.out.printf("[%s] replaymem.txt not found in filesystem.%n", name);

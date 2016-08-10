@@ -9,6 +9,8 @@ import org.anieanie.cardgame.dl.normalization.GameState;
 import org.anieanie.cardgame.dl.normalization.CompactableUtility;
 import org.anieanie.cardgame.gameplay.GameClient;
 import org.anieanie.cardgame.gameplay.GameEnvironment;
+import org.anieanie.cardgame.learning.DeepQNetwork;
+import org.anieanie.cardgame.learning.SkewedNeuralLearner;
 
 import java.io.IOException;
 import java.util.*;
@@ -28,7 +30,7 @@ import static org.anieanie.cardgame.gameplay.whot.WhotGameRule.VAR_TOP_CARD;
 public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
 
     // DQN for validating moves.
-    private DeepQNetwork validator;
+    private SkewedNeuralLearner validator;
 
     // DQN for strategic thinking.
     private DeepQNetwork strategizer;
@@ -74,7 +76,7 @@ public class IntelligentWhotGameAgent extends SimpleWhotGameAgent {
         // DQN for learning valid moves.
         prevValidationState = buildValidationGameState(gameClient.getCards(), dummyEnvironment());
         prevValidationState.set("move", CompactableUtility.fromWhotMove(WhotCard.MARKET));
-        validator = new DeepQNetwork("validator");
+        validator = new SkewedNeuralLearner("validator");
         validator.setHyperParameter("minCycleError", 0.01)
                 .setHyperParameter("maxCycles", 50)
                 .setHyperParameter("learningRate", 0.1)
