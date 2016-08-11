@@ -24,7 +24,7 @@ public class ValidMoveClassifier {
 
     public static void main(String[] args) {
         ValidMoveClassifier classifier = new ValidMoveClassifier();
-        classifier.run(10);
+        classifier.run(100);
     }
 
     private final SkewedNeuralLearner net;
@@ -33,12 +33,12 @@ public class ValidMoveClassifier {
         net = new SkewedNeuralLearner("trained_validator");
         net.setHyperParameter("minCycleError", 0.01)
                 .setHyperParameter("maxCycles", 50)
-                .setHyperParameter("learningRate", 0.1)
+                .setHyperParameter("learningRate", 0.01)
                 .setHyperParameter("replaySizeToLearn", -1); // Learn from all replay memory.
     }
 
     public void run(int epochs) {
-        Random random = new Random(123);
+        Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < epochs; i++) {
             Card topCard = randomWhotCard(new WhotCardSet(), random);
             GameEnvironment env = randomGameEnvironment(random, topCard);

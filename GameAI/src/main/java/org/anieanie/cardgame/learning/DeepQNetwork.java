@@ -109,7 +109,6 @@ public class DeepQNetwork {
 
                 int j = 0;
                 do {
-                    System.err.println("fit");
                     learner.fit(split.getTrain());
                     j++;
                 } while (learner.score() > minCycleError && j < maxCycles);

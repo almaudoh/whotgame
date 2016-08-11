@@ -50,7 +50,7 @@ public class SkewedNeuralLearner extends DeepQNetwork {
             else {
                 replayMemoryNegative.add(features);
             }
-            System.out.printf("replayMemory: Positive (%s), Negative (%s)%n", replayMemoryPositive.size(), replayMemoryNegative.size());
+//            System.out.printf("replayMemory: Positive (%s), Negative (%s)%n", replayMemoryPositive.size(), replayMemoryNegative.size());
         }
     }
 
@@ -72,7 +72,6 @@ public class SkewedNeuralLearner extends DeepQNetwork {
 
                 int j = 0;
                 do {
-                    System.err.println("fit");
                     learner.fit(replay);
                     j++;
                 } while (learner.score() > minCycleError && j < maxCycles);
